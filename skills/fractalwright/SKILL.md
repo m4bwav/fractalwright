@@ -36,6 +36,10 @@ Read `evergreen.json` at the repository root. If `contradiction` is set or today
 
 `FW ifs sierpinski|fern|unequal-tiles -o out.png` (chaos game, p by |det|, first 20 points dropped, framed by a ball that provably holds the attractor). `FW attractor-search --hits 5 -o best.png` (Sprott quadratic maps ranked by D2 1.1-1.5 and small L, a book rule; Lyapunov in bits). `FW terrain -o t.png [--method midpoint] [--H 0.8]` (spectral by default; midpoint creases measured) writes a PNG and `.npy`. `FW fif --points "0,0;1,1;2,0" --d 0.5,-0.5 -o f.png [--numbers y.txt]` draws a fractal interpolation curve through the points.
 
+## Step 2d: flames, L-systems, attractors
+
+`FW flame [sierpinski|swirl-sierpinski|recipe.json] -o f.png [--seed N --tries 24]` (chaos game over xforms, 12 Draves-Reckase variations, final xform, colour blending, log-density with gamma and vibrancy, supersample 2, density estimation; no preset = seeded random flames scored on coverage, best kept). `FW lsystem koch|koch-snowflake|dragon|hilbert|sierpinski-arrowhead|plant-a|plant-b|plant-d|plant-e|plant-f|plant-stochastic -o p.png [--n N --seed N]` writes PNG, SVG and recipe. `FW attractor clifford|dejong|icon|icon-3|lorenz -o a.png [--params a,b,c,d] [--search]` (density shading; search ranks random Clifford or de Jong sets by Sprott's rule). Every command writes a recipe JSON that redraws it.
+
 ## Step 3: measure
 
 - `FW measure box image.png [--invert] [--threshold T]`: box-counting dimension of the dark (or light) pixels over 15+ box sizes and seeded random offsets, with the fit range in decades, the local-slope curve and a verdict. Pass the verdict on as written: under two decades it is "descriptor only"; a drifting local slope is "not fractal". Give D with its error bar from [references/08-measuring.md](../../references/08-measuring.md), never as exact, and never name a shape from D.

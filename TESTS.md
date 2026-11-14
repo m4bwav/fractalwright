@@ -8,6 +8,12 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261114-8 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2 · 76/76 (13 new in test_gen.py)
+- Flame: same seed gives identical pixels (64x64, supersample 2), seed 4 differs. Sierpinski flame (3 linear xforms, 3M points, 1024 px): D - log3/log2 = -0.021 (bar 0.05). All 12 variations stay finite. Recipe JSON redraws byte-identical PNG. Random search seed 0, 12 tries: best score 0.312, coverage 0.39, 0.3 s.
+- L-system: Koch n 7 at 2048 px D - log4/log3 = -0.022 (n 6: -0.033; bar 0.05). Hilbert order 2-6 visits all 4^n cells once, span 2^n - 1.
+- Lorenz (RK4 dt 0.01, 60k points, 3000 subset): D2 2.045, 2.047 at fit 0.01-0.1 (bar 2.05 +- 0.1); 1.955 at 0.02-0.25 and 2.07 at 0.005-0.05. Clifford 128 px: deterministic, coverage over 0.1. Clifford, de Jong, two icons bounded over 50k points.
+- led to: C-20261114-8
+
 ### T-20261114-7 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2 · 63/63 (after rebase on batch 4a; 12 new in test_extra.py)
 - Logistic: 1, 2, 4, 8 branches at r 2.8, 3.2, 3.5, 3.56; Lyapunov r = 4 0.9999995 bits (bar 0.01), r 3.2 negative. Henon (1.4, 0.3): L 0.6036 bits (bar 0.603 +- 0.02), D2 1.201 and 1.195 on two subsets (bar 1.21 +- 0.05). Search: 5 hits in 177 tries, 1.1 s.
 - IFS: unequal tiles 8x8 histogram cv 0.014 with |det| p, 1.049 with equal p (bars 0.05, 0.5). Ball cover: max distance / R 1.0 Sierpinski, 0.973 fern, 0.995 worst of 20 random 3-map IFS (bar 1). Start 50 units away: 8 of 50 points outside without discard, 0 with 20.

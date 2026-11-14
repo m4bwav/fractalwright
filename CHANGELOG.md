@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-8 · 2026-11-14 · flame, lsystem, attractor (Step D batch 4c, fw_gen.py)
+- because: T-20261114-8, user request (Step D batch 4c), design.md section 4 (all neighbours in)
+- files: scripts/fw_gen.py (new), scripts/fw.py (`main` registers it), tests/test_gen.py (new), skills/fractalwright/SKILL.md (Step 2d), README.md, CODEMAP.md
+- Flames reimplemented from the Draves and Reckase paper (no flam3 or Apophysis code, palettes are fw.py's own). Hilbert's B rule is `-AF+BFB+FA-`; a recalled `-FA+` ending broke the curve, caught by the visit-once test. Lorenz D2 needs the fit range 0.01-0.1 of the cloud (0.02-0.25 read 1.95). Icon parameter sets are recalled, checked bounded only. Multi-scroll attractor still left out: no primary-paper parameter set in hand.
+
 ### C-20261114-7 · 2026-11-14 · book items: logistic explain, attractor-search, ifs, terrain, fif (fw_extra.py)
 - because: T-20261114-7, book verdicts in ai-docs/log.md (Feldman, Pickover ed., Mandelbrot FGoN, Steeb, Banerjee, Loy *Musimathics*)
 - files: scripts/fw_extra.py (new), scripts/fw.py (`main` registers it), tests/test_extra.py (new), skills/fractalwright/SKILL.md (Steps 1, 2c), CODEMAP.md, references/01 (Richardson), 02 (Lyapunov units), 04 (|det| default, discard, ball cover), 05 (Sprott window, Henon checks, Euler and hyperchaos cautions), 06 (crease measurement, FIF and Weierstrass), 09 (section 8b audio design rules)
