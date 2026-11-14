@@ -4,6 +4,10 @@ Status: Step A in progress (session 1, 2026-11-14): local git repo, research sub
 
 Continue prompt: [plans/fractalwright-continue-prompt.md](plans/fractalwright-continue-prompt.md)
 
+## Step D progress (2026-11-14)
+
+- Batch 1 done on branch `scaffold` (worktree `Ai/_wt/fractalwright-scaffold`, not merged): scaffold, evergreen unit at root, fw.py doctor/explain/render/measure/palette, tests 8/8. Next: identify, sheet, then zoom/morph/loop; evals in Step F; banner owed.
+
 ## What exists
 
 - This folder holds only `ai-docs/`. It is not a git repository yet; the first session creates it (private until Mark says public).

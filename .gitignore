@@ -1,3 +1,5 @@
+__pycache__/
+*.pyc
 bench/.venv/
 bench/out/
-__pycache__/
+.pytest_cache/
