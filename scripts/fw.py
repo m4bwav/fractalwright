@@ -1497,6 +1497,8 @@ def main(argv=None):
     s.set_defaults(fn=cmd_flashcheck)
     import fw_extra  # book-derived commands: logistic plots, attractor-search, ifs, terrain, fif
     fw_extra.register(sub, EXPLAIN)
+    import fw_gen  # flame, lsystem, attractor
+    fw_gen.register(sub, EXPLAIN)
     a = ap.parse_args(argv)
     return a.fn(a)
 
