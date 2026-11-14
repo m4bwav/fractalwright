@@ -1,0 +1,170 @@
+{
+  "askwright": 1,
+  "id": "fractalwright-scope-2026-11-14",
+  "title": "fractalwright: name, visibility, scope, AI styling, browser accelerator",
+  "context": "",
+  "asked_by": "fractalwright design agent",
+  "product": "Claude Code",
+  "session": "",
+  "working_dir": "D:\\m4bwa\\Claude\\Projects\\Ai\\fractalwright",
+  "media_roots": [],
+  "questions": [
+    {
+      "id": "name",
+      "kind": "choice",
+      "title": "Final name",
+      "question": "What should the plugin be called?",
+      "background": "The working name is fractalwright, matching the other -wright plugins (pixelwright, polywright, musicwright). Design note: D:/m4bwa/Claude/Projects/Ai/fractalwright/ai-docs/plans/design.md.",
+      "why": "The name goes into the repo, the plugin manifest and every skill name; renaming later costs a migration.",
+      "options": [
+        {
+          "id": "fractalwright",
+          "label": "fractalwright"
+        },
+        {
+          "id": "fractwright",
+          "label": "fractwright (shorter)"
+        },
+        {
+          "id": "patternwright",
+          "label": "patternwright (wider, covers neighbours)"
+        }
+      ],
+      "guess": {
+        "option": "fractalwright",
+        "why": "Plain, searchable, and fits the -wright family.",
+        "confidence": "high"
+      },
+      "created": "2026-11-14T09:56:39-06:00",
+      "updated": "2026-11-14T09:56:39-06:00"
+    },
+    {
+      "id": "visibility",
+      "kind": "choice",
+      "title": "Repository visibility",
+      "question": "When should the fractalwright repository be public?",
+      "background": "Most of your plugins go public (pixelwright, polywright); some start private until evals pass (lexwright). Making a repo public is a repository-settings change, so it waits on you.",
+      "why": "Decides whether the repo is created private now and when the switch happens.",
+      "options": [
+        {
+          "id": "private-then-public",
+          "label": "Private until v0.1 passes its evals, then public (switch waits on you)"
+        },
+        {
+          "id": "public-now",
+          "label": "Public from the first commit"
+        },
+        {
+          "id": "private",
+          "label": "Private indefinitely"
+        }
+      ],
+      "guess": {
+        "option": "private-then-public",
+        "why": "Matches how lexwright was handled and keeps an untested plugin out of view.",
+        "confidence": "high"
+      },
+      "created": "2026-11-14T09:56:39-06:00",
+      "updated": "2026-11-14T09:56:39-06:00"
+    },
+    {
+      "id": "neighbours",
+      "kind": "multi",
+      "title": "Neighbours in v1 scope",
+      "question": "Which neighbouring pattern families belong in fractalwright v1?",
+      "background": "Fractals border other generative pattern families. Each added family costs shaders, presets and evals. Ones left out can come later.",
+      "why": "Sets the v1 scope and the size of the plugin.",
+      "options": [
+        {
+          "id": "reaction-diffusion",
+          "label": "Reaction-diffusion, as one preset"
+        },
+        {
+          "id": "cellular-automata",
+          "label": "Cellular automata"
+        },
+        {
+          "id": "tilings",
+          "label": "Tilings / Penrose"
+        },
+        {
+          "id": "kleinian",
+          "label": "Kleinian limit sets"
+        }
+      ],
+      "guess": {
+        "options": [
+          "reaction-diffusion"
+        ],
+        "why": "Reaction-diffusion is one shader and looks fractal-like; CA and tilings are their own fields (out); Kleinian sets fit but are heavier, so later rather than v1.",
+        "confidence": "low"
+      },
+      "created": "2026-11-14T09:56:39-06:00",
+      "updated": "2026-11-14T09:56:39-06:00"
+    },
+    {
+      "id": "ai-styling",
+      "kind": "choice",
+      "title": "AI styling",
+      "question": "How should AI styling (img2img or video restyle over the math render) work in v1?",
+      "background": "The core renders exact math. An AI pass through ComfyUI could restyle frames, but then the result is no longer the exact fractal.",
+      "why": "Decides whether v1 ships a ComfyUI styling step and its default.",
+      "options": [
+        {
+          "id": "none",
+          "label": "None in v1"
+        },
+        {
+          "id": "optional-off",
+          "label": "Optional, off by default, outputs marked \"interpreted\""
+        },
+        {
+          "id": "on-video",
+          "label": "On by default for video"
+        }
+      ],
+      "guess": {
+        "option": "optional-off",
+        "why": "Keeps exact renders the default while allowing the look when asked, clearly labelled.",
+        "confidence": "high"
+      },
+      "created": "2026-11-14T09:56:39-06:00",
+      "updated": "2026-11-14T09:56:39-06:00"
+    },
+    {
+      "id": "browser-accel",
+      "kind": "choice",
+      "title": "Headless browser accelerator",
+      "question": "Should Playwright driving headless system Edge be the first optional accelerator?",
+      "background": "Measured 1080p Mandelbrot frame: NumPy 6 s, Playwright + system Edge WebGL2 0.2 s. Install is 118 MB pip (Playwright incl. its Node driver); no Chromium download since Edge ships with Windows. One shader serves stills, video, the interactive page and 3D. moderngl is faster (0.03 s float64) at ~1 MB but serves only Python outputs. Details in design.md section 1.",
+      "why": "Decides which optional dependency v1 builds around first.",
+      "options": [
+        {
+          "id": "playwright-edge",
+          "label": "Yes: Playwright + system Edge first (118 MB)"
+        },
+        {
+          "id": "moderngl",
+          "label": "moderngl first (~1 MB, Python-only shaders)"
+        },
+        {
+          "id": "numpy-only",
+          "label": "No accelerator in v1, NumPy only"
+        }
+      ],
+      "guess": {
+        "option": "playwright-edge",
+        "why": "30x faster than NumPy and the only route where one shader serves all five outputs.",
+        "confidence": "high"
+      },
+      "created": "2026-11-14T09:56:39-06:00",
+      "updated": "2026-11-14T09:56:39-06:00"
+    }
+  ],
+  "created": "2026-11-14T09:56:39-06:00",
+  "updated": "2026-11-14T09:56:39-06:00",
+  "project": {
+    "name": "fractalwright",
+    "path": "D:/m4bwa/Claude/Projects/Ai/fractalwright"
+  }
+}

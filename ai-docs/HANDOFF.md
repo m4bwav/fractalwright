@@ -29,6 +29,8 @@ None specific to this project. Standing grants live in the memory index and the 
 
 ## Waits on Mark
 
+- askwright set ask/fractalwright-scope-2026-11-14 (name, visibility, neighbours, AI styling, browser accelerator). Read: `python D:/m4bwa/Claude/Projects/Ai/askwright/skills/askwright/scripts/ask.py read D:/m4bwa/Claude/Projects/Ai/fractalwright/ask/fractalwright-scope-2026-11-14`. Guesses in force meanwhile.
+
 - Nothing blocks the start.
 - Books: any title from notes/books.md he can supply. Buying is his call.
 
