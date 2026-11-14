@@ -1,44 +1,40 @@
 # HANDOFF: fractalwright
 
-Status: Step A in progress (session 1, 2026-11-14): local git repo, research subagents writing references/
+Status: Steps A, B, C done; Step D in progress (2 batches merged); public repo, no release yet. Updated 2026-11-14 end of session 1.
 
 Continue prompt: [plans/fractalwright-continue-prompt.md](plans/fractalwright-continue-prompt.md)
 
-## Step D progress (2026-11-14)
-
-- Batch 1 done on branch `scaffold` (worktree `Ai/_wt/fractalwright-scaffold`, not merged): scaffold, evergreen unit at root, fw.py doctor/explain/render/measure/palette, tests 8/8. Next: identify, sheet, then zoom/morph/loop; evals in Step F; banner done.
-- Batch 2 done on branch `measure` (worktree `Ai/_wt/fractalwright-measure`, not merged): measure v2 (box verdicts, lacunarity, ifs, profile, katz, heightmap), identify v1, kronecker render family; tests 30/30. Next: sheet, then zoom/morph/loop.
-
 ## What exists
 
-- Public repo https://github.com/m4bwav/fractalwright (since 2026-11-14) with wiki https://github.com/m4bwav/fractalwright/wiki (7 pages, note ai-docs/notes/2026-11-14-github-wiki.md). No release yet: tag only after evals/evals.json is written and run. Banner/social rendered by fw.py, done.
-- Book list with status: [notes/books.md](notes/books.md).
-- Backlog entry: "Fractal plugin" in `Ai/plugin-backlog/new-plugins.md`.
+- Public repo https://github.com/m4bwav/fractalwright (main), wiki https://github.com/m4bwav/fractalwright/wiki (7 pages; notes in notes/2026-11-14-github-wiki.md). Banner and social preview rendered by fw.py (.github/images). MIT. No release: tag v0.1.0 only after evals/evals.json is written (still TODO prompts) and run with a baseline.
+- Research: references/01-11 (history, escape-time, deep zoom, IFS/flames, L-systems/attractors, noise, 3D, measuring, audio visuals, AI models, tools/prior art). Two verification passes done; remaining unverified items are marked in place.
+- Design: [plans/design.md](plans/design.md). Render core decided by measurement (bench/bench.py): NumPy float64 required; optional accelerators probed in order: headless browser (Playwright + system Edge, WebGL2), then moderngl float64. wgpu dropped. float32 GPU fails at 1e-4 views.
+- Code: scripts/fw.py with doctor, explain, render (mandelbrot, julia, burning-ship, tricorn, multibrot, kronecker; recipe JSON saved beside each PNG), measure (box with verdicts and decades, area, lacunarity, ifs, profile, katz, heightmap), identify v1, palette. tests/test_fw.py: 30/30 (about 70 s).
+- Beat: everscout `fractal-art` (Ai/indie-ai-scout/beats/fractal-art, 28 verified sources; fractalforums.org dead in a redirect loop on 2026-11-14, recheck later). harvest.json at root; `evergreen.py harvest targets` lists it.
+- Sibling READMEs and wikis carry a fractalwright "Works with" line (10 PRs merged 2026-11-14). askwright's install is at 399/400 KB: its next README addition fails the size check.
 
-## Found on 2026-11-14 (so nobody searches again)
+## Books
 
-- everscout: no beat covers fractals, shaders, generative art or music visualizers. Beats on disk: ai-music, ai-sfx, ai-video, ai-voice, downtempo, game-design, global-economics, indie-game-marketing, learning-games, multi-agent-grind, personal-sites, project-management, tech-hiring, token-saving, video-analysis, indie-ai-games. A grep of every beat's data for fractal, Mandelbrot, MilkDrop, Shadertoy, visualizer, raymarch, GLSL and demoscene found nothing. Step B builds the beat from zero.
-- technique-harvest: no fractal candidate in any window. Two near misses only: `Ai/technique-harvest/ai-docs/posts/1x7o0t1.md` (a music tool with a MilkDrop-like player, judged outside musicwright) and `posts/1vic0bw.md` (FFT ocean in TSL, built into threewright 1.2.0). No plugin's `harvest.json` names a fractal or creative-coding source.
-- plugin-backlog: no earlier fractal idea.
-- Books on disk: none of the fractal titles. A filename search of `D:/RawStorage/BigDownloads/Books and Texts` (depth 4) found only neighbours, listed at the end of notes/books.md. A search of all of BigDownloads timed out at 120 s (audio books); search the sorted folder only.
+- Read and noted (technique-harvest/ai-docs/books/<slug>/notes.md): Falconer, Mandelbrot FGoN (OCR scan), Pickover (OCR), Feldman, Steeb, Banerjee MATLAB, numerical fractal-fractional, Turcotte, Rosenberg, Musimathics 1-2. Closed: fractional calculus (skipped), Blender x2 (built into polywright 0.6.7), Microscope (ludowright 0.1.34), 3ds Max (skipped). sfxwright 0.1.26 / musicwright 0.1.33 got the Musimathics sfx/music items.
+- fractalwright book items not yet built are listed in ai-docs/log.md "book verdicts" lines (2026-11-14). Built in batch 2: the measure/identify items. Still to build: Sprott preference ranking in attractor search, IFS |det| probabilities, Mariani-Silver (test-first, pixel-identical bar), Canright framing (test-first), Lyapunov units bits/nats fix in refs/02, beginner teaching order + cobweb/bifurcation in explain, Richardson coastline in explain, FFT terrain default (test-first vs midpoint creases), fractal interpolation family (test-first), grey-level IFS (test-first), multi-scroll attractor (test-first), audio items (critical-band edges, 200 ms loudness window, chroma->hue, no MP3, longer sub-bass frame, Shepard-Risset note).
+- Close each book with `book_harvest.py done <slug> --verdict built` once its fractalwright items are built. Still wanted: Peitgen, Chaos and Fractals: New Frontiers of Science (#4).
 
-## Flagged small rulings (mine, change freely)
+## Decisions and small rulings (change freely)
 
-- Working name fractalwright, folder `Ai/fractalwright`.
-- One chain, one prompt that serves the first session too (no separate kickoff file).
-- 3D is in scope behind a look gate (step E of the prompt) after Mark's question about ugly 3D fractals.
-
-## Grants
-
-None specific to this project. Standing grants live in the memory index and the global CLAUDE.md.
+- Name fractalwright; public since Mark's word on 2026-11-14.
+- MIT; no third-party presets bundled; no GPL/AGPL code copied; own shaders; AI passes optional and off by default, outputs marked interpreted.
+- Fractal verdict needs at least two decades of fit range.
+- Per-frame band envelopes belong in musicwright mw.py, not here.
 
 ## Waits on Mark
 
-- askwright set ask/fractalwright-scope-2026-11-14 (name, visibility, neighbours, AI styling, browser accelerator). Read: `python D:/m4bwa/Claude/Projects/Ai/askwright/skills/askwright/scripts/ask.py read D:/m4bwa/Claude/Projects/Ai/fractalwright/ask/fractalwright-scope-2026-11-14`. Guesses in force meanwhile.
+- askwright set ask/fractalwright-scope-2026-11-14 (Q2 visibility now answered: public). Read: `python D:/m4bwa/Claude/Projects/Ai/askwright/skills/askwright/scripts/ask.py read D:/m4bwa/Claude/Projects/Ai/fractalwright/ask/fractalwright-scope-2026-11-14`. Guesses in force meanwhile (neighbours: reaction-diffusion in only; AI optional; browser accelerator first).
+- Books: Peitgen #4 if he has it.
 
-- Nothing blocks the start.
-- Books: any title from notes/books.md he can supply. Buying is his call.
+## Next (in order)
 
-## Next
-
-Step A of the prompt (research, one subagent per topic), with step B (beat and harvest targets) alongside.
+1. Read askwright answers and apply.
+2. Step D batch 3: `sheet`, then `zoom`/`morph`/`loop` (ffmpeg; loop seam bar), deep-zoom perturbation path (refs/03).
+3. Build the remaining fractalwright book items above, closing books as their items land.
+4. Batch 4: `serve` + `export` (interactive page, loopback only), then `audio` + live audio page (add per-frame band envelopes to musicwright first), then `flame`, `lsystem`, attractors.
+5. Step E 3D look gate; Step F evals (evergreen-test with baseline), worth check, release v0.1.0, install, existing-plugins.md.
