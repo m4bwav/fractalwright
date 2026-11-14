@@ -1,4 +1,4 @@
-"""fractalwright deep zoom: perturbation rendering for the Mandelbrot set.
+"""fractalwright deep zoom: perturbation rendering for the Mandelbrot set and quadratic Julia sets.
 
 One reference orbit at the view centre in arbitrary precision (stdlib
 `decimal`; mpmath is not needed), then every pixel iterates only its float64
@@ -6,9 +6,13 @@ offset from that orbit:
 
     dz' = 2 Z[m] dz + dz^2 + dc,   z = Z[m+1] + dz
 
+Julia (z^2 + c, c fixed): the reference orbit starts at Z[0] = view centre, every
+pixel's dz starts at its offset from the centre, and dc = 0.
+
 Glitches are handled by rebasing (Zhuoran 2021, references/03 section 2.3):
-when |z| < |dz|, or the reference orbit runs out, the pixel restarts against
-the same reference from iteration 0 with dz = z. The counter reports how many
+when |z - Z[0]| < |dz|, or the reference orbit runs out, the pixel restarts
+against the same reference from iteration 0 with dz = z - Z[0] (Z[0] = 0 for
+Mandelbrot, so this is the published |z| < |dz| test). The counter reports how many
 pixels were rebased. float64 deltas hold down to widths near 1e-290; past
 that a floatexp delta would be needed (not built).
 
@@ -22,6 +26,7 @@ import numpy as np
 
 DEEP_WIDTH = Decimal("1e-12")  # fw.py render routes here below this width
 MIN_WIDTH = Decimal("1e-290")
+FORMULAS = ("mandelbrot", "julia")
 
 
 def _prec(width):
@@ -29,14 +34,14 @@ def _prec(width):
     return max(30, -w.adjusted() + 25)
 
 
-def reference_orbit(cx, cy, max_iter, bailout2, prec):
-    """Decimal orbit of the centre, rounded to float64. Returns (Zr, Zi);
-    Z[0] = 0, ends at max_iter or one step past escape."""
+def reference_orbit(cx, cy, max_iter, bailout2, prec, z0=None):
+    """Decimal orbit z <- z^2 + c with c = (cx, cy), rounded to float64. Returns (Zr, Zi);
+    Z[0] = z0 (default 0, Mandelbrot), ends at max_iter or one step past escape."""
     with localcontext() as ctx:
         ctx.prec = prec
         cr, ci = Decimal(cx), Decimal(cy)
-        zr = zi = Decimal(0)
-        out_r, out_i = [0.0], [0.0]
+        zr, zi = (Decimal(0), Decimal(0)) if z0 is None else (Decimal(z0[0]), Decimal(z0[1]))
+        out_r, out_i = [float(zr)], [float(zi)]
         big = Decimal(1e10)
         for _ in range(max_iter):
             zr, zi = zr * zr - zi * zi + cr, 2 * zr * zi + ci
@@ -63,22 +68,31 @@ def _offsets(r):
 
 
 def escape_perturb(r, stats=None):
-    """(nu, inside) like fw.escape_numpy, by perturbation. Mandelbrot only."""
-    if r["formula"] != "mandelbrot":
-        raise ValueError("deep path supports formula 'mandelbrot' only")
+    """(nu, inside) like fw.escape_numpy, by perturbation. Mandelbrot and quadratic Julia."""
+    if r["formula"] not in FORMULAS:
+        raise ValueError(f"deep path supports {', '.join(FORMULAS)} only")
+    julia = r["formula"] == "julia"
     width = Decimal(r["view"]["width"])
     if width < MIN_WIDTH:
         raise ValueError(f"width {width} is below float64 delta range ({MIN_WIDTH}); floatexp not built")
     p = r["params"]
     maxit, R2 = int(p["max_iter"]), float(p["bailout"]) ** 2
     cx, cy = r["view"]["centre"]
-    Zr, Zi = reference_orbit(cx, cy, maxit, R2, _prec(width))
+    if julia:
+        Zr, Zi = reference_orbit(p["c"][0], p["c"][1], maxit, R2, _prec(width), z0=(cx, cy))
+    else:
+        Zr, Zi = reference_orbit(cx, cy, maxit, R2, _prec(width))
+    Z0r, Z0i = Zr[0], Zi[0]
     last = len(Zr) - 1
     DX, DY, _ = _offsets(r)
     shape = DX.shape
-    dcr, dci = DX.ravel().copy(), DY.ravel().copy()
-    N = dcr.size
-    dzr, dzi = np.zeros(N), np.zeros(N)
+    N = DX.size
+    if julia:
+        dzr, dzi = DX.ravel().copy(), DY.ravel().copy()
+        dcr, dci = np.zeros(N), np.zeros(N)
+    else:
+        dcr, dci = DX.ravel().copy(), DY.ravel().copy()
+        dzr, dzi = np.zeros(N), np.zeros(N)
     m = np.zeros(N, np.int64)
     idx = np.arange(N)
     n_out = np.full(N, -1, np.int64)
@@ -100,11 +114,11 @@ def escape_perturb(r, stats=None):
             dzr, dzi, dcr, dci, m, idx, zr, zi, mag = (a[keep] for a in (dzr, dzi, dcr, dci, m, idx, zr, zi, mag))
             if idx.size == 0:
                 break
-        rb = (mag < dzr * dzr + dzi * dzi) | (m >= last)
+        rb = ((zr - Z0r) ** 2 + (zi - Z0i) ** 2 < dzr * dzr + dzi * dzi) | (m >= last)
         if rb.any():
             rebases += int(rb.sum())
             rebased[idx[rb]] = True
-            dzr[rb], dzi[rb], m[rb] = zr[rb], zi[rb], 0
+            dzr[rb], dzi[rb], m[rb] = zr[rb] - Z0r, zi[rb] - Z0i, 0
     inside = n_out < 0
     nu = np.zeros(N)
     e = ~inside
@@ -129,7 +143,8 @@ def render_array(r, stats=None):
 
 
 def direct_counts(r, prec=None):
-    """Slow proof reference: per-pixel Decimal iteration. Returns int counts (-1 inside)."""
+    """Slow proof reference: per-pixel Decimal iteration. Returns int counts (-1 inside).
+    Mandelbrot (z0 = 0, c = pixel) or Julia (z0 = pixel, c = params.c)."""
     w, h = r["size"]["w"], r["size"]["h"]
     width = Decimal(r["view"]["width"])
     prec = prec or _prec(width)
@@ -139,17 +154,24 @@ def direct_counts(r, prec=None):
         ctx.prec = prec
         cx, cy = Decimal(r["view"]["centre"][0]), Decimal(r["view"]["centre"][1])
         px = width / w
+        julia = r["formula"] == "julia"
+        if julia:
+            kr, ki = Decimal(r["params"]["c"][0]), Decimal(r["params"]["c"][1])
         for j in range(h):
             ci = cy + (Decimal(h) / 2 - (j + Decimal("0.5"))) * px
             for i in range(w):
                 cr = cx + (i + Decimal("0.5") - Decimal(w) / 2) * px
                 zr = zi = Decimal(0)
+                if julia:
+                    zr, zi, cr, ci_ = cr, ci, kr, ki
+                else:
+                    ci_ = ci
                 for n in range(maxit):
                     zr2, zi2 = zr * zr, zi * zi
                     if n and zr2 + zi2 > R2:
                         out[j, i] = n
                         break
-                    zr, zi = zr2 - zi2 + cr, 2 * zr * zi + ci
+                    zr, zi = zr2 - zi2 + cr, 2 * zr * zi + ci_
                 else:
                     if zr * zr + zi * zi > R2:
                         out[j, i] = maxit

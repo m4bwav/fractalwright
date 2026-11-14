@@ -22,6 +22,13 @@ Entry shape: `### T-20261114-10 · 2026-11-14 · unittest (tests/) · Windows, P
 
 ## Runs
 
+### T-20261114-13 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2, Playwright + Edge headless · 111/111 after rebase on AI styling and neighbours
+- Julia deep zoom (fw_deep.py, c = -0.8+0.156i, 24x16, 3000 iterations): 1e-20 382/384 pixels equal direct Decimal counts, 1e-30 381/384 (bar 99%, largest wrong blob 1, bar 4). Direct Decimal at prec 45 and 120 agree; the misses are float64 rounding after rebasing. At 1e-5 (32x24) perturbation 5/768 wrong vs plain float64 19/768, so the old "mean diff vs plain" bar does not fit Julia boundaries.
+- flashcheck WCAG area rule: 16x20 px square blinking at 12 Hz in 192x144 frames covers 10.4% of a 10-degree field, passes (its cells flash 12/s); 40x40 square 52.1% fails; full-frame strobe 100% fails; red vs equal-luminance grey 0 general, 100% red, fails; one slow change passes.
+- JS flash limiter (page/audio.html limitedDraw, headless Edge): 30 Hz strobe at a simulated 60 fps for 5 s, raw 60 swings/s, shown 2 swings/s (bar 3), 145 frames held.
+- Lorenz `fw.py attractor lorenz` prints D2 with its fit range 0.01-0.1 (bar 2.05 +- 0.1).
+- led to: C-20261114-13
+
 ### T-20261114-11 · 2026-11-14 · unittest (tests/) + live smoke · Windows, Python 3.14.6, ComfyUI on loopback 8199 (RTX 5060 Ti) · 93/93
 - tests/test_ai.py: workflow builder (seed, denoise, cfg 1, 9 steps, wiring, no Krea or SAM 3, bad denoise refused); residual smoothing (alpha 1 = identity, constant offset kept, flicker cut on noise); no-host fallback with FW_COMFY_HOSTS=""; fake ComfyUI echo server end to end (_ai.mp4, _ai_frames, _ai.json interpreted); broken host gives status failed and keeps the exact video.
 - Live smoke: `fw.py zoom seahorse --size 512x512 --fps 12 --duration 1 --to-width 0.002`, 12 frames, Z-Image Turbo denoise 0.3 seed 7 alpha 0.5: 62.7 s total (61.7 s generate). Flicker (mean abs neighbour diff, 0-255): exact 69.0, styled raw 54.3, styled smoothed 57.3. Flashcheck on smoke_ai.mp4: 2 swings/s, pass.

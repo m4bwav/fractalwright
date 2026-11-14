@@ -393,6 +393,32 @@ class Video(unittest.TestCase):
         self.assertFalse(res["pass"])
         self.assertGreater(res["max_swings_per_s"], 3)
 
+    def test_flash_area_rule(self):
+        # WCAG 2.x general flash area rule (T-20261114-13): a blinking region counts only if it covers > 25% of a
+        # 10-degree field (341x256 at 1024x768). 192x144 frames, 12 Hz blink at 24 fps.
+        def blink(y0, y1, x0, x1, on=(1, 1, 1), off=(0, 0, 0)):
+            a, b = np.zeros((144, 192, 3)), np.zeros((144, 192, 3))
+            a[y0:y1, x0:x1], b[y0:y1, x0:x1] = on, off
+            return [a, b] * 24
+        small = fw.flash_check(blink(60, 76, 80, 100), 24)        # 16x20 px: 8.7% of a 48x64 field
+        self.assertTrue(small["pass"], small)
+        self.assertGreater(small["max_cell_flashes_per_s"], 3)    # it does flash, just too small to count
+        self.assertGreater(small["general_flash_area"], 0)
+        self.assertLessEqual(small["general_flash_area"], 0.25)
+        big = fw.flash_check(blink(40, 80, 60, 100), 24)          # 40x40 px: about half a field
+        self.assertFalse(big["pass"], big)
+        full = fw.flash_check(blink(0, 144, 0, 192), 24)
+        self.assertFalse(full["pass"])
+        self.assertEqual(full["general_flash_area"], 1.0)
+        # red flash: saturated red vs grey of near-equal luminance (swing < 0.10, so only the red rule fires)
+        grey = (0.5,) * 3   # rel. luminance 0.214 vs red 0.2126
+        red = fw.flash_check(blink(0, 144, 0, 192, on=(1, 0, 0), off=grey), 24)
+        self.assertEqual(red["general_flash_area"], 0.0)
+        self.assertEqual(red["red_flash_area"], 1.0)
+        self.assertFalse(red["pass"])
+        slow = fw.flash_check([np.zeros((144, 192, 3))] * 12 + [np.ones((144, 192, 3))] * 12, 24)
+        self.assertTrue(slow["pass"])
+
     def test_sheet_tiles_and_sidecar(self):
         out = self.dir / "sheet.png"
         self.run_fw("sheet", "julia-rabbit", "--vary", "params.c", "--values", "-0.123:0.745,-0.8:0.156,0:1",

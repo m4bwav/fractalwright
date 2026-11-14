@@ -892,8 +892,8 @@ def cmd_render(a):
                 return 0
             except Exception as e:  # noqa: BLE001
                 print(f"browser route unavailable ({str(e).splitlines()[0][:120]}); using numpy")
-    if np is not None and r["formula"] == "mandelbrot" and (a.deep or Decimal(r["view"]["width"]) < Decimal("1e-12")):
-        import fw_deep  # perturbation: Decimal reference orbit, float64 deltas, rebasing
+    if np is not None and r["formula"] in ("mandelbrot", "julia") and int(r["params"].get("power", 2)) == 2 and (a.deep or Decimal(r["view"]["width"]) < Decimal("1e-12")):
+        import fw_deep  # perturbation (Mandelbrot, Julia): Decimal reference orbit, float64 deltas, rebasing
         st = {}
         r["render"] = {"route": "numpy-perturbation", "precision": "decimal+float64"}
         write_png(out, arr=fw_deep.render_array(r, st))
@@ -1257,38 +1257,112 @@ def rel_luminance(rgb):
     return lin @ np.array([0.2126, 0.7152, 0.0722])
 
 
-def flash_check(frames, fps):
-    """Count swings of mean relative luminance >= FLASH_SWING between turning points; max in any 1 s window."""
-    L = np.array([rel_luminance(f).mean() for f in frames])
-    swings = []  # frame index where a swing of >= FLASH_SWING completes
-    lo = hi = L[0]
-    direction = 0
+def swing_walk(L, swing=FLASH_SWING, dark_max=None):
+    """Turning-point walk over a luminance series (any trailing shape, vectorised per element).
+    Returns a bool array (frames, ...) marking frames where a swing of >= swing completes. With dark_max,
+    a swing counts only if its darker end is below dark_max (WCAG: darker image below 0.80)."""
+    L = np.asarray(L, float)
+    ev = np.zeros(L.shape, bool)
+    lo = L[0].copy(); hi = L[0].copy()
+    d = np.zeros(L.shape[1:], np.int8)
     for i in range(1, len(L)):
         x = L[i]
-        if direction == 0:
-            lo, hi = min(lo, x), max(hi, x)
-            if x - lo >= FLASH_SWING:
-                swings.append(i); direction, hi = 1, x
-            elif hi - x >= FLASH_SWING:
-                swings.append(i); direction, lo = -1, x
-        elif direction > 0:
-            if x > hi:
-                hi = x
-            elif hi - x >= FLASH_SWING:
-                swings.append(i); direction, lo = -1, x
+        z, up, dn = d == 0, d > 0, d < 0
+        lo = np.where(z, np.minimum(lo, x), lo); hi = np.where(z, np.maximum(hi, x), hi)
+        hi = np.where(up & (x > hi), x, hi); lo = np.where(dn & (x < lo), x, lo)
+        rise = (z | dn) & (x - lo >= swing)
+        fall = (z | up) & (hi - x >= swing) & ~rise
+        if dark_max is not None:
+            ok_r, ok_f = lo < dark_max, x < dark_max
         else:
-            if x < lo:
-                lo = x
-            elif x - lo >= FLASH_SWING:
-                swings.append(i); direction, hi = 1, x
+            ok_r = ok_f = True
+        ev[i] = (rise & ok_r) | (fall & ok_f)
+        d = np.where(rise, 1, np.where(fall, -1, d)).astype(np.int8)
+        hi = np.where(rise, x, hi); lo = np.where(fall, x, lo)
+    return ev
+
+
+def _per_second_max(ev, win):
+    """Max count of events in any window of win frames, per element."""
+    c = np.concatenate([np.zeros((1,) + ev.shape[1:]), np.cumsum(ev, 0)])
+    n = len(ev)
+    if n <= win:
+        return c[-1]
+    return (c[win:] - c[:-win]).max(0)
+
+
+def _box_max_fraction(mask, bh, bw):
+    """Max fraction of any bh x bw box (sliding, cell stride) covered by mask."""
+    H, W = mask.shape
+    bh, bw = min(bh, H), min(bw, W)
+    S = np.zeros((H + 1, W + 1)); S[1:, 1:] = np.cumsum(np.cumsum(mask, 0), 1)
+    tot = S[bh:, bw:] - S[:-bh, bw:] - S[bh:, :-bw] + S[:-bh, :-bw]
+    return float(tot.max() / (bh * bw))
+
+
+def _cells(f, gh, gw):
+    """Block-mean an HxWxC frame onto a gh x gw grid (edge rows/cols dropped)."""
+    H, W = f.shape[:2]
+    gh, gw = min(gh, H), min(gw, W)
+    hh, ww = H // gh * gh, W // gw * gw
+    return f[:hh, :ww].reshape(gh, hh // gh, gw, ww // gw, -1).mean(axis=(1, 3))
+
+
+def _uv(rgb):
+    """CIE 1976 u'v' of sRGB values (via linear RGB -> XYZ)."""
+    lin = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+    M = np.array([[0.4124, 0.3576, 0.1805], [0.2126, 0.7152, 0.0722], [0.0193, 0.1192, 0.9505]])
+    X, Y, Z = np.moveaxis(lin @ M.T, -1, 0)
+    den = X + 15 * Y + 3 * Z + 1e-12
+    return np.stack([4 * X / den, 9 * Y / den], -1)
+
+
+FLASH_AREA = 0.25          # WCAG 2.x: 25% of any 10-degree visual field
+FLASH_FIELD = (256 / 768, 341 / 1024)  # 10-degree field as a fraction of the screen (341x256 at 1024x768)
+FLASH_GRID = (36, 48)      # analysis cells (rows, cols); the field is 12 x 16 cells
+FLASH_MIN_CELL = 4         # px; smaller cells measure single-pixel aliasing on tiny previews, not flashes
+
+
+def flash_check(frames, fps):
+    """WCAG 2.x general flash and red flash thresholds (W3C Understanding SC 2.3.1, fetched 2026-11-14):
+    a general flash is a pair of opposing changes in relative luminance of 10% or more where the darker
+    image is below 0.80; a red flash is a pair of opposing transitions to or from saturated red
+    (R/(R+G+B) >= 0.8) with a u'v' difference above 0.2. Content fails only if more than 3 flashes in any
+    second cover more than 25% of a 10-degree field (341x256 px at 1024x768, here a 1/3 x 1/3 box).
+    Frames are block-averaged onto a grid of up to 36x48 cells (cells at least 4 px); each cell runs the swing walk."""
+    F = np.array([np.asarray(f, float)[..., :3] for f in frames])
+    L = np.array([rel_luminance(f).mean() for f in F])
     win = max(1, int(round(fps)))
-    worst = 0
-    for i in range(len(L)):
-        worst = max(worst, sum(1 for s in swings if i <= s < i + win))
-    return {"frames": len(L), "fps": fps, "swings": len(swings), "max_swings_per_s": worst,
+    whole = swing_walk(L)
+    worst = int(_per_second_max(whole[:, None], win)[0]) if len(L) > 1 else 0
+    H, W = F.shape[1:3]
+    gh, gw = max(3, min(FLASH_GRID[0], H // FLASH_MIN_CELL)), max(3, min(FLASH_GRID[1], W // FLASH_MIN_CELL))
+    C = np.array([_cells(f, gh, gw) for f in F])            # (n, gh, gw, 3)
+    Lc = rel_luminance(C)
+    bh = max(1, int(round(FLASH_FIELD[0] * Lc.shape[1]))); bw = max(1, int(round(FLASH_FIELD[1] * Lc.shape[2])))
+    gen = _per_second_max(swing_walk(Lc, dark_max=0.80), win)
+    # red: state 1 when saturated red; a transition counts when the state flips and u'v' moves > 0.2
+    red = C[..., 0] / (C.sum(-1) + 1e-12) >= 0.8
+    uv = _uv(C)
+    rev = np.zeros(red.shape, bool)
+    ref = uv[0].copy(); st = red[0].copy()
+    for i in range(1, len(C)):
+        flip = (red[i] != st) & (np.linalg.norm(uv[i] - ref, axis=-1) > 0.2)
+        rev[i] = flip
+        st = np.where(flip, red[i], st); ref = np.where(flip[..., None], uv[i], ref)
+    redc = _per_second_max(rev, win) / 2.0  # a red flash is a pair of transitions
+    gen_flash = gen / 2.0                   # a general flash is a pair of opposing changes (two swings)
+    gen_area = _box_max_fraction(gen_flash > FLASH_MAX_PER_S, bh, bw) if len(L) > 1 else 0.0
+    red_area = _box_max_fraction(redc > FLASH_MAX_PER_S, bh, bw) if len(L) > 1 else 0.0
+    ok = gen_area <= FLASH_AREA and red_area <= FLASH_AREA
+    return {"frames": len(L), "fps": fps, "swings": int(whole.sum()), "max_swings_per_s": worst,
             "limit_per_s": FLASH_MAX_PER_S, "luminance_range": [float(L.min()), float(L.max())],
-            "pass": worst <= FLASH_MAX_PER_S,
-            "method": "frame-mean relative luminance; whole-frame stand-in for the WCAG 2.3.1 area rule"}
+            "general_flash_area": round(gen_area, 4), "red_flash_area": round(red_area, 4),
+            "area_limit": FLASH_AREA, "max_cell_flashes_per_s": float(gen_flash.max()) if len(L) > 1 else 0.0,
+            "pass": bool(ok),
+            "method": "WCAG 2.x general and red flash thresholds: per-cell swing walk on a 36x48 grid, "
+                      "flashing cells (> 3 flashes/s) must cover <= 25% of any 341x256-at-1024x768 box; "
+                      "max_swings_per_s is the older whole-frame mean count, kept for reference"}
 
 
 def seam_ratio(frames):

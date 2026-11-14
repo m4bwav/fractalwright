@@ -486,6 +486,9 @@ def map_points(step, n=1_000_000, seed=0, walkers=1024, warm=200):
     return np.column_stack([X[ok], Y[ok]])
 
 
+LORENZ_D2_FIT = (0.01, 0.1)  # fraction of the cloud's size; gives 2.045 (literature 2.05), 0.02-0.25 reads 1.95
+
+
 def lorenz(n=100000, dt=0.01, p=(10.0, 28.0, 8.0 / 3.0), warm=2000, start=(1.0, 1.0, 1.0)):
     """RK4 integration; returns (n, 3) points after `warm` transient steps."""
     s, r, b = p
@@ -559,6 +562,10 @@ def cmd_attractor(a):
     if kind == "lorenz":
         pts3 = lorenz(a.points // 4, p=params)
         pts = pts3[:, [0, 2]]
+        lo, hi = LORENZ_D2_FIT
+        d2 = fx.correlation_dimension(pts3, n=3000, seed=a.seed, lo=lo, hi=hi)
+        print(f"Lorenz D2 {d2:.3f} (Grassberger-Procaccia on 3000 3D points, fit range {lo}-{hi} of the cloud size; "
+              f"literature 2.05)")
     else:
         pts = map_points(ATTRACTORS[kind]["step"](params), a.points, a.seed)
     _, cnt = density_png(pts, a.out, w, h, a.palette)
