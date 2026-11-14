@@ -1,40 +1,31 @@
 # HANDOFF: fractalwright
 
-Status: Steps A, B, C done; Step D in progress (2 batches merged); public repo, no release yet. Updated 2026-11-14 end of session 1.
+Status: v0.1.0 released and installed 2026-11-14 (session 2). Steps A-D done, F done (evals 13/13), E waits on Mark's 3D verdict. Not finished: neighbours Mark put in scope, AI styling pass, Peitgen book.
 
 Continue prompt: [plans/fractalwright-continue-prompt.md](plans/fractalwright-continue-prompt.md)
 
 ## What exists
 
-- Public repo https://github.com/m4bwav/fractalwright (main), wiki https://github.com/m4bwav/fractalwright/wiki (7 pages; notes in notes/2026-11-14-github-wiki.md). Banner and social preview rendered by fw.py (.github/images). MIT. No release: tag v0.1.0 only after evals/evals.json is written (still TODO prompts) and run with a baseline.
-- Research: references/01-11 (history, escape-time, deep zoom, IFS/flames, L-systems/attractors, noise, 3D, measuring, audio visuals, AI models, tools/prior art). Two verification passes done; remaining unverified items are marked in place.
-- Design: [plans/design.md](plans/design.md). Render core decided by measurement (bench/bench.py): NumPy float64 required; optional accelerators probed in order: headless browser (Playwright + system Edge, WebGL2), then moderngl float64. wgpu dropped. float32 GPU fails at 1e-4 views.
-- Code: scripts/fw.py with doctor, explain, render (mandelbrot, julia, burning-ship, tricorn, multibrot, kronecker; recipe JSON saved beside each PNG), measure (box with verdicts and decades, area, lacunarity, ifs, profile, katz, heightmap), identify v1, palette. tests/test_fw.py: 30/30 (about 70 s).
-- Beat: everscout `fractal-art` (Ai/indie-ai-scout/beats/fractal-art, 28 verified sources; fractalforums.org dead in a redirect loop on 2026-11-14, recheck later). harvest.json at root; `evergreen.py harvest targets` lists it.
-- Sibling READMEs and wikis carry a fractalwright "Works with" line (10 PRs merged 2026-11-14). askwright's install is at 399/400 KB: its next README addition fails the size check.
+- Public repo https://github.com/m4bwav/fractalwright, release https://github.com/m4bwav/fractalwright/releases/tag/v0.1.0, installed fractalwright@mark-local (entry in Ai/.claude-plugin/marketplace.json). Wiki 7 pages (written before 0.1.0: does not yet cover the new commands).
+- fw.py commands: doctor, explain (incl. logistic cobweb/bifurcation, coastline), identify, measure, render (+ --deep perturbation to 1e-30 in fw_deep.py; --route browser via Playwright+Edge), palette, sheet, zoom, morph, loop, flashcheck, serve (explorer + /audio, loopback only), export, audio (fw_audio.py, uses musicwright mw.py envelopes >= 0.1.34, NumPy fallback), flame, lsystem, attractor (fw_gen.py), ifs, attractor-search, fif (fw_extra.py), 3d recipe|render|gate (fw_3d.py, browser only). Tests 89/89 (~75 s).
+- ComfyUI hosts come from FW_COMFY_HOSTS (default loopback 8188,8199); add the Mac with FW_COMFY_HOSTS=127.0.0.1:8199,192.168.86.100:8188 (setx was refused by the permission classifier; Mark may set it).
+- Evals: evals/evals.json, T-20261114-10: 13/13 after description fix; baseline 2/2 vs 0/2. Worth lite UNPROVEN (needs heavy A/B), leaning KEEP.
+- Beat everscout `fractal-art`; harvest.json listed by `evergreen.py harvest targets`.
 
-## Books
+## Decisions (Mark, askwright set fractalwright-scope-2026-11-14, closed)
 
-- Read and noted (technique-harvest/ai-docs/books/<slug>/notes.md): Falconer, Mandelbrot FGoN (OCR scan), Pickover (OCR), Feldman, Steeb, Banerjee MATLAB, numerical fractal-fractional, Turcotte, Rosenberg, Musimathics 1-2. Closed: fractional calculus (skipped), Blender x2 (built into polywright 0.6.7), Microscope (ludowright 0.1.34), 3ds Max (skipped). sfxwright 0.1.26 / musicwright 0.1.33 got the Musimathics sfx/music items.
-- All fractalwright book items are built or ruled out (log 2026-11-14 books batch; scripts/fw_extra.py). Retry the multi-scroll attractor from a primary paper when the batch-4 `attractor` command lands.
-- Books closed except Turcotte (open for polywright). Still wanted: Peitgen, Chaos and Fractals: New Frontiers of Science (#4).
-
-## Decisions and small rulings (change freely)
-
-- Name fractalwright; public since Mark's word on 2026-11-14.
-- MIT; no third-party presets bundled; no GPL/AGPL code copied; own shaders; AI passes optional and off by default, outputs marked interpreted.
-- Fractal verdict needs at least two decades of fit range.
-- Per-frame band envelopes belong in musicwright mw.py, not here.
+Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular automata, tilings, Kleinian); AI styling ON by default for video (stills exact; exact frames kept; --no-ai); Playwright+Edge first accelerator. Small rulings: MIT, no third-party presets, own shaders, fractal verdict needs two decades, band envelopes live in musicwright.
 
 ## Waits on Mark
 
-- askwright set ask/fractalwright-scope-2026-11-14 (Q2 visibility now answered: public). Read: `python D:/m4bwa/Claude/Projects/Ai/askwright/skills/askwright/scripts/ask.py read D:/m4bwa/Claude/Projects/Ai/fractalwright/ask/fractalwright-scope-2026-11-14`. Guesses in force meanwhile (neighbours: reaction-diffusion in only; AI optional; browser accelerator first).
-- Books: Peitgen #4 if he has it.
+- 3D gate: `python D:/m4bwa/Claude/Projects/Ai/askwright/skills/askwright/scripts/ask.py serve D:/m4bwa/Claude/Projects/Ai/fractalwright/ask/fractalwright-3d-gate-2026-11-14` (not served yet). Judge: shadow 6-0, AO 5-0-1, camera 5-0-1, all 4-0-2, fog 0-4-2. Guess: ship normal with shadow+AO+camera default. Notes: ai-docs/notes/2026-11-14-3d-gate.md.
+- Books: Peitgen, Chaos and Fractals: New Frontiers (#4); Indra's Pearls (#7) now matters for Kleinian sets.
+- Installed musicwright is 0.1.33: the shared clone Ai/musicwright has another session's uncommitted ai-docs/HANDOFF.md, so it was not pulled to 0.1.34.
 
 ## Next (in order)
 
-1. Read askwright answers and apply.
-2. Step D batch 3: `sheet`, then `zoom`/`morph`/`loop` (ffmpeg; loop seam bar), deep-zoom perturbation path (refs/03).
-3. Build the remaining fractalwright book items above, closing books as their items land.
-4. Batch 4: `serve` + `export` (interactive page, loopback only), then `audio` + live audio page (add per-frame band envelopes to musicwright first), then `flame`, `lsystem`, attractors.
-5. Step E 3D look gate; Step F evals (evergreen-test with baseline), worth check, release v0.1.0, install, existing-plugins.md.
+1. Read the 3D gate answers; apply (default remedies, ship status in SKILL.md; fix Mandelbox framing and hybrid scale; numeric DE test for quaternion Julia).
+2. AI styling pass for video (ComfyUI workflow via comfyui-gen, exact frames kept, marked interpreted).
+3. Neighbours: reaction-diffusion preset, cellular automata, tilings (measure must say "not fractal"), Kleinian limit sets.
+4. Gaps: GPU perturbation in the browser, Julia deep zoom, floatexp past 1e-290, series approximation; page rotation and stop palettes; JS flash limiter browser test; WCAG flash-area rule in flashcheck; symmetric-icon params checked against Field and Golubitsky; multi-scroll attractor from a primary paper; Lorenz D2 default range.
+5. Wiki update for 0.1.0 commands (wikiwright); evergreen-worth heavy run; next release.
