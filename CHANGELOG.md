@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-4 · 2026-11-14 · sheet, zoom, morph, loop, flashcheck (Step D batch 3)
+- because: T-20261114-4, user request (continue prompt Step D batch 3), design.md section 6 (AI styling on by default for video)
+- files: scripts/fw.py (video block, colouring.phase), tests/test_fw.py (Video), skills/fractalwright/SKILL.md (Step 2b), README.md, CODEMAP.md
+- Contact sheets with a recipe per tile; keyframed zoom (exponential width, smoothstep centre), morph (piecewise linear param path), loop (closed path sampled at k/n, palette phase cycle); frames + H.264 mp4 (yuv420p, CRF 18) + animation recipe. `--ai/--no-ai` (default on) only probes ComfyUI (2 s timeout, FW_COMFY_HOSTS overrides) and records `ai_pass: pending-not-implemented`. `flashcheck` counts frame-mean relative-luminance swings of 10% per second (limit 3).
+
 ### C-20261114-3 · 2026-11-14 · measure v2 and identify v1 (book verdicts)
 - because: R-20261114-3, T-20261114-3, user request (continue prompt Step D batch 2)
 - files: scripts/fw.py (measure v2, self-affine, kronecker, identify blocks), tests/test_fw.py, skills/fractalwright/SKILL.md (Steps 1, 3, 4), references/08-measuring.md (sections 1, 2, 6, 7, 8, 10, 12), references/06-noise-natural.md (section 7)

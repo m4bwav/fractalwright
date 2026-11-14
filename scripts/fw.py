@@ -246,7 +246,7 @@ def escape_numpy(r, X, Y):
 
 def colour(r, nu, inside):
     c = r["colouring"]
-    rgb = palette_rgb(r["palette"], nu * float(c.get("density", 0.02)))
+    rgb = palette_rgb(r["palette"], nu * float(c.get("density", 0.02)) + float(c.get("phase", 0) or 0))
     rgb[inside] = _hex(c.get("inside", "#000000"))
     return rgb
 
@@ -830,7 +830,7 @@ def cmd_doctor(a):
     if edge.exists():
         browsers.append("msedge")
     rows.append(("browser", ", ".join(sorted(set(browsers))) or "none on PATH", "for the playwright route"))
-    rows.append(("ffmpeg", shutil.which("ffmpeg") or "missing", "optional: video commands (later)"))
+    rows.append(("ffmpeg", shutil.which("ffmpeg") or "missing", "video commands: zoom, morph, loop (H.264 encode), flashcheck"))
     if a.json:
         print(json.dumps([{"name": n, "value": v, "role": r} for n, v, r in rows], indent=2))
     else:
@@ -1014,6 +1014,348 @@ def cmd_palette(a):
     return 0
 
 
+# ---------------------------------------------------------------- video (sheet, zoom, morph, loop, flashcheck)
+COMFY_HOSTS = ("127.0.0.1:8199", "192.168.86.100:8188")
+FLASH_SWING = 0.10   # relative luminance swing that counts (WCAG 2.3.1 general flash, refs/09 5.1)
+FLASH_MAX_PER_S = 3
+
+
+def _set_path(r, path, value):
+    keys = path.split(".")
+    d = r
+    for k in keys[:-1]:
+        d = d.setdefault(k, {})
+    d[keys[-1]] = value
+
+
+def _parse_value(s):
+    s = s.strip()
+    if ":" in s:  # complex pair re:im, kept as decimal strings
+        return [str(Decimal(x)) for x in s.split(":")]
+    try:
+        return int(s)
+    except ValueError:
+        pass
+    try:
+        return float(s)
+    except ValueError:
+        return s
+
+
+def sheet(base, vary, values, cols=None):
+    """Render one tile per value; returns (uint8 sheet, list of (label, recipe))."""
+    from PIL import Image, ImageDraw
+    tiles = []
+    for v in values:
+        r = json.loads(json.dumps(base))
+        if vary == "palette":
+            r["palette"] = dict(PALETTES[v])
+            label = f"palette={v}"
+        else:
+            _set_path(r, vary, v)
+            label = f"{vary}={v if not isinstance(v, list) else ','.join(v)}"
+        r = normalise(r)
+        tiles.append((label, r, render_array(r)))
+    n = len(tiles)
+    cols = cols or math.ceil(math.sqrt(n))
+    rows = math.ceil(n / cols)
+    th, tw = tiles[0][2].shape[:2]
+    band = 14
+    img = Image.new("RGB", (cols * tw, rows * (th + band)), (24, 24, 24))
+    dr = ImageDraw.Draw(img)
+    for i, (label, _, arr) in enumerate(tiles):
+        x, y = (i % cols) * tw, (i // cols) * (th + band)
+        img.paste(Image.fromarray(arr), (x, y))
+        dr.text((x + 3, y + th + 2), label, fill=(230, 230, 230))
+    return np.asarray(img), [(lab, r) for lab, r, _ in tiles]
+
+
+def smoothstep(t):
+    return t * t * (3 - 2 * t)
+
+
+def zoom_frames(base, w0, w1, n, centre_to=None):
+    """Exponential width interpolation: w_i = w0 * (w1/w0)^(i/(n-1)); centre fixed or eased."""
+    c0 = [float(Decimal(x)) for x in base["view"]["centre"]]
+    out = []
+    for i in range(n):
+        t = i / (n - 1) if n > 1 else 0.0
+        r = json.loads(json.dumps(base))
+        w = w0 * (w1 / w0) ** t
+        r["view"]["width"] = repr(w)
+        if centre_to is not None:
+            s = smoothstep(t)
+            r["view"]["centre"] = [repr(a + (b - a) * s) for a, b in zip(c0, centre_to)]
+        out.append(r)
+    return out
+
+
+def _interp_path(points, t):
+    """Piecewise linear along a list of points, t in 0..1."""
+    if len(points) == 1:
+        return list(points[0])
+    seg = t * (len(points) - 1)
+    k = min(int(seg), len(points) - 2)
+    u = seg - k
+    return [a + (b - a) * u for a, b in zip(points[k], points[k + 1])]
+
+
+def morph_frames(base, path, vary, n):
+    out = []
+    for i in range(n):
+        t = i / (n - 1) if n > 1 else 0.0
+        r = json.loads(json.dumps(base))
+        val = _interp_path(path, t)
+        _set_path(r, vary, [repr(x) for x in val] if len(val) > 1 else val[0])
+        out.append(r)
+    return out
+
+
+def loop_frames(base, n, circle=None, phase=False):
+    """Closed path sampled at k/n, k = 0..n-1, so frame n would equal frame 0."""
+    out = []
+    for k in range(n):
+        a = 2 * math.pi * k / n
+        r = json.loads(json.dumps(base))
+        if circle:
+            cr, ci, rad = circle
+            r["params"]["c"] = [repr(cr + rad * math.cos(a)), repr(ci + rad * math.sin(a))]
+        if phase:
+            r["colouring"]["phase"] = k / n
+        out.append(r)
+    return out
+
+
+def probe_comfy(hosts=None, timeout=2.0):
+    import urllib.request
+    if hosts is None:
+        env = __import__("os").environ.get("FW_COMFY_HOSTS")
+        hosts = COMFY_HOSTS if env is None else [h for h in env.split(",") if h.strip()]
+    for h in hosts:
+        try:
+            with urllib.request.urlopen(f"http://{h}/system_stats", timeout=timeout) as resp:
+                if resp.status == 200:
+                    return h
+        except Exception:  # noqa: BLE001
+            continue
+    return None
+
+
+def encode_mp4(frame_dir, fps, out):
+    ff = shutil.which("ffmpeg")
+    if not ff:
+        raise SystemExit("ffmpeg not on PATH: frames written, video skipped")
+    cmd = [ff, "-y", "-loglevel", "error", "-framerate", str(fps), "-i", str(Path(frame_dir) / "f_%05d.png"),
+           "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-r", str(fps), str(out)]
+    import subprocess
+    subprocess.run(cmd, check=True)
+    return out
+
+
+def probe_video(path):
+    import subprocess
+    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_frames",
+                          "-show_entries", "stream=nb_read_frames,r_frame_rate,width,height",
+                          "-of", "json", str(path)], capture_output=True, text=True, check=True)
+    s = json.loads(out.stdout)["streams"][0]
+    num, den = s["r_frame_rate"].split("/")
+    return {"frames": int(s["nb_read_frames"]), "fps": int(num) / int(den), "w": s["width"], "h": s["height"]}
+
+
+def write_video(kind, recipes, anim, out, ai=True):
+    """Render frames, encode, write the animation recipe. Exact frames and video always written."""
+    out = Path(out)
+    fdir = out.with_name(out.stem + "_frames")
+    fdir.mkdir(parents=True, exist_ok=True)
+    for i, r in enumerate(recipes):
+        write_png(fdir / f"f_{i:05d}.png", arr=render_array(normalise(r)))
+    encode_mp4(fdir, anim["fps"], out)
+    rec = json.loads(json.dumps(normalise(recipes[0])))
+    rec["animation"] = dict(anim, kind=kind, frames=len(recipes), frame_dir=fdir.name)
+    notes = []
+    if ai:
+        host = probe_comfy()
+        if host:
+            rec["ai_pass"] = {"status": "pending-not-implemented", "host": host}
+            notes.append(f"AI styling: ComfyUI at {host} reachable; the pass is not implemented yet, exact video kept")
+        else:
+            notes.append("AI styling: no ComfyUI host reachable, exact video kept")
+    else:
+        notes.append("AI styling off (--no-ai): exact video")
+    rec["notes"] = notes
+    rp = out.with_suffix(".json")
+    rp.write_text(json.dumps(rec, indent=2) + "\n", encoding="utf-8")
+    return rp, notes
+
+
+def read_frames(src):
+    """Frame dir (PNGs) or video file -> list of float arrays HxWx3 in 0..1, plus fps (None for dirs)."""
+    src = Path(src)
+    if src.is_dir():
+        from PIL import Image
+        fr = [np.asarray(Image.open(p).convert("RGB"), dtype=np.float64) / 255 for p in sorted(src.glob("*.png"))]
+        return fr, None
+    import subprocess
+    info = probe_video(src)
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(src), "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+                         capture_output=True, check=True).stdout
+    w, h = info["w"], info["h"]
+    arr = np.frombuffer(raw, np.uint8).reshape(-1, h, w, 3).astype(np.float64) / 255
+    return list(arr), info["fps"]
+
+
+def rel_luminance(rgb):
+    lin = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+    return lin @ np.array([0.2126, 0.7152, 0.0722])
+
+
+def flash_check(frames, fps):
+    """Count swings of mean relative luminance >= FLASH_SWING between turning points; max in any 1 s window."""
+    L = np.array([rel_luminance(f).mean() for f in frames])
+    swings = []  # frame index where a swing of >= FLASH_SWING completes
+    lo = hi = L[0]
+    direction = 0
+    for i in range(1, len(L)):
+        x = L[i]
+        if direction == 0:
+            lo, hi = min(lo, x), max(hi, x)
+            if x - lo >= FLASH_SWING:
+                swings.append(i); direction, hi = 1, x
+            elif hi - x >= FLASH_SWING:
+                swings.append(i); direction, lo = -1, x
+        elif direction > 0:
+            if x > hi:
+                hi = x
+            elif hi - x >= FLASH_SWING:
+                swings.append(i); direction, lo = -1, x
+        else:
+            if x < lo:
+                lo = x
+            elif x - lo >= FLASH_SWING:
+                swings.append(i); direction, hi = 1, x
+    win = max(1, int(round(fps)))
+    worst = 0
+    for i in range(len(L)):
+        worst = max(worst, sum(1 for s in swings if i <= s < i + win))
+    return {"frames": len(L), "fps": fps, "swings": len(swings), "max_swings_per_s": worst,
+            "limit_per_s": FLASH_MAX_PER_S, "luminance_range": [float(L.min()), float(L.max())],
+            "pass": worst <= FLASH_MAX_PER_S,
+            "method": "frame-mean relative luminance; whole-frame stand-in for the WCAG 2.3.1 area rule"}
+
+
+def seam_ratio(frames):
+    d = [np.abs(frames[i + 1] - frames[i]).mean() for i in range(len(frames) - 1)]
+    seam = np.abs(frames[0] - frames[-1]).mean()
+    return float(seam / np.median(d)), float(seam), float(np.median(d))
+
+
+def _video_base(a):
+    r = load_recipe(a.recipe)
+    if a.size:
+        w, h = a.size.lower().split("x")
+        r["size"]["w"], r["size"]["h"] = int(w), int(h)
+    if a.iter:
+        r["params"]["max_iter"] = a.iter
+    if getattr(a, "palette", None):
+        r["palette"] = dict(PALETTES[a.palette])
+    return normalise(r)
+
+
+def _finish_video(kind, recipes, anim, a):
+    rp, notes = write_video(kind, recipes, anim, a.out, ai=a.ai)
+    fc = flash_check(read_frames(Path(a.out).with_name(Path(a.out).stem + "_frames"))[0], anim["fps"])
+    print(f"wrote {a.out}, {rp} and {len(recipes)} frames")
+    for n in notes:
+        print("note:", n)
+    print(f"flashcheck: {fc['max_swings_per_s']} swings/s (limit {FLASH_MAX_PER_S}) {'pass' if fc['pass'] else 'FAIL'}")
+    return 0 if fc["pass"] else 4
+
+
+def _nframes(a):
+    return max(2, int(round(a.fps * a.duration)))
+
+
+def cmd_sheet(a):
+    r = load_recipe(a.recipe)
+    w, h = (a.tile or "200x150").lower().split("x")
+    r["size"]["w"], r["size"]["h"] = int(w), int(h)
+    if a.iter:
+        r["params"]["max_iter"] = a.iter
+    r = normalise(r)
+    if a.palettes:
+        vary, values = "palette", a.palettes.split(",")
+    elif a.vary:
+        vary, values = a.vary, [_parse_value(v) for v in a.values.split(",")]
+    else:
+        raise SystemExit("pass --palettes A,B,C or --vary PATH --values V1,V2 (pairs as re:im)")
+    arr, tiles = sheet(r, vary, values, a.cols)
+    out = Path(a.out)
+    write_png(out, arr=arr)
+    side = out.with_suffix(".json")
+    side.write_text(json.dumps({"sheet": out.name, "vary": vary,
+                                "tiles": [{"label": lab, "recipe": rr} for lab, rr in tiles]}, indent=2) + "\n",
+                    encoding="utf-8")
+    print(f"wrote {out} ({len(tiles)} tiles) and {side}")
+    return 0
+
+
+def cmd_zoom(a):
+    r = _video_base(a)
+    w0 = float(Decimal(a.from_width or r["view"]["width"]))
+    w1 = float(Decimal(a.to_width))
+    ct = [float(x) for x in a.to_centre.split(",")] if a.to_centre else None
+    n = _nframes(a)
+    frames = zoom_frames(r, w0, w1, n, ct)
+    kf = [{"t": 0, "centre": r["view"]["centre"], "width": repr(w0)},
+          {"t": a.duration, "centre": [repr(x) for x in ct] if ct else r["view"]["centre"], "width": repr(w1)}]
+    return _finish_video("zoom", frames, {"keyframes": kf, "fps": a.fps, "duration_s": a.duration,
+                                          "interp": "exponential width, smoothstep centre"}, a)
+
+
+def cmd_morph(a):
+    r = _video_base(a)
+    path = [[float(x) for x in p.split(",")] for p in a.path.split(";")]
+    n = _nframes(a)
+    frames = morph_frames(r, path, a.vary, n)
+    kf = [{"t": a.duration * i / (len(path) - 1), a.vary: p} for i, p in enumerate(path)]
+    return _finish_video("morph", frames, {"keyframes": kf, "fps": a.fps, "duration_s": a.duration,
+                                           "interp": "piecewise linear"}, a)
+
+
+def cmd_loop(a):
+    r = _video_base(a)
+    circle = [float(x) for x in a.circle.split(",")] if a.circle else None
+    if not circle and not a.phase:
+        raise SystemExit("pass --circle re,im,radius (julia c) and/or --phase")
+    if circle and r["formula"] != "julia":
+        raise SystemExit("--circle moves julia c; use a julia recipe")
+    n = _nframes(a)
+    frames = loop_frames(r, n, circle, a.phase)
+    kf = {"circle": circle, "phase_cycle": bool(a.phase), "closed": True}
+    return _finish_video("loop", frames, {"keyframes": kf, "fps": a.fps, "duration_s": a.duration,
+                                          "interp": "closed path sampled at k/n"}, a)
+
+
+def cmd_flashcheck(a):
+    frames, fps = read_frames(a.src)
+    fps = a.fps or fps or 24
+    res = flash_check(frames, fps)
+    _out(res, a.json)
+    return 0 if res["pass"] else 4
+
+
+def _video_args(s, default_out):
+    s.add_argument("recipe", help="preset or recipe.json")
+    s.add_argument("-o", "--out", default=default_out)
+    s.add_argument("--size", help="WxH (even numbers for H.264)")
+    s.add_argument("--iter", type=int)
+    s.add_argument("--palette", choices=list(PALETTES))
+    s.add_argument("--fps", type=int, default=24)
+    s.add_argument("--duration", type=float, default=4.0, help="seconds")
+    s.add_argument("--ai", action=argparse.BooleanOptionalAction, default=True,
+                   help="AI styling hook (default on; probes ComfyUI, pass not implemented yet)")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="fw.py", description=__doc__.splitlines()[0])
     ap.add_argument("--version", action="version", version=VERSION)
@@ -1056,6 +1398,37 @@ def main(argv=None):
     s.add_argument("name", nargs="?")
     s.add_argument("-o", "--out")
     s.set_defaults(fn=cmd_palette)
+    s = sub.add_parser("sheet", help="contact sheet: vary one param or palette over N values")
+    s.add_argument("recipe")
+    s.add_argument("-o", "--out", default="sheet.png")
+    s.add_argument("--vary", help="recipe path, e.g. params.max_iter, view.width, params.c, colouring.density")
+    s.add_argument("--values", help="comma separated; complex pairs as re:im")
+    s.add_argument("--palettes", help="comma separated palette names")
+    s.add_argument("--tile", help="tile WxH (default 200x150)")
+    s.add_argument("--cols", type=int)
+    s.add_argument("--iter", type=int)
+    s.set_defaults(fn=cmd_sheet)
+    s = sub.add_parser("zoom", help="keyframed zoom video (exponential width) -> frames + mp4 + recipe")
+    _video_args(s, "zoom.mp4")
+    s.add_argument("--to-width", required=True)
+    s.add_argument("--from-width")
+    s.add_argument("--to-centre", help="re,im: eased centre move")
+    s.set_defaults(fn=cmd_zoom)
+    s = sub.add_parser("morph", help="interpolate a param along keyframes (default julia c)")
+    _video_args(s, "morph.mp4")
+    s.add_argument("--path", required=True, help="keyframe values: 're,im;re,im;...' (or single numbers)")
+    s.add_argument("--vary", default="params.c")
+    s.set_defaults(fn=cmd_morph)
+    s = sub.add_parser("loop", help="closed path video whose last frame wraps to the first")
+    _video_args(s, "loop.mp4")
+    s.add_argument("--circle", help="julia c circle: re,im,radius")
+    s.add_argument("--phase", action="store_true", help="cycle the palette phase once")
+    s.set_defaults(fn=cmd_loop)
+    s = sub.add_parser("flashcheck", help="luminance swings per second of a video or frame folder (limit 3)")
+    s.add_argument("src")
+    s.add_argument("--fps", type=float, help="frame folder fps (default 24)")
+    s.add_argument("--json", action="store_true")
+    s.set_defaults(fn=cmd_flashcheck)
     a = ap.parse_args(argv)
     return a.fn(a)
 

@@ -328,5 +328,114 @@ class Identify(unittest.TestCase):
         self.assertIn("box dimension is a descriptor here, not an identification", out["hints"])
 
 
+class Video(unittest.TestCase):
+    """Step D batch 3: sheet, zoom, morph, loop, flashcheck. Small sizes keep it fast."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.dir = Path(cls.tmp.name)
+        cls.env = dict(__import__("os").environ, FW_COMFY_HOSTS="")
+        cls.julia = fw.normalise(fw.load_recipe("julia-rabbit"))
+        cls.julia["size"] = {"w": 160, "h": 90, "supersample": 1}
+        cls.julia["params"]["max_iter"] = 200
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def run_fw(self, *args):
+        out = subprocess.run([sys.executable, str(ROOT / "scripts" / "fw.py"), *args],
+                             capture_output=True, text=True, env=self.env)
+        self.assertEqual(out.returncode, 0, out.stderr + out.stdout)
+        return out.stdout
+
+    def test_same_recipe_identical_frames(self):
+        frames = fw.loop_frames(self.julia, 12, circle=(-0.123, 0.745, 0.02), phase=True)
+        a = [hash(fw.render_array(r).tobytes()) for r in frames]
+        b = [hash(fw.render_array(r).tobytes()) for r in json.loads(json.dumps(frames))]
+        self.assertEqual(a, b)
+
+    def test_loop_seam(self):
+        recs = fw.loop_frames(self.julia, 12, circle=(-0.123, 0.745, 0.02), phase=True)
+        frames = [fw.render_array(r).astype(float) for r in recs]
+        ratio, seam, med = fw.seam_ratio(frames)
+        self.assertLessEqual(ratio, 1.25, (seam, med))
+
+    def test_zoom_width_ratio_constant(self):
+        base = fw.normalise(fw.load_recipe("mandelbrot-full"))
+        recs = fw.zoom_frames(base, 3.5, 0.01, 12, centre_to=[-0.75, 0.1])
+        w = [float(r["view"]["width"]) for r in recs]
+        ratios = [w[i + 1] / w[i] for i in range(len(w) - 1)]
+        self.assertLess(max(ratios) - min(ratios), 1e-9)
+        self.assertAlmostEqual(w[-1], 0.01, places=12)
+
+    def test_mp4_frames_fps_and_flashcheck(self):
+        for kind, args in (("zoom", ["mandelbrot-full", "--to-width", "0.5", "--to-centre", "-0.75,0.1"]),
+                           ("loop", ["julia-rabbit", "--circle", "-0.123,0.745,0.02", "--phase"]),
+                           ("morph", ["julia-rabbit", "--path", "-0.123,0.745;-0.8,0.156"])):
+            out = self.dir / f"{kind}.mp4"
+            self.run_fw(kind, *args, "--size", "160x90", "--iter", "200", "--fps", "12", "--duration", "1",
+                        "-o", str(out))
+            info = fw.probe_video(out)
+            self.assertEqual((info["frames"], info["fps"]), (12, 12.0), kind)
+            rec = json.loads(out.with_suffix(".json").read_text(encoding="utf-8"))
+            self.assertEqual(rec["animation"]["fps"], 12)
+            self.assertEqual(rec["animation"]["duration_s"], 1.0)
+            self.assertIn("no ComfyUI host", rec["notes"][0])
+            for src in (out, out.with_name(f"{kind}_frames")):
+                res = json.loads(self.run_fw("flashcheck", str(src), "--fps", "12", "--json"))
+                self.assertTrue(res["pass"], (kind, src, res))
+
+    def test_flashcheck_catches_strobe(self):
+        black, white = np.zeros((9, 16, 3)), np.ones((9, 16, 3))
+        res = fw.flash_check([black, white] * 12, 24)
+        self.assertFalse(res["pass"])
+        self.assertGreater(res["max_swings_per_s"], 3)
+
+    def test_ai_hook_pending_when_host_up(self):
+        import http.server
+        import threading
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200); self.end_headers(); self.wfile.write(b"{}")
+
+            def log_message(self, *a):
+                pass
+        srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            host = f"127.0.0.1:{srv.server_address[1]}"
+            self.assertEqual(fw.probe_comfy([host]), host)
+            recs = fw.loop_frames(self.julia, 4, phase=True)
+            env = __import__("os").environ
+            old = env.get("FW_COMFY_HOSTS")
+            env["FW_COMFY_HOSTS"] = host
+            try:
+                rp, notes = fw.write_video("loop", recs, {"fps": 4, "duration_s": 1}, self.dir / "ai.mp4", ai=True)
+            finally:
+                if old is None:
+                    env.pop("FW_COMFY_HOSTS")
+                else:
+                    env["FW_COMFY_HOSTS"] = old
+            rec = json.loads(rp.read_text(encoding="utf-8"))
+            self.assertEqual(rec["ai_pass"]["status"], "pending-not-implemented")
+            self.assertTrue((self.dir / "ai.mp4").exists())
+        finally:
+            srv.shutdown()
+
+    def test_sheet_tiles_and_sidecar(self):
+        out = self.dir / "sheet.png"
+        self.run_fw("sheet", "julia-rabbit", "--vary", "params.c", "--values", "-0.123:0.745,-0.8:0.156,0:1",
+                    "--tile", "160x90", "--iter", "200", "-o", str(out))
+        side = json.loads(out.with_suffix(".json").read_text(encoding="utf-8"))
+        self.assertEqual(len(side["tiles"]), 3)
+        tile = fw.render_array(side["tiles"][1]["recipe"])
+        from PIL import Image
+        img = np.asarray(Image.open(out).convert("RGB"))
+        self.assertTrue(np.array_equal(img[0:90, 160:320], tile))
+
+
 if __name__ == "__main__":
     unittest.main()

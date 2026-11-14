@@ -8,6 +8,11 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261114-4 · 2026-11-14 · unittest (tests/test_fw.py) · Windows, Python 3.14.6, numpy 2.5.2, ffmpeg on PATH · 37/37
+- Video at 160x90, max_iter 200, 12 frames at 12 fps. Same recipe twice: 12/12 frame hashes identical. Loop seam (julia c circle r 0.02 + palette phase): last-to-first mean abs diff 34.35 vs median neighbour diff 35.99, ratio 0.954 (bar 1.25). Zoom 3.5 -> 0.01 over 12 frames: width ratio spread 4.4e-16 (bar 1e-9). ffprobe: zoom, loop and morph mp4 each 12 frames at 12.0 fps.
+- flashcheck on the test outputs: zoom 1, loop 2, morph 1 swings per second (limit 3), mp4 and frame folder both pass; a black/white strobe decoy fails. Sheet tile 2 pixel-identical to its sidecar recipe re-rendered. AI hook: a local stub server on /system_stats gives ai_pass pending-not-implemented; no host gives the exact video with a note. Suite runtime 57 s.
+- led to: C-20261114-4
+
 ### T-20261114-3 · 2026-11-14 · unittest (tests/test_fw.py) · Windows, Python 3.14.6, numpy 2.5.2 · 30/30
 - Box v2 (16 sizes, 8 seeded offsets): Koch 4096 px -0.0025 (bar 0.02), 2.23 decades, fractal-like; Koch 2048 px 1.93 decades, descriptor only; chaos Sierpinski 2048 px -0.0146 (bar 0.03). Local-slope spread: fractals 0.05-0.29 (Cantor dust 0.287 worst), decoys spiral 1.02, random discs 0.53, filled disc 0.35, so SLOPE_SPREAD_MAX = 0.30. A diagonal line reads 0.931 (spread 0.280), so INTEGER_BAND = 0.10.
 - Specks: 3000 on Koch 2048 moved D to 1.176; the 1-2 px filter removed 2917 and returned 1.2589 (clean 1.2581, bar 0.005). A single-pixel filter left 131 and read 1.176: pairs matter.
