@@ -1,8 +1,28 @@
 # fractalwright
 
-<!-- banner: .github/images/banner.jpg (owed, Step F) -->
+![fractalwright banner: the Seahorse Valley of the Mandelbrot set](.github/images/banner.jpg)
 
 An agent plugin that renders, explains and measures fractals. Every picture comes with a recipe file that redraws it pixel for pixel.
+
+Ask an agent for "a Mandelbrot wallpaper" and you usually get a screenshot from somewhere, or code that renders once and is never the same again. fractalwright is a skill for AI coding agents plus one small script, `fw.py`. It renders in float64, writes a recipe JSON next to every PNG, and checks its own numbers against known values, so the agent can say how far to trust them.
+
+The banner above is `fw.py render seahorse --palette ultra --size 1536x640`. Its recipe is [banner.recipe.json](.github/images/banner.recipe.json).
+
+## What you get
+
+- **Stills from recipes.** Mandelbrot, Julia, Burning Ship, Tricorn, Multibrot and Kronecker (grid) fractals, with smooth colouring, supersampling and palettes. A preset name or a recipe JSON goes in; a PNG and the recipe that redraws it come out.
+- **Measurements with error bars.** Box-counting dimension with a verdict on the fit range, lacunarity, IFS similarity dimension from scale ratios, profile and heightmap roughness (Hurst exponent), Katz, and the area of the Mandelbrot set. Each is tested against a shape whose answer is known.
+- **Plain explanations.** `fw.py explain <family>` prints the formula and how it is drawn, for a reader who has not met it before.
+- **Identify.** `fw.py identify` lists hand-built features of a preset, recipe, image or Julia `c`, for example whether a Julia set is connected and why.
+
+## Install
+
+```
+claude plugin marketplace add m4bwav/fractalwright
+claude plugin install fractalwright@fractalwright
+```
+
+The script needs Python 3.9 or later and NumPy. Without NumPy a slow pure Python fallback renders small pictures. Other agents can read `skills/fractalwright/SKILL.md` and run the script directly.
 
 ## Quick start
 
@@ -15,12 +35,32 @@ python scripts/fw.py measure area --size 1024
 python scripts/fw.py palette
 ```
 
-Needs Python 3.9+ and NumPy (a slow pure Python fallback renders small pictures without it).
-
 ## Status
 
-Early: stills of five escape-time families and measuring. Video, the interactive page, audio and 3D are planned.
+Early, version 0.1.0 and not released yet. Stills and measuring work and have tests (30 passing). Planned next: contact sheets, zooms, morphs and loops (video), an interactive browser page, audio-driven visuals, and 3D fractals behind a look test. The eval suite is not written yet, so there is no release until it is.
+
+## Works with
+
+Each partner is optional. fractalwright works on its own, and every pairing goes through files on disk.
+
+- comfyui-gen (private): fractalwright hands over the exact render, a depth or edge pass and the licence class; comfyui-gen runs the AI pass (restyle, upscale, video) on a local ComfyUI. The math stays exact and the AI layer is marked as interpreted.
+- [threewright](https://github.com/m4bwav/threewright): fractal shaders and 3D fractals in the browser. fractalwright gives the formula, view and palette from a recipe; threewright builds the three.js or WebGL page.
+- [musicwright](https://github.com/m4bwav/musicwright): `mw.py` measures loudness, onsets and bands of a track, and fractalwright maps them to zoom speed, colour cycling and parameters for audio visuals.
+- [cinewright](https://github.com/m4bwav/cinewright): zoom and morph frames go to cinewright for encoding, delivery and use as shots in a film.
+- [artwright](https://github.com/m4bwav/artwright): judges and critiques renders, and ranks palettes or views blind, so picking the best of a batch is not a guess.
+- [polywright](https://github.com/m4bwav/polywright) and its polywright-print skill: heightmaps and 3D fractals become meshes, terrain and printable solids.
+- [pixelwright](https://github.com/m4bwav/pixelwright): a render snapped to a pixel grid and a small palette becomes pixel-art fractal tiles or sprites.
+- [askwright](https://github.com/m4bwav/askwright): views, palettes and takes go on a local decision page when a person has to choose.
+- [everscout](https://github.com/m4bwav/everscout): the `fractal-art` beat brings in new tools, techniques and forum threads, so refreshes start from leads.
+- [readwright](https://github.com/m4bwav/readwright): reads fractal books a chapter at a time, so formulas and claims can be checked against the source.
+- [chartwright](https://github.com/m4bwav/chartwright): plots the log-log box counts behind a dimension estimate, so the fit range can be seen.
+
+More on the wiki's [Works with](https://github.com/m4bwav/fractalwright/wiki/Works-With) page.
+
+## Learn more
+
+The [wiki](https://github.com/m4bwav/fractalwright/wiki) covers getting started, every command, the recipe format and an FAQ. The research behind the defaults is in [references/](references/).
 
 ## Licence
 
-MIT.
+MIT. See [LICENSE](LICENSE).
