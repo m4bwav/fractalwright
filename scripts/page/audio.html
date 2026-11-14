@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fractalwright audio</title>
+<style>
+  :root { --bg: #0d0f12; --panel: #171a1f; --text: #e6e8eb; --muted: #9aa3ad; --warn: #f0b429; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 13px/1.4 system-ui, sans-serif; }
+  #wrap { display: flex; height: 100%; }
+  #stage { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  canvas { max-width: 100%; max-height: 100%; }
+  #panel { width: 260px; background: var(--panel); padding: 12px; overflow-y: auto; }
+  label { display: block; margin: 8px 0 2px; color: var(--muted); }
+  input, select, button { width: 100%; background: #22262d; color: var(--text); border: 1px solid #333a44; border-radius: 4px; padding: 4px 6px; font: inherit; }
+  button { cursor: pointer; margin-top: 6px; }
+  #warn { position: fixed; inset: 0; background: rgba(0,0,0,.92); display: flex; align-items: center; justify-content: center; }
+  #warn div { max-width: 420px; padding: 20px; border-left: 4px solid var(--warn); background: var(--panel); }
+  #meters { margin-top: 10px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: pre; }
+  @media (max-width: 700px) { #wrap { flex-direction: column; } #panel { width: auto; max-height: 45%; } }
+</style>
+</head>
+<body>
+<div id="warn"><div>
+  <b>Photosensitivity warning.</b> This page changes colour and brightness with the music. A limiter keeps
+  large brightness swings to at most 3 a second (WCAG 2.3.1 style), but it is an approximation, not a certified
+  test. Stop if you feel unwell.
+  <button id="ok">I understand, continue</button>
+</div></div>
+<div id="wrap">
+  <div id="stage"><canvas id="cv" width="640" height="360"></canvas></div>
+  <div id="panel">
+    <label for="preset">Preset</label>
+    <select id="preset"><option value="julia-pulse">julia-pulse</option><option value="mandel-dive">mandel-dive</option></select>
+    <label for="file">Audio file</label><input id="file" type="file" accept="audio/*">
+    <button id="mic">Use microphone</button>
+    <button id="stop">Stop</button>
+    <label for="intensity">Intensity</label><input id="intensity" type="range" min="0" max="1" step="0.05" value="0.6">
+    <div id="meters"></div>
+  </div>
+</div>
+<audio id="player" controls style="position:fixed;left:8px;bottom:8px;width:300px"></audio>
+<script id="fragsrc" type="x-shader/x-fragment">/*FRAG*/</script>
+<script>
+"use strict";
+// Mapping constants: fw_audio.py ATTACK_S, RELEASE_S, HUE_TAU_S, BEAT_DECAY_S, BEAT_MIN_GAP_S, BASS_HZ, TREB_HZ.
+const ATTACK_S = 0.02, RELEASE_S = 0.25, HUE_TAU_S = 1.0, BEAT_DECAY_S = 0.2, BEAT_MIN_GAP_S = 0.34;
+const BASS_HZ = 250, TREB_HZ = 4000;
+// Flash limiter: fw.py FLASH_SWING and FLASH_MAX_PER_S.
+const FLASH_SWING = 0.10, FLASH_MAX_PER_S = 3;
+const PRESETS = {
+  "julia-pulse": { formula: 1, cx: 0, cy: 0, w: 3.0, k: [-0.8, 0.156], maxit: 300, c_radius: 0.05, zoom_kick: 0.12, mid_drift: 0.35, treb_density: 0.4, dive: 0 },
+  "mandel-dive": { formula: 0, cx: -0.7436447860, cy: 0.1318252536, w: 0.05, k: [0, 0], maxit: 400, c_radius: 0, zoom_kick: 0.1, mid_drift: 0.25, treb_density: 0.3, dive: 0.6 },
+};
+const cv = document.getElementById("cv");
+const gl = cv.getContext("webgl2", { preserveDrawingBuffer: true, antialias: false });
+const $ = id => document.getElementById(id);
+let prog, U = {};
+
+function compile() {
+  const vs = "#version 300 es\nin vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }";
+  const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o);
+    if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
+  prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, $("fragsrc").textContent.trim()));
+  gl.bindAttribLocation(prog, 0, "p"); gl.linkProgram(prog); gl.useProgram(prog);
+  const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  const n = gl.getProgramParameter(prog, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) { const name = gl.getActiveUniform(prog, i).name; U[name.replace("[0]", "")] = gl.getUniformLocation(prog, name); }
+}
+
+function draw(u) {
+  gl.viewport(0, 0, cv.width, cv.height);
+  const set = (k, f, ...v) => { if (U[k]) gl[f](U[k], ...v); };
+  set("u_size", "uniform2f", cv.width, cv.height); set("u_c", "uniform2f", u.cx, u.cy); set("u_px", "uniform1f", u.w / cv.width);
+  set("u_rot", "uniform1f", 0); set("u_formula", "uniform1i", u.formula); set("u_power", "uniform1i", 2);
+  set("u_maxit", "uniform1i", u.maxit); set("u_bail2", "uniform1f", 256 * 256); set("u_k", "uniform2f", u.k[0], u.k[1]);
+  set("u_flip", "uniform1i", 0); set("u_paltype", "uniform1i", 0);
+  set("u_a", "uniform3fv", [0.5,0.5,0.5]); set("u_b", "uniform3fv", [0.5,0.5,0.5]); set("u_cc", "uniform3fv", [1,1,1]); set("u_d", "uniform3fv", [0,0.33,0.67]);
+  set("u_nstops", "uniform1i", 0); set("u_density", "uniform1f", u.density); set("u_phase", "uniform1f", u.phase);
+  set("u_inside", "uniform3fv", [0,0,0]);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+
+// Mean relative luminance of a 64x36 read of the frame (sRGB -> linear LUT, WCAG weights).
+const LIN = new Float32Array(256).map((_, i) => { const c = i / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; });
+const px = new Uint8Array(4 * cv.width * cv.height);
+function meanLum() {
+  gl.readPixels(0, 0, cv.width, cv.height, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  let s = 0, n = 0;
+  const stepX = Math.max(1, cv.width / 64 | 0), stepY = Math.max(1, cv.height / 36 | 0);
+  for (let y = 0; y < cv.height; y += stepY) for (let x = 0; x < cv.width; x += stepX) {
+    const i = 4 * (y * cv.width + x);
+    s += 0.2126 * LIN[px[i]] + 0.7152 * LIN[px[i + 1]] + 0.0722 * LIN[px[i + 2]]; n++;
+  }
+  return s / n;
+}
+
+// The same swing walk as fw.py flash_check, over wall-clock time. A frame that would complete a swing while the
+// last second already holds FLASH_MAX_PER_S - 1 swings is not shown: the previous parameters are redrawn instead.
+const FL = { lo: null, hi: null, dir: 0, swings: [], damped: 0 };
+function swingTest(x, commit, now) {
+  let { lo, hi, dir } = FL, hit = false;
+  if (lo === null) { lo = hi = x; }
+  else if (dir === 0) { lo = Math.min(lo, x); hi = Math.max(hi, x);
+    if (x - lo >= FLASH_SWING) { hit = true; dir = 1; hi = x; } else if (hi - x >= FLASH_SWING) { hit = true; dir = -1; lo = x; } }
+  else if (dir > 0) { if (x > hi) hi = x; else if (hi - x >= FLASH_SWING) { hit = true; dir = -1; lo = x; } }
+  else { if (x < lo) lo = x; else if (x - lo >= FLASH_SWING) { hit = true; dir = 1; hi = x; } }
+  if (commit) { FL.lo = lo; FL.hi = hi; FL.dir = dir; if (hit) FL.swings.push(now); }
+  return hit;
+}
+let lastGood = null;
+function limitedDraw(u, now) {
+  FL.swings = FL.swings.filter(t => now - t < 1000);
+  draw(u);
+  let x = meanLum();
+  if (lastGood && FL.swings.length >= FLASH_MAX_PER_S - 1 && swingTest(x, false, now)) {
+    draw(lastGood); x = meanLum(); FL.damped++;
+  } else lastGood = u;
+  swingTest(x, true, now);
+}
+
+// Analysis: AnalyserNode fftSize 2048, no built-in smoothing; our own attack/release (refs/09 3.2).
+let ctx, an, src, freq, prevMag, stream;
+const env = { bass: 0, mid: 0, treb: 0, beat: 0, hx: 0, hy: 0, hue: 0, drift: 0, dive: 0, loud: 0 };
+const avg = { bass: 1e-6, mid: 1e-6, treb: 1e-6 };
+const flux = [];
+let lastBeat = -1e9, lastT = null;
+
+function onePole(y, v, dt, a = ATTACK_S, r = RELEASE_S) { const tau = v > y ? a : r; const k = Math.exp(-dt / tau); return k * y + (1 - k) * v; }
+
+function analyse(now) {
+  const dt = lastT === null ? 1 / 60 : Math.min(0.1, (now - lastT) / 1000); lastT = now;
+  an.getFloatFrequencyData(freq);
+  const hz = ctx.sampleRate / an.fftSize;
+  const sum = { bass: 0, mid: 0, treb: 0 }, cnt = { bass: 0, mid: 0, treb: 0 };
+  const chroma = new Float32Array(12);
+  let fl = 0, total = 0;
+  const pm = prevMag, mags = new Float32Array(freq.length);
+  for (let k = 1; k < freq.length; k++) {
+    const f = k * hz, p = 10 ** (freq[k] / 10), m = Math.log1p(1000 * Math.sqrt(p));
+    if (f >= 20 && f < 16000) { const g = f < BASS_HZ ? "bass" : f < TREB_HZ ? "mid" : "treb"; sum[g] += p; cnt[g]++; }
+    if (f >= 65 && f <= 2000) chroma[((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12] += p;
+    if (pm) fl += Math.max(0, m - pm[k]);
+    mags[k] = m; total += p;
+  }
+  prevMag = mags;
+  for (const g of ["bass", "mid", "treb"]) {
+    const e = cnt[g] ? sum[g] / cnt[g] : 0;
+    avg[g] = avg[g] + (e - avg[g]) * Math.min(1, dt / 2.0);          // 2 s running average (MilkDrop's 1 = normal)
+    const rel = Math.max(0, Math.min(1, (e / Math.max(avg[g], 1e-9)) / 2)); // 0..1 with 0.5 = normal
+    env[g] = onePole(env[g], total > 1e-10 ? rel : 0, dt);
+  }
+  flux.push(fl); if (flux.length > 90) flux.shift();
+  const sorted = [...flux].sort((a, b) => a - b), med = sorted[sorted.length >> 1], mx = sorted[sorted.length - 1];
+  if (fl > med + 0.3 * (mx - med) && fl > 1 && (now - lastBeat) / 1000 >= BEAT_MIN_GAP_S) { lastBeat = now; env.beat = 1; }
+  else env.beat *= Math.exp(-dt / BEAT_DECAY_S);
+  let vx = 0, vy = 0; const cm = Math.max(...chroma);
+  if (cm > 0) for (let i = 0; i < 12; i++) { vx += chroma[i] / cm * Math.cos(2 * Math.PI * i / 12); vy += chroma[i] / cm * Math.sin(2 * Math.PI * i / 12); }
+  env.hx = onePole(env.hx, vx, dt, HUE_TAU_S, HUE_TAU_S); env.hy = onePole(env.hy, vy, dt, HUE_TAU_S, HUE_TAU_S);
+  if (Math.hypot(env.hx, env.hy) > 1e-3) env.hue = ((Math.atan2(env.hy, env.hx) / (2 * Math.PI)) % 1 + 1) % 1;
+  env.loud = onePole(env.loud, Math.max(0, Math.min(1, (10 * Math.log10(total + 1e-12) + 60) / 60)), dt);
+  return dt;
+}
+
+function frameUniforms(dt) {
+  const P = PRESETS[$("preset").value], k = +$("intensity").value;
+  env.drift += env.mid * P.mid_drift * k * dt;
+  env.dive += env.loud * P.dive * k * dt;
+  const s = 1 + P.c_radius * k * env.bass;
+  return { formula: P.formula, cx: P.cx, cy: P.cy, maxit: P.maxit, k: [P.k[0] * s, P.k[1] * s],
+           w: P.w * Math.exp(-env.dive) / (1 + P.zoom_kick * k * (env.beat + 0.5 * env.bass)),
+           phase: (env.hue + env.drift) % 1, density: 0.02 * (1 + P.treb_density * k * env.treb) };
+}
+
+function loop(now) {
+  if (!an) return;
+  const dt = analyse(now);
+  limitedDraw(frameUniforms(dt), now);
+  $("meters").textContent = `bass ${env.bass.toFixed(2)}  mid ${env.mid.toFixed(2)}  treb ${env.treb.toFixed(2)}\nbeat ${env.beat.toFixed(2)}  hue ${env.hue.toFixed(2)}\nlimiter held ${FL.damped} frames`;
+  requestAnimationFrame(loop);
+}
+
+function start(node) {
+  an = ctx.createAnalyser(); an.fftSize = 2048; an.smoothingTimeConstant = 0;
+  freq = new Float32Array(an.frequencyBinCount); prevMag = null;
+  node.connect(an); src = node; requestAnimationFrame(loop);
+}
+function stop() {
+  an = null; if (src) try { src.disconnect(); } catch (e) {}
+  if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; $("player").pause();
+}
+function ensureCtx() { ctx = ctx || new AudioContext(); return ctx.resume(); }
+
+$("ok").onclick = () => { $("warn").style.display = "none"; };
+$("file").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return; stop(); await ensureCtx();
+  const pl = $("player"); pl.src = URL.createObjectURL(f);
+  if (!pl._node) { pl._node = ctx.createMediaElementSource(pl); pl._node.connect(ctx.destination); }
+  start(pl._node); pl.play();
+};
+$("mic").onclick = async () => {
+  stop(); await ensureCtx();
+  stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+  start(ctx.createMediaStreamSource(stream));
+};
+$("stop").onclick = stop;
+compile();
+draw(frameUniforms(0));
+window.fwAudio = { swingTest, FL, env, PRESETS };
+</script>
+</body>
+</html>

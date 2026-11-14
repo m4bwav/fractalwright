@@ -4,6 +4,10 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-9 · 2026-11-14 · audio: song to fractal video, live audio page (Step D batch 4b)
+- because: T-20261114-9, user request (Step D batch 4b), references/09 sections 3, 4, 5.3 and 8b
+- files: scripts/fw_audio.py (new), scripts/page/audio.html (new), scripts/fw.py (`main` registers fw_audio), scripts/fw_serve.py (GET /audio), tests/test_audio.py (new), skills/fractalwright/SKILL.md (Step 2d), README.md, CODEMAP.md
+- `fw.py audio <song>` takes per-frame envelopes from musicwright's `mw.py envelopes` (0.1.34; a NumPy fallback when musicwright is absent or older), maps bass to julia c radius and zoom pulse, mids to colour drift, chroma to hue, treble to palette density, beats to zoom kicks and loudness to zoom travel, with 20 ms attack and 250 ms release. Frames are stepped at n/fps, rendered by the browser shader or NumPy, passed through a flash limiter and gated by flashcheck; the song is muxed with ffmpeg and cut to the frame count. MP3 is refused unless `--allow-mp3`. `fw.py serve` also serves `/audio`: file or microphone through the Web Audio analyser, the same mappings and a JS flash limiter behind a photosensitivity warning.
 ### C-20261114-8 · 2026-11-14 · flame, lsystem, attractor (Step D batch 4c, fw_gen.py)
 - because: T-20261114-8, user request (Step D batch 4c), design.md section 4 (all neighbours in)
 - files: scripts/fw_gen.py (new), scripts/fw.py (`main` registers it), tests/test_gen.py (new), skills/fractalwright/SKILL.md (Step 2d), README.md, CODEMAP.md

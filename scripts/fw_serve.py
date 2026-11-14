@@ -20,6 +20,7 @@ import fw
 PAGE_DIR = Path(__file__).resolve().parent / "page"
 FRAG = PAGE_DIR / "fractal.frag"
 PAGE = PAGE_DIR / "explorer.html"
+AUDIO_PAGE = PAGE_DIR / "audio.html"  # live audio page, served at /audio
 LOOPBACK = ("127.0.0.1", "localhost", "::1")
 # Hash keys in page order (explorer.html KEYS). kr, ki only for julia; pw only for multibrot.
 HASH_KEYS = ("f", "cx", "cy", "w", "rot", "it", "bail", "pw", "kr", "ki", "den", "ph", "pa", "sz")
@@ -182,6 +183,11 @@ def page_html():
     return PAGE.read_text(encoding="utf-8").replace("/*FRAG*/", FRAG.read_text(encoding="utf-8"))
 
 
+def audio_page_html():
+    """The live audio page (file or microphone through the Web Audio analyser) with fractal.frag inlined."""
+    return AUDIO_PAGE.read_text(encoding="utf-8").replace("/*FRAG*/", FRAG.read_text(encoding="utf-8"))
+
+
 # ---------------------------------------------------------------- browser route
 BROWSER_ARGS = ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"]
 
@@ -301,6 +307,8 @@ def make_handler(out_dir):
             path = urlsplit(self.path).path
             if path in ("/", "/index.html"):
                 return self._send(200, page_html().encode("utf-8"), "text/html; charset=utf-8")
+            if path in ("/audio", "/audio.html"):
+                return self._send(200, audio_page_html().encode("utf-8"), "text/html; charset=utf-8")
             if path == "/fractal.frag":
                 return self._send(200, FRAG.read_bytes(), "text/plain; charset=utf-8")
             self._send(404, b"not found", "text/plain")
@@ -335,7 +343,7 @@ def make_server(host="127.0.0.1", port=8765, out_dir="."):
 def serve(host="127.0.0.1", port=8765, out_dir=".", open_browser=False):
     srv = make_server(host, port, out_dir)
     url = f"http://127.0.0.1:{srv.server_address[1]}/"
-    print(f"explorer at {url} (Ctrl+C stops); exports go to {Path(out_dir).resolve()}", flush=True)
+    print(f"explorer at {url} and the live audio page at {url}audio (Ctrl+C stops); exports go to {Path(out_dir).resolve()}", flush=True)
     if open_browser:
         import webbrowser
         threading.Timer(0.3, webbrowser.open, (url,)).start()
