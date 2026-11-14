@@ -824,7 +824,13 @@ def cmd_doctor(a):
         except Exception as e:  # noqa: BLE001
             mgl = f"installed, no context: {e.__class__.__name__}"
     rows.append(("moderngl", mgl, "optional accelerator: float64 GLSL stills (not wired yet)"))
-    rows.append(("playwright", "installed" if has("playwright") else "missing", "optional accelerator: WebGL2 page and frames (not wired yet)"))
+    if has("playwright"):
+        import fw_serve
+        ok, note = fw_serve.probe_browser()
+        pw = ("ready: " if ok else "") + note
+    else:
+        pw = "missing"
+    rows.append(("playwright", pw, "optional accelerator: render --route browser (WebGL2, float32), same shader as serve"))
     browsers = [b for b in ("msedge", "chrome", "google-chrome", "chromium") if shutil.which(b)]
     edge = Path("C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe")
     if edge.exists():
@@ -869,6 +875,22 @@ def cmd_render(a):
             r["params"]["power"] = a.power
     r = normalise(r)
     out = Path(a.out)
+    if getattr(a, "route", "auto") == "browser" and not a.deep:
+        import fw_serve
+        if not fw_serve.float32_ok(r):
+            print(f"browser route: float32 cannot hold this view (pixel {fw_serve.float32_rel(r):.1e} of the coordinate,"
+                  f" limits: pixel {fw_serve.F32_REL_LIMIT:g}, width {fw_serve.F32_WIDTH_LIMIT:g}); using numpy")
+        else:
+            try:
+                arr = fw_serve.browser_render(r)
+                r["render"] = {"route": "browser", "precision": "float32"}
+                write_png(out, arr=arr)
+                rec = out.with_suffix(".json")
+                rec.write_text(json.dumps(r, indent=2) + "\n", encoding="utf-8")
+                print(f"wrote {out} and {rec} (browser route)")
+                return 0
+            except Exception as e:  # noqa: BLE001
+                print(f"browser route unavailable ({str(e).splitlines()[0][:120]}); using numpy")
     if np is not None and r["formula"] == "mandelbrot" and (a.deep or Decimal(r["view"]["width"]) < Decimal("1e-12")):
         import fw_deep  # perturbation: Decimal reference orbit, float64 deltas, rebasing
         st = {}
@@ -887,6 +909,31 @@ def cmd_render(a):
     rec = out.with_suffix(".json")
     rec.write_text(json.dumps(r, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {out} and {rec}")
+    return 0
+
+
+def cmd_serve(a):
+    import fw_serve
+    try:
+        return fw_serve.serve(a.host, a.port, a.out_dir, a.open)
+    except ValueError as e:
+        print(e, file=sys.stderr)
+        return 2
+
+
+def cmd_export(a):
+    import fw_serve
+    try:
+        r = fw_serve.hash_to_recipe(a.share)
+    except ValueError as e:
+        print(e, file=sys.stderr)
+        return 2
+    text = json.dumps(r, indent=2) + "\n"
+    if a.out:
+        Path(a.out).write_text(text, encoding="utf-8")
+        print(f"wrote {a.out}")
+    else:
+        sys.stdout.write(text)
     return 0
 
 
@@ -1382,7 +1429,19 @@ def main(argv=None):
     s.add_argument("--mask", help=f"kronecker mask: {', '.join(KRONECKER)} or rows like 111,101,111")
     s.add_argument("--power", type=int, help="kronecker power (side = k^power)")
     s.add_argument("--deep", action="store_true", help="perturbation route (automatic below width 1e-12)")
+    s.add_argument("--route", choices=["auto", "numpy", "browser"], default="auto",
+                   help="browser: headless Edge WebGL2 (float32; falls back to numpy when the view is too deep or no browser)")
     s.set_defaults(fn=cmd_render)
+    s = sub.add_parser("serve", help="interactive WebGL2 explorer on 127.0.0.1 (pan, zoom, share hash, export, exact render)")
+    s.add_argument("--host", default="127.0.0.1", help="loopback only; any other host is refused")
+    s.add_argument("--port", type=int, default=8765)
+    s.add_argument("--out-dir", default=".", help="where Export writes recipe JSON")
+    s.add_argument("--open", action="store_true", help="open the page in the default browser")
+    s.set_defaults(fn=cmd_serve)
+    s = sub.add_parser("export", help="share URL or hash from the explorer -> recipe JSON")
+    s.add_argument("share", help="http://127.0.0.1:8765/#f=... or #f=... (quote it)")
+    s.add_argument("-o", "--out", help="recipe path (default: print)")
+    s.set_defaults(fn=cmd_export)
     s = sub.add_parser("measure", help="box/lacunarity of an image, profile/katz of numbers, heightmap, IFS ratios, Mandelbrot area")
     s.add_argument("what", choices=["box", "lacunarity", "profile", "katz", "heightmap", "ifs", "area"])
     s.add_argument("image", nargs="?", help="image or .npy (box, lacunarity, heightmap); numbers file (profile, katz)")

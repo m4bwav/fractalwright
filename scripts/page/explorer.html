@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fractalwright explorer</title>
+<style>
+  :root { --bg: #0d0f12; --panel: #171a1f; --text: #e6e8eb; --muted: #9aa3ad; --warn: #f0b429; --bad: #ef5350; --ok: #66bb6a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 13px/1.4 system-ui, sans-serif; }
+  #wrap { display: flex; height: 100%; }
+  #stage { flex: 1; position: relative; overflow: hidden; touch-action: none; display: flex; align-items: center; justify-content: center; }
+  canvas { max-width: 100%; max-height: 100%; cursor: grab; image-rendering: auto; }
+  #panel { width: 270px; background: var(--panel); padding: 12px; overflow-y: auto; }
+  label { display: block; margin: 8px 0 2px; color: var(--muted); }
+  input, select, button { width: 100%; background: #22262d; color: var(--text); border: 1px solid #333a44; border-radius: 4px; padding: 4px 6px; font: inherit; }
+  button { cursor: pointer; margin-top: 6px; }
+  .row { display: flex; gap: 4px; }
+  .row input { min-width: 0; }
+  #prec { margin-top: 10px; padding: 6px; border-radius: 4px; background: #22262d; }
+  #prec.ok { border-left: 4px solid var(--ok); }
+  #prec.near { border-left: 4px solid var(--warn); }
+  #prec.over { border-left: 4px solid var(--bad); }
+  #msg { margin-top: 8px; color: var(--muted); word-break: break-all; }
+  #exact { position: absolute; inset: 0; display: none; background: rgba(0,0,0,.85); align-items: center; justify-content: center; flex-direction: column; }
+  #exact img { max-width: 95%; max-height: 85%; }
+  @media (max-width: 700px) { #wrap { flex-direction: column; } #panel { width: auto; max-height: 45%; } }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="cv"></canvas>
+    <div id="exact"><img id="exactimg" alt="exact render"><button id="closeexact" style="width:auto">Close</button></div>
+  </div>
+  <div id="panel">
+    <label for="formula">Formula</label>
+    <select id="formula">
+      <option value="mandelbrot">Mandelbrot</option><option value="julia">Julia</option>
+      <option value="burning-ship">Burning ship</option><option value="tricorn">Tricorn</option>
+      <option value="multibrot">Multibrot</option>
+    </select>
+    <div id="juliabox"><label>Julia c (shift-click the view to pick)</label>
+      <div class="row"><input id="kr" type="number" step="0.001"><input id="ki" type="number" step="0.001"></div></div>
+    <div id="powbox"><label for="power">Power</label><input id="power" type="number" min="2" max="16" step="1"></div>
+    <label for="iter">Iterations</label><input id="iter" type="number" min="1" max="100000" step="50">
+    <label for="preset">Palette</label>
+    <select id="preset"><option value="">custom</option><option>classic</option><option>fire</option><option>ocean</option></select>
+    <label>Cosine a / b / c / d (r,g,b)</label>
+    <div class="row"><input class="pa" data-i="0"><input class="pa" data-i="1"><input class="pa" data-i="2"></div>
+    <div class="row"><input class="pa" data-i="3"><input class="pa" data-i="4"><input class="pa" data-i="5"></div>
+    <div class="row"><input class="pa" data-i="6"><input class="pa" data-i="7"><input class="pa" data-i="8"></div>
+    <div class="row"><input class="pa" data-i="9"><input class="pa" data-i="10"><input class="pa" data-i="11"></div>
+    <label>Density / phase</label>
+    <div class="row"><input id="den" type="number" step="0.005"><input id="ph" type="number" step="0.05"></div>
+    <div id="prec"></div>
+    <button id="renderexact">Render exact (server)</button>
+    <button id="export">Export recipe</button>
+    <button id="reset">Reset view</button>
+    <div id="msg"></div>
+  </div>
+</div>
+<script id="fragsrc" type="x-shader/x-fragment">/*FRAG*/</script>
+<script>
+"use strict";
+// Hash keys and their order. fw_serve.py HASH_KEYS must match.
+const KEYS = ["f", "cx", "cy", "w", "rot", "it", "bail", "pw", "kr", "ki", "den", "ph", "pa", "sz"];
+const PALS = {
+  classic: [0.5,0.5,0.5, 0.5,0.5,0.5, 1,1,1, 0,0.33,0.67],
+  fire: [0.5,0.3,0.1, 0.5,0.4,0.2, 1,1,1, 0,0.1,0.2],
+  ocean: [0.2,0.4,0.6, 0.2,0.3,0.4, 1,1,1, 0.3,0.2,0.1],
+};
+const HOME = { "mandelbrot": ["-0.75","0","3.5"], "julia": ["0","0","3.2"], "burning-ship": ["-0.45","-0.5","3.6"],
+               "tricorn": ["-0.3","0","4"], "multibrot": ["0","0","3.2"] };
+const FORMULAS = ["mandelbrot", "julia", "burning-ship", "tricorn", "multibrot"];
+// float32 has a 24-bit mantissa; plain iteration breaks when a pixel step is a few ulps of the coordinate.
+// pixel / max(1,|centre|) and width / max(1,|centre|); fw_serve.py F32_REL_LIMIT, F32_WIDTH_LIMIT = the OVER pair
+const F32_NEAR = 1e-5, F32_OVER = 1e-6, W32_NEAR = 1e-2, W32_OVER = 1e-3;
+
+const S = { f: "mandelbrot", cx: "-0.75", cy: "0", w: "3.5", rot: "0", it: "500", bail: "256", pw: "2",
+            kr: "-0.8", ki: "0.156", den: "0.02", ph: "0", pa: PALS.classic.join(","), sz: "" };
+
+const cv = document.getElementById("cv");
+const gl = cv.getContext("webgl2", { preserveDrawingBuffer: true, antialias: false });
+const $ = id => document.getElementById(id);
+let prog = null, U = {};
+
+function compile() {
+  const vs = "#version 300 es\nin vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }";
+  const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o);
+    if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
+  prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, $("fragsrc").textContent.trim()));
+  gl.bindAttribLocation(prog, 0, "p");
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+  const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  const n = gl.getProgramParameter(prog, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) { const name = gl.getActiveUniform(prog, i).name; U[name.replace("[0]", "")] = gl.getUniformLocation(prog, name); }
+}
+
+// Draw from a uniform dict (the same dict fw_serve.uniforms() builds in Python).
+function drawUniforms(u) {
+  if (cv.width !== u.w || cv.height !== u.h) { cv.width = u.w; cv.height = u.h; }
+  gl.viewport(0, 0, u.w, u.h);
+  const set = (k, f, ...v) => { if (U[k] !== undefined && U[k] !== null) gl[f](U[k], ...v); };
+  set("u_size", "uniform2f", u.w, u.h); set("u_c", "uniform2f", u.cx, u.cy); set("u_px", "uniform1f", u.px);
+  set("u_rot", "uniform1f", u.rot); set("u_formula", "uniform1i", u.formula); set("u_power", "uniform1i", u.power);
+  set("u_maxit", "uniform1i", u.maxit); set("u_bail2", "uniform1f", u.bail2); set("u_k", "uniform2f", u.kr, u.ki);
+  set("u_flip", "uniform1i", u.flip); set("u_paltype", "uniform1i", u.paltype);
+  set("u_a", "uniform3fv", u.a); set("u_b", "uniform3fv", u.b); set("u_cc", "uniform3fv", u.c); set("u_d", "uniform3fv", u.d);
+  set("u_nstops", "uniform1i", u.nstops); set("u_spos", "uniform1fv", u.spos); set("u_scol", "uniform3fv", u.scol);
+  set("u_density", "uniform1f", u.density); set("u_phase", "uniform1f", u.phase); set("u_inside", "uniform3fv", u.inside);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+
+function stateUniforms() {
+  const [w, h] = S.sz.split("x").map(Number);
+  const pa = S.pa.split(",").map(Number);
+  const f = FORMULAS.indexOf(S.f);
+  return { w, h, cx: +S.cx, cy: +S.cy, px: +S.w / w, rot: (+S.rot) * Math.PI / 180, formula: f,
+           power: S.f === "multibrot" ? Math.max(2, +S.pw | 0) : 2, maxit: +S.it | 0, bail2: (+S.bail) ** 2,
+           kr: +S.kr, ki: +S.ki, flip: S.f === "burning-ship" ? 1 : 0, paltype: 0,
+           a: pa.slice(0, 3), b: pa.slice(3, 6), c: pa.slice(6, 9), d: pa.slice(9, 12),
+           nstops: 0, spos: new Array(8).fill(0), scol: new Array(24).fill(0),
+           density: +S.den, phase: +S.ph, inside: [0, 0, 0] };
+}
+
+function hashOf() {
+  return KEYS.filter(k => !((k === "kr" || k === "ki") && S.f !== "julia") && !(k === "pw" && S.f !== "multibrot"))
+             .map(k => k + "=" + S[k]).join("&");
+}
+function readHash() {
+  const h = location.hash.replace(/^#/, "");
+  if (!h) return false;
+  for (const part of h.split("&")) { const i = part.indexOf("="); if (i > 0) { const k = part.slice(0, i); if (KEYS.includes(k)) S[k] = decodeURIComponent(part.slice(i + 1)); } }
+  return true;
+}
+let lastHash = "";
+function writeHash() { lastHash = "#" + hashOf(); history.replaceState(null, "", lastHash); }
+
+function precision() {
+  const big = Math.max(1, Math.abs(+S.cx), Math.abs(+S.cy));
+  const rel = (+S.w / (+S.sz.split("x")[0])) / big, wrel = +S.w / big;
+  const el = $("prec");
+  const zoom = (3.5 / +S.w).toExponential(2);
+  if (rel < F32_OVER || wrel < W32_OVER) { el.className = "over"; el.textContent = `zoom ${zoom}: past float32 (pixel ${rel.toExponential(1)} of the coordinate). This view is blocky; use Render exact.`; }
+  else if (rel < F32_NEAR || wrel < W32_NEAR) { el.className = "near"; el.textContent = `zoom ${zoom}: nearing the float32 limit. Render exact for a true picture.`; }
+  else { el.className = "ok"; el.textContent = `zoom ${zoom}: float32 is fine here.`; }
+  return rel;
+}
+
+function syncInputs() {
+  $("formula").value = S.f; $("kr").value = S.kr; $("ki").value = S.ki; $("power").value = S.pw; $("iter").value = S.it;
+  $("den").value = S.den; $("ph").value = S.ph;
+  const pa = S.pa.split(","); document.querySelectorAll(".pa").forEach(e => { e.value = pa[+e.dataset.i]; });
+  $("preset").value = Object.keys(PALS).find(k => PALS[k].join(",") === S.pa) || "";
+  $("juliabox").style.display = S.f === "julia" ? "" : "none";
+  $("powbox").style.display = S.f === "multibrot" ? "" : "none";
+}
+
+let pending = false;
+function render() {
+  if (pending) return; pending = true;
+  requestAnimationFrame(() => { pending = false; drawUniforms(stateUniforms()); precision(); writeHash(); });
+}
+function renderNow() { drawUniforms(stateUniforms()); precision(); writeHash(); }
+
+// --- view maths (float64 in JS; strings in the hash) ---
+const num = x => String(+x);
+function pixelToComplex(px, py) {
+  const [w, h] = S.sz.split("x").map(Number);
+  const s = +S.w / w, a = (+S.rot) * Math.PI / 180;
+  const dx = (px + 0.5 - w / 2) * s, dy = (h / 2 - py - 0.5) * s;
+  let rx = dx * Math.cos(a) - dy * Math.sin(a), ry = dx * Math.sin(a) + dy * Math.cos(a);
+  if (S.f === "burning-ship") ry = -ry;
+  return [+S.cx + rx, +S.cy + ry];
+}
+function zoomAt(px, py, factor) {
+  const [x, y] = pixelToComplex(px, py);
+  S.cx = num(x + (+S.cx - x) * factor); S.cy = num(y + (+S.cy - y) * factor); S.w = num(+S.w * factor);
+}
+function pan(dpx, dpy) {
+  const [w] = S.sz.split("x").map(Number);
+  const s = +S.w / w, a = (+S.rot) * Math.PI / 180;
+  const dx = -dpx * s, dy = dpy * s;
+  let rx = dx * Math.cos(a) - dy * Math.sin(a), ry = dx * Math.sin(a) + dy * Math.cos(a);
+  if (S.f === "burning-ship") ry = -ry;
+  S.cx = num(+S.cx + rx); S.cy = num(+S.cy + ry);
+}
+function canvasXY(e) {
+  const r = cv.getBoundingClientRect();
+  return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height, cv.width / r.width];
+}
+
+const pointers = new Map(); let pinch = null;
+cv.addEventListener("pointerdown", e => {
+  cv.setPointerCapture(e.pointerId); pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (e.shiftKey && S.f === "julia") { const [px, py] = canvasXY(e); const [x, y] = pixelToComplex(px, py); S.kr = num(x); S.ki = num(y); syncInputs(); render(); }
+});
+cv.addEventListener("pointermove", e => {
+  if (!pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId); pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pointers.size === 1) {
+    const [, , k] = canvasXY(e); pan((e.clientX - prev[0]) * k, (e.clientY - prev[1]) * k); render();
+  } else if (pointers.size === 2) {
+    const [p, q] = [...pointers.values()];
+    const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+    if (pinch) {
+      const mid = { clientX: (p[0] + q[0]) / 2, clientY: (p[1] + q[1]) / 2 };
+      const [mx, my] = canvasXY(mid); zoomAt(mx, my, pinch / d); render();
+    }
+    pinch = d;
+  }
+});
+const up = e => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null; };
+cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+cv.addEventListener("wheel", e => { e.preventDefault(); const [px, py] = canvasXY(e); zoomAt(px, py, Math.pow(1.0015, e.deltaY)); render(); }, { passive: false });
+
+$("formula").onchange = () => { S.f = $("formula").value; [S.cx, S.cy, S.w] = HOME[S.f]; syncInputs(); render(); };
+$("reset").onclick = () => { [S.cx, S.cy, S.w] = HOME[S.f]; S.rot = "0"; render(); };
+for (const id of ["kr", "ki", "iter", "power", "den", "ph"]) $(id).oninput = () => {
+  const key = { iter: "it", power: "pw" }[id] || id; if ($(id).value !== "") { S[key] = num($(id).value); render(); } };
+document.querySelectorAll(".pa").forEach(e => e.oninput = () => {
+  const pa = S.pa.split(","); if (e.value !== "") { pa[+e.dataset.i] = num(e.value); S.pa = pa.join(","); $("preset").value = ""; render(); } });
+$("preset").onchange = () => { const p = PALS[$("preset").value]; if (p) { S.pa = p.join(","); syncInputs(); render(); } };
+
+async function post(path, body) {
+  const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(await r.text());
+  return r;
+}
+async function exportRecipe() {
+  const r = await post("/export", { hash: hashOf() });
+  const j = await r.json(); $("msg").textContent = "wrote " + j.path; return j;
+}
+$("export").onclick = () => exportRecipe().catch(e => { $("msg").textContent = "export failed: " + e.message; });
+$("renderexact").onclick = async () => {
+  $("msg").textContent = "rendering on the server...";
+  try {
+    const r = await post("/render", { hash: hashOf() });
+    $("exactimg").src = URL.createObjectURL(await r.blob()); $("exact").style.display = "flex";
+    $("msg").textContent = "exact render: " + (r.headers.get("X-Route") || "?");
+  } catch (e) { $("msg").textContent = "render failed: " + e.message; }
+};
+$("closeexact").onclick = () => { $("exact").style.display = "none"; };
+
+// Hooks for tests and the browser route.
+window.fw = {
+  drawUniforms, hashOf, exportRecipe, zoomAt, pan, state: S,
+  setHash(h) { location.hash = h; readHash(); syncInputs(); renderNow(); },
+  pixels() { const w = cv.width, h = cv.height, buf = new Uint8Array(w * h * 4);
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, buf); let s = "";
+    for (let i = 0; i < buf.length; i += 32768) s += String.fromCharCode.apply(null, buf.subarray(i, i + 32768));
+    return btoa(s); },
+  renderer() { const e = gl.getExtension("WEBGL_debug_renderer_info"); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : "?"; },
+};
+
+compile();
+readHash();
+if (!S.sz) { const st = $("stage").getBoundingClientRect(); S.sz = `${Math.max(64, Math.floor(st.width))}x${Math.max(64, Math.floor(st.height))}`; }
+syncInputs();
+renderNow();
+window.addEventListener("hashchange", () => { if (location.hash !== lastHash) { readHash(); syncInputs(); render(); } });
+</script>
+</body>
+</html>
