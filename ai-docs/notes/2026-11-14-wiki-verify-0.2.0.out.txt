@@ -1,0 +1,209 @@
+== --version
+0.1.0
+exit: 0
+== doctor
+python      3.14.6                                   required (3.9+)
+numpy       2.5.2                                    core: render, measure (pure Python fallback for small renders)
+Pillow      12.3.0                                   optional: measure on image files (PNG writing is built in)
+moderngl    missing                                  optional accelerator: float64 GLSL stills (not wired yet)
+playwright  ready: msedge headless, ANGLE (NVIDIA, NVIDIA GeForce RTX 5060 Ti (0x00002D04) Direct3D11 vs_5_0 ps_5_0, D3D11) optional accelerator: render --route browser (WebGL2, float32), same shader as serve
+browser     msedge                                   for the playwright route
+3d          browser route only                       fw.py 3d needs the playwright route above; no NumPy fallback for 3D
+ffmpeg      <ffmpeg> video commands: zoom, morph, loop (H.264 encode), flashcheck
+exit: 0
+== explain julia
+julia
+  formula: z <- z^2 + k, z0 = pixel, k fixed
+  how: Same loop as Mandelbrot but the pixel is the start point and k is a constant. k inside the Mandelbrot set gives a connected Julia set, outside it a dust. Recipe params.c holds k as two decimal strings.
+  presets: julia-dendrite, julia-rabbit
+  more: references/02-escape-time.md#julia-filled-julia-sets
+exit: 0
+== explain mandelbrot
+mandelbrot
+  formula: z <- z^2 + c, z0 = 0, c = pixel
+  how: Escape time: iterate each pixel's c until |z| > R or max_iter. Points that never escape form the set (area ~1.50659). Smooth colour mu = n + 1 - log(log|z|)/log 2 with R >= 256.
+  presets: mandelbrot-full, seahorse
+  more: references/02-escape-time.md#mandelbrot
+exit: 0
+== render kronecker-carpet -o carpet.png
+wrote carpet.png and carpet.json
+exit: 0
+== measure box carpet.png
+measure: box-dimension
+dimension: 1.8114
+r2: 0.9997
+curvature: 0.0222
+fit_px: [2, 182]
+decades: 1.9590
+sizes: [2, 3, 4, 5, 7, 9, 12, 16, 22, 30, 40, 55, 74, 100, 135, 182]
+counts: [82680.000, 39706.500, 23378.250, 15429.625, 8290.375, 5094.500, 3017.125, 1781.500, 993.625, 561.875, 333.500, 189.250, 109.750, 69.625, 40.250, 24.750]
+local_slopes: [1.837, 1.866, 1.868, 1.859, 1.847, 1.831, 1.831, 1.818, 1.812, 1.749, 1.726, 1.694]
+slope_spread: 0.1745
+offsets: 8
+seed: 0
+specks_removed: 0
+image: [729, 729]
+verdict: descriptor only: fit range 1.96 decades is under 2
+warnings: ['coarse boxes bias D; read the local-slope curve, not one number']
+image_file: carpet.png
+exit: 0
+== measure ifs --ratios 0.5,0.5,0.5
+measure: similarity-dimension
+ratios: [0.500, 0.500, 0.500]
+dimension: 1.5850
+note: exact only when the pieces do not overlap (open set condition); with overlap it is an upper bound
+exit: 0
+== measure area --size 512
+measure: mandelbrot-area
+size: 512
+max_iter: 10000
+area: 1.5071
+reference: 1.5066
+error: 0.0005
+exit: 0
+== render seahorse -o seahorse.png --size 320x180
+wrote seahorse.png and seahorse.json
+exit: 0
+== render deep.json -o deep.png --size 160x90 --deep
+deep: rebased 14400 pixels
+wrote deep.png and deep.json
+exit: 0
+== render julia-rabbit -o rabbit_b.png --size 160x90 --route browser
+wrote rabbit_b.png and rabbit_b.json (browser route)
+exit: 0
+== palette
+classic  cosine
+fire     cosine
+ocean    cosine
+ultra    stops
+grey     stops
+exit: 0
+== palette fire -o fire.png
+wrote fire.png
+exit: 0
+== sheet julia-rabbit --palettes classic,fire,ocean -o sheet.png --tile 120x68
+wrote sheet.png (3 tiles) and sheet.json
+exit: 0
+== zoom seahorse --to-width 0.001 -o zoom.mp4 --size 160x90 --fps 12 --duration 1
+wrote zoom.mp4, zoom.json and 12 frames
+note: AI styling: no ComfyUI host reachable, exact video kept
+flashcheck: 1 swings/s (limit 3) pass
+exit: 0
+== morph julia-rabbit --path -0.12,0.75;-0.8,0.156 -o morph.mp4 --size 160x90 --fps 12 --duration 1
+wrote morph.mp4, morph.json and 12 frames
+note: AI styling: no ComfyUI host reachable, exact video kept
+flashcheck: 2 swings/s (limit 3) pass
+exit: 0
+== loop julia-rabbit --circle 0,0,0.7885 -o loop.mp4 --size 160x90 --fps 12 --duration 1 --no-ai
+wrote loop.mp4, loop.json and 12 frames
+note: AI styling off (--no-ai): exact video
+flashcheck: 2 swings/s (limit 3) pass
+exit: 0
+== flashcheck zoom.mp4
+frames: 12
+fps: 12.0000
+swings: 2
+max_swings_per_s: 2
+limit_per_s: 3
+luminance_range: [0.274, 0.455]
+general_flash_area: 0.0989
+red_flash_area: 0.0000
+area_limit: 0.2500
+max_cell_flashes_per_s: 4.0000
+pass: True
+method: WCAG 2.x general and red flash thresholds: per-cell swing walk on a 36x48 grid, flashing cells (> 3 flashes/s) must cover <= 25% of any 341x256-at-1024x768 box; max_swings_per_s is the older whole-frame mean count, kept for reference
+exit: 0
+== export #f=mandelbrot&cx=-0.75&cy=0&w=3&it=200 -o shared.json
+wrote shared.json
+exit: 0
+== audio song.wav -o song.mp4 --size 160x90 --fps 12 --duration 2 --route numpy --no-ai
+wrote song.mp4, song.json and 24 frames
+note: envelopes: musicwright at <path>/mw.py has no usable envelopes command (, 'answer', 'mixcheck', 'compare', 'preview', 'monobass', 'render', 'notate', 'transcribe', 'verdict', 'ledger', 'note')); internal fallback
+note: route: numpy
+note: AI styling off (--no-ai): exact video
+flash limiter damped 0 frames; flashcheck: 1 swings/s (limit 3) pass
+exit: 0
+== flame sierpinski -o flame.png
+wrote flame.png and flame.json (coverage 0.117)
+exit: 0
+== lsystem koch -o koch.png --n 4
+wrote koch.png, koch.svg and koch.json (256 segments)
+exit: 0
+== attractor clifford -o clifford.png
+wrote clifford.png and clifford.json (coverage 0.333)
+exit: 0
+== ifs fern -o fern.png
+fern: p = [0.01, 0.765, 0.11, 0.115], envelope centre (1.5519, 4.9796) radius 5.3113
+wrote fern.png
+exit: 0
+== attractor-search --hits 2 -o best.png
+2 attractors in 39 tries (ranked by distance from D2 1.1-1.5, small L; book rule)
+  EGQIHCRALSMRT  L 0.3026 bits/iter  D2 1.462  score 0.0303
+  EHMMYRTAHYGMV  L 0.4693 bits/iter  D2 1.163  score 0.0469
+wrote best.png (EGQIHCRALSMRT)
+exit: 0
+== fif --points 0,0;1,1;2,0 --d 0.5,-0.5 -o fif.png
+FIF through 3 points, sum|d| 1.000, graph dimension 1.0000
+wrote fif.png
+exit: 0
+== terrain -o terrain.png
+wrote terrain.png (spectral, 512x512, H 0.8, crease ratio 1.000)
+exit: 0
+== measure box koch.png
+measure: box-dimension
+dimension: 1.1612
+r2: 0.9986
+curvature: -0.0191
+fit_px: [2, 200]
+decades: 2.0000
+sizes: [2, 3, 4, 5, 7, 9, 13, 17, 23, 32, 43, 59, 80, 108, 147, 200]
+counts: [1341.125, 895.500, 675.500, 538.500, 376.875, 284.625, 187.125, 137.875, 85.750, 60.875, 42.750, 27.500, 21.875, 14.250, 9.625, 7.375]
+local_slopes: [1.010, 1.044, 1.090, 1.117, 1.222, 1.242, 1.246, 1.258, 1.136, 1.171, 1.188, 1.132]
+slope_spread: 0.2485
+offsets: 8
+seed: 0
+specks_removed: 0
+image: [800, 800]
+verdict: fractal-like over 2.00 decades (D alone cannot identify the shape)
+warnings: ['coarse boxes bias D; read the local-slope curve, not one number']
+image_file: koch.png
+exit: 0
+== identify --c -0.12,0.75
+identify: v1
+features: {'family': 'escape-time', 'formula': 'julia', 'julia_connected': True}
+hints: ['connected Julia set: the orbit of 0 stays bounded, so c is in the Mandelbrot set']
+exit: 0
+== 3d render mandelbulb -o bulb.png
+wrote bulb.png and bulb.json (0.08 s)
+exit: 0
+== rd coral -o coral.png
+wrote coral.png and coral.json (B max 0.434)
+exit: 0
+== ca 90 -o rule90.png
+wrote rule90.png and rule90.json (6561 live cells)
+exit: 0
+== tiling penrose -o penrose.png
+wrote penrose.png and penrose.json (4660 edges). A tiling is not a fractal: fw.py measure box on it should not say fractal-like.
+exit: 0
+== kleinian apollonian -o gasket.png
+wrote gasket.png and gasket.json
+exit: 0
+== measure box penrose.png
+measure: box-dimension
+dimension: 1.6645
+r2: 0.9940
+curvature: -0.0825
+fit_px: [2, 200]
+decades: 2.0000
+sizes: [2, 3, 4, 5, 7, 9, 13, 17, 23, 32, 43, 59, 80, 108, 147, 200]
+counts: [26506.500, 17300.625, 12526.625, 9617.750, 6247.625, 4362.500, 2378.750, 1440.250, 801.250, 428.625, 245.750, 139.125, 80.875, 46.875, 28.625, 18.125]
+local_slopes: [1.150, 1.252, 1.402, 1.553, 1.730, 1.842, 1.902, 1.880, 1.840, 1.813, 1.759, 1.677]
+slope_spread: 0.7514
+offsets: 8
+seed: 0
+specks_removed: 0
+image: [800, 800]
+verdict: not fractal over this range: local slope drifts 1.15..1.90 (no single scaling range)
+warnings: ['coarse boxes bias D; read the local-slope curve, not one number']
+image_file: penrose.png
+exit: 0
