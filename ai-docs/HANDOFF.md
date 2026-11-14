@@ -18,6 +18,8 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 
 ## Waits on Mark
 
+- askwright set ask/fractalwright-ai-look-2026-11-14 (served 2026-11-14): AI vs exact zoom compare + whether AI stays default. Next session: ask.py read it, act, close.
+
 - Books: Peitgen, Chaos and Fractals: New Frontiers (#4); Indra's Pearls (#7) now matters for Kleinian sets.
 - Installed musicwright is 0.1.33: the shared clone Ai/musicwright has another session's uncommitted ai-docs/HANDOFF.md, so it was not pulled to 0.1.34.
 
