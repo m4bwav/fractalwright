@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-11 · 2026-11-14 · AI styling pass for video (replaces the pending stub)
+- because: T-20261114-11, ai-docs/plans/design.md (Mark's ruling: AI styling on by default for video), references/10-ai-models.md
+- files: scripts/fw_ai.py (new), scripts/fw.py (`write_video`, `--ai` help), scripts/fw_audio.py (AI block), tests/test_ai.py (new), tests/test_fw.py (old stub test removed), skills/fractalwright/SKILL.md (Video), CODEMAP.md
+- Per-frame Z-Image Turbo img2img through ComfyUI at low denoise with a fixed seed, residual EMA for temporal consistency, second video and recipe marked interpreted. Exact frames kept; no host or a host error never fails the render.
+
 ### C-20261114-10 · 2026-11-14 · fw.py 3d: raymarched DE fractals, look gate (Step E)
 - because: T-20261114-10, user request (Step E), references/07-3d.md sections 2-5, ai-docs/notes/2026-11-14-3d-gate.md
 - files: scripts/fw_3d.py (new), scripts/page/fractal3d.frag (new), scripts/fw.py (`main` registers it; one doctor row), tests/test_3d.py (new), skills/fractalwright/SKILL.md (Step 2e), README.md, CODEMAP.md, ask/fractalwright-3d-gate-2026-11-14 (new)

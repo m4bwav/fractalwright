@@ -1227,18 +1227,12 @@ def write_video(kind, recipes, anim, out, ai=True):
     rec = json.loads(json.dumps(normalise(recipes[0])))
     rec["animation"] = dict(anim, kind=kind, frames=len(recipes), frame_dir=fdir.name)
     notes = []
-    if ai:
-        host = probe_comfy()
-        if host:
-            rec["ai_pass"] = {"status": "pending-not-implemented", "host": host}
-            notes.append(f"AI styling: ComfyUI at {host} reachable; the pass is not implemented yet, exact video kept")
-        else:
-            notes.append("AI styling: no ComfyUI host reachable, exact video kept")
-    else:
-        notes.append("AI styling off (--no-ai): exact video")
+    import fw_ai
+    fw_ai.apply(rec, notes, fdir, out, anim["fps"], ai=ai)
     rec["notes"] = notes
     rp = out.with_suffix(".json")
     rp.write_text(json.dumps(rec, indent=2) + "\n", encoding="utf-8")
+    fw_ai.write_ai_recipe(rec, out)
     return rp, notes
 
 
@@ -1407,7 +1401,7 @@ def _video_args(s, default_out):
     s.add_argument("--fps", type=int, default=24)
     s.add_argument("--duration", type=float, default=4.0, help="seconds")
     s.add_argument("--ai", action=argparse.BooleanOptionalAction, default=True,
-                   help="AI styling hook (default on; probes ComfyUI, pass not implemented yet)")
+                   help="AI styling pass (default on): img2img via ComfyUI to <out>_ai.mp4; exact video always kept")
 
 
 def main(argv=None):

@@ -1,6 +1,6 @@
 # HANDOFF: fractalwright
 
-Status: v0.1.0 released and installed 2026-11-14 (session 2). Steps A-D done, F done (evals 13/13), E waits on Mark's 3D verdict. Not finished: neighbours Mark put in scope, AI styling pass, Peitgen book.
+Status: v0.1.0 released and installed 2026-11-14 (session 2). Steps A-D done, F done (evals 13/13), E waits on Mark's 3D verdict. Not finished: neighbours Mark put in scope, Peitgen book.
 
 Continue prompt: [plans/fractalwright-continue-prompt.md](plans/fractalwright-continue-prompt.md)
 
@@ -25,7 +25,7 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 ## Next (in order)
 
 1. Read the 3D gate answers; apply (default remedies, ship status in SKILL.md; fix Mandelbox framing and hybrid scale; numeric DE test for quaternion Julia).
-2. AI styling pass for video (ComfyUI workflow via comfyui-gen, exact frames kept, marked interpreted).
+2. AI styling pass for video: done 2026-11-14 (fw_ai.py, img2img per frame). Next: --ai-prompt/--ai-denoise flags, Wan VACE v2v route, Mark's look verdict.
 3. Neighbours: reaction-diffusion preset, cellular automata, tilings (measure must say "not fractal"), Kleinian limit sets.
 4. Gaps: GPU perturbation in the browser, Julia deep zoom, floatexp past 1e-290, series approximation; page rotation and stop palettes; JS flash limiter browser test; WCAG flash-area rule in flashcheck; symmetric-icon params checked against Field and Golubitsky; multi-scroll attractor from a primary paper; Lorenz D2 default range.
 5. Wiki update for 0.1.0 commands (wikiwright); evergreen-worth heavy run; next release.

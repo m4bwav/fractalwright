@@ -393,38 +393,6 @@ class Video(unittest.TestCase):
         self.assertFalse(res["pass"])
         self.assertGreater(res["max_swings_per_s"], 3)
 
-    def test_ai_hook_pending_when_host_up(self):
-        import http.server
-        import threading
-
-        class H(http.server.BaseHTTPRequestHandler):
-            def do_GET(self):
-                self.send_response(200); self.end_headers(); self.wfile.write(b"{}")
-
-            def log_message(self, *a):
-                pass
-        srv = http.server.HTTPServer(("127.0.0.1", 0), H)
-        threading.Thread(target=srv.serve_forever, daemon=True).start()
-        try:
-            host = f"127.0.0.1:{srv.server_address[1]}"
-            self.assertEqual(fw.probe_comfy([host]), host)
-            recs = fw.loop_frames(self.julia, 4, phase=True)
-            env = __import__("os").environ
-            old = env.get("FW_COMFY_HOSTS")
-            env["FW_COMFY_HOSTS"] = host
-            try:
-                rp, notes = fw.write_video("loop", recs, {"fps": 4, "duration_s": 1}, self.dir / "ai.mp4", ai=True)
-            finally:
-                if old is None:
-                    env.pop("FW_COMFY_HOSTS")
-                else:
-                    env["FW_COMFY_HOSTS"] = old
-            rec = json.loads(rp.read_text(encoding="utf-8"))
-            self.assertEqual(rec["ai_pass"]["status"], "pending-not-implemented")
-            self.assertTrue((self.dir / "ai.mp4").exists())
-        finally:
-            srv.shutdown()
-
     def test_sheet_tiles_and_sidecar(self):
         out = self.dir / "sheet.png"
         self.run_fw("sheet", "julia-rabbit", "--vary", "params.c", "--values", "-0.123:0.745,-0.8:0.156,0:1",
