@@ -38,18 +38,23 @@
     "learnings": 0,
     "changes": 0,
     "research": 0,
-    "tests": 0
+    "tests": 1
   },
   "consolidate_every": 25,
   "tests": {
-    "last_run": null,
-    "harness": null,
-    "env": null,
-    "cases": 0,
-    "passed": 0,
-    "failed": 0,
-    "failing": [],
-    "last_failure": null,
+    "last_run": "2026-11-14T11:16",
+    "harness": "evergreen-tester",
+    "env": "windows",
+    "cases": 13,
+    "passed": 12,
+    "failed": 1,
+    "failing": [
+      "trigger-visualizer"
+    ],
+    "last_failure": {
+      "date": "2026-11-14",
+      "note": "routing proxy + action/outcome with baseline; visualizer undertrigger fixed by description, rerun pass"
+    },
     "research_after_days": null
   }
 }

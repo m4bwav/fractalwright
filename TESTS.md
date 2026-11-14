@@ -8,6 +8,16 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261114-10 · 2026-11-14 · evergreen-tester (routing proxy: subagent picks from a 9-skill catalog file; not the main loop) · Windows · 12/13, 13/13 after fix
+- trigger-visualizer · trigger · undertrigger · picked none: description listed stills only; zoom and flame picked fractalwright on the bare words "animate" and "wallpaper" (testers flagged both as weak).
+- Passed: triggers zoom, identify, coastline, flame; decoys shader, master, mesh, critique, image (1 run each, routing proxy). After the description fix: visualizer (reworded prompt) picks fractalwright; new decoy-musicvideo picks comfyui-gen.
+- action-zoom-video, with skill: h264 320x240 3.000 s (ffprobe re-run by the caller), seahorse-zoom.json with animation keyframes, flashcheck 2 swings/s pass. Baseline: own script, same mp4, no recipe JSON, no flash check: FAIL.
+- outcome-coastline-d, with skill: D 1.23 (1.2318, 2.00 decades, slope drift reported, descriptor not identification): PASS. Baseline: own box count D 1.36, outside 1.17-1.33: FAIL.
+- Baseline delta: value cases 2/2 with, 0/2 without. 1 run per case (moderate budget), not a 3-run proof.
+- worth lite: UNPROVEN (listing ~198 tokens per session, body ~1,928 per use, 0 uses in 60 days); the A/B above points to KEEP; a --heavy run would record it.
+- not covered: main-loop Skill tool firing (plugin not installed here), 3 runs per case, other OS (untested elsewhere).
+- led to: C-20261114-10, L-20261114-10
+
 ### T-20261114-9 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2, ffmpeg, musicwright 0.1.34 mw.py · 84/84 after rebase on batch 4c (8 new in test_audio.py)
 - Sine sweep 40 Hz to 8 kHz, 4 s, 30 fps: the dominant driver steps bass to mid to treble only forward, switching at frames 48 and 104 (internal envelopes) and 47 and 102 (musicwright).
 - Silence, 1.5 s at 12 fps, 64x36: per-pixel variance over time 0.0 (bar 1e-6); limiter damped 0 frames.

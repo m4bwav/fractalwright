@@ -45,3 +45,5 @@ Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (ID
 - because: user request
 - files: skills/fractalwright/SKILL.md, RESEARCH.md, LEARNINGS.md, evergreen.json (skills: also TESTS.md and evals/evals.json)
 - Initial version. Tier `moderate`, interval 30d. See R-20261114-1 for the research basis; the first test run, for a skill, is logged in TESTS.md.
+
+### C-20261114-10 · 2026-11-14 · description now lists video, audio visualizers, flames, IFS, L-systems, attractors, terrain and identify; evals.json written (5 triggers, 6 decoys, action zoom video, outcome coastline D on a Koch fixture) · because: T-20261114-10

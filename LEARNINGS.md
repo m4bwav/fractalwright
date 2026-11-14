@@ -15,3 +15,6 @@ Write an entry the moment a real signal happens: a user correction, the same err
 - Scope: skill | repo:<slug> | env:<name> | global
 - Status: active · helpful 1 · harmful 0 · last_confirmed 2026-11-14
 -->
+
+### L-20261114-10 · 2026-11-14 · description-lagged-features
+Trigger: trigger-visualizer routed to no skill; zoom and flame matched only by luck. Hypothesis: each new command (zoom, audio, flame) must add its user phrase to the description in the same change, or routing never sees it.
