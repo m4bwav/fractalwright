@@ -1,0 +1,40 @@
+{
+  "askwright": 1,
+  "rev": 10,
+  "answers": {
+    "keep": {
+      "choices": [
+        "mandelbulb-whole-all",
+        "mandelbulb-close-all",
+        "mandelbulb-whole-shadow",
+        "quatjulia-close-all",
+        "quatjulia-whole-all",
+        "quatjulia-close-camera",
+        "menger-close-camera",
+        "menger-whole-shadow",
+        "menger-close-shadow"
+      ],
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": false,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 9,
+      "updated": "2026-11-14T11:45:38-06:00",
+      "state": "answered"
+    },
+    "ship": {
+      "choice": "normal",
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": false,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 10,
+      "updated": "2026-11-14T11:46:02-06:00",
+      "state": "answered"
+    }
+  }
+}
