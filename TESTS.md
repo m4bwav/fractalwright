@@ -4,7 +4,14 @@ Test runs for [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md). Ca
 
 A test passes on evidence (a tool call in the trace, a file, a marker, a log line), never on the transcript's claim that something was done.
 
-Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then one line per failing case (`id · kind · class · what the evidence showed`), then `led to:` (L-, C-, R- ids or none). Newest first. Budget 150 lines; archive older runs to `TESTS-ARCHIVE.md`.
+Entry shape: `### T-20261114-10 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2, Playwright + Edge headless (ANGLE D3D11, RTX 5060 Ti) · 89/89 after rebase on audio
+- tests/test_3d.py: recipe -> JSON -> recipe and uniforms identical for 5 formulas x 2 views; composed camera in the 35-50 mm band and below the subject; unknown formula and remedy refused.
+- Mandelbulb DE lower bound (NumPy float64, same formula as the shader): 400 rays marched at fudge 1, 6 samples per step tested for set membership (24 iterations): 4 of 82,806 inside = 0.00005 (bar 0.01).
+- Determinism: each formula with every remedy at 96x64, rendered, another recipe rendered, then rendered again: identical bytes.
+- Gate: 54 renders at 768x512 in 3.44 s total GPU plus readback (0.01-0.11 s each).
+- led to: C-20261114-10
+
+### T-YYYYMMDD-n · date · harness · env · passed/total`, then one line per failing case (`id · kind · class · what the evidence showed`), then `led to:` (L-, C-, R- ids or none). Newest first. Budget 150 lines; archive older runs to `TESTS-ARCHIVE.md`.
 
 ## Runs
 

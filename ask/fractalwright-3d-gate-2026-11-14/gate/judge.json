@@ -1,0 +1,427 @@
+{
+ "judge": "claude-opus-5-5 subagents, blind, both orders in different calls; split = tie",
+ "resolved": {
+  "menger-close|aa": {
+   "1": "base",
+   "2": "rem"
+  },
+  "menger-close|trap": {
+   "1": "base",
+   "2": "base"
+  },
+  "mandelbulb-close|camera": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "quatjulia-close|all": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "mandelbulb-whole|shadow": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "quatjulia-close|aa": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "mandelbulb-close|dof": {
+   "1": "base",
+   "2": "base"
+  },
+  "quatjulia-whole|shadow": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "menger-whole|all": {
+   "1": "rem",
+   "2": "base"
+  },
+  "menger-whole|trap": {
+   "1": "base",
+   "2": "base"
+  },
+  "menger-whole|camera": {
+   "1": "rem",
+   "2": "base"
+  },
+  "quatjulia-whole|aa": {
+   "1": "rem",
+   "2": "tie"
+  },
+  "mandelbulb-close|ao": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "quatjulia-whole|ao": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "menger-close|fog": {
+   "1": "base",
+   "2": "base"
+  },
+  "quatjulia-close|trap": {
+   "1": "rem",
+   "2": "base"
+  },
+  "quatjulia-whole|dof": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "menger-whole|dof": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "mandelbulb-whole|camera": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "quatjulia-close|ao": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "mandelbulb-whole|fog": {
+   "1": "base",
+   "2": "base"
+  },
+  "mandelbulb-close|fog": {
+   "1": "base",
+   "2": "base"
+  },
+  "mandelbulb-whole|trap": {
+   "1": "rem",
+   "2": "base"
+  },
+  "menger-whole|aa": {
+   "1": "tie",
+   "2": "rem"
+  },
+  "mandelbulb-whole|dof": {
+   "1": "base",
+   "2": "base"
+  },
+  "mandelbulb-whole|aa": {
+   "1": "rem",
+   "2": "tie"
+  },
+  "mandelbulb-close|trap": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "quatjulia-close|camera": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "menger-whole|shadow": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "quatjulia-close|dof": {
+   "1": "base",
+   "2": "rem"
+  },
+  "menger-close|all": {
+   "1": "base",
+   "2": "rem"
+  },
+  "mandelbulb-whole|all": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "quatjulia-close|shadow": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "mandelbulb-whole|ao": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "menger-close|camera": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "quatjulia-close|fog": {
+   "1": "base",
+   "2": "base"
+  },
+  "quatjulia-whole|fog": {
+   "1": "base",
+   "2": "rem"
+  },
+  "mandelbulb-close|shadow": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "quatjulia-whole|trap": {
+   "1": "rem",
+   "2": "base"
+  },
+  "menger-close|shadow": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "menger-close|dof": {
+   "1": "base",
+   "2": "rem"
+  },
+  "menger-close|ao": {
+   "1": "rem",
+   "2": "base"
+  },
+  "quatjulia-whole|camera": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "menger-whole|ao": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "mandelbulb-close|all": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "quatjulia-whole|all": {
+   "1": "rem",
+   "2": "rem"
+  },
+  "menger-whole|fog": {
+   "1": "base",
+   "2": "rem"
+  },
+  "mandelbulb-close|aa": {
+   "1": "tie",
+   "2": "tie"
+  }
+ },
+ "bt": {
+  "mandelbulb-whole": [
+   [
+    "mandelbulb-whole-all.jpg",
+    2.444
+   ],
+   [
+    "mandelbulb-whole-camera.jpg",
+    2.444
+   ],
+   [
+    "mandelbulb-whole-ao.jpg",
+    2.444
+   ],
+   [
+    "mandelbulb-whole-shadow.jpg",
+    2.444
+   ],
+   [
+    "mandelbulb-whole-trap.jpg",
+    0.8
+   ],
+   [
+    "mandelbulb-whole-aa.jpg",
+    0.8
+   ],
+   [
+    "mandelbulb-whole-baseline.jpg",
+    0.634
+   ],
+   [
+    "mandelbulb-whole-dof.jpg",
+    0.263
+   ],
+   [
+    "mandelbulb-whole-fog.jpg",
+    0.263
+   ]
+  ],
+  "mandelbulb-close": [
+   [
+    "mandelbulb-close-camera.jpg",
+    2.224
+   ],
+   [
+    "mandelbulb-close-shadow.jpg",
+    2.224
+   ],
+   [
+    "mandelbulb-close-ao.jpg",
+    2.224
+   ],
+   [
+    "mandelbulb-close-trap.jpg",
+    2.224
+   ],
+   [
+    "mandelbulb-close-all.jpg",
+    2.224
+   ],
+   [
+    "mandelbulb-close-aa.jpg",
+    0.711
+   ],
+   [
+    "mandelbulb-close-baseline.jpg",
+    0.494
+   ],
+   [
+    "mandelbulb-close-dof.jpg",
+    0.229
+   ],
+   [
+    "mandelbulb-close-fog.jpg",
+    0.229
+   ]
+  ],
+  "quatjulia-whole": [
+   [
+    "quatjulia-whole-all.jpg",
+    1.817
+   ],
+   [
+    "quatjulia-whole-shadow.jpg",
+    1.817
+   ],
+   [
+    "quatjulia-whole-dof.jpg",
+    1.817
+   ],
+   [
+    "quatjulia-whole-camera.jpg",
+    1.817
+   ],
+   [
+    "quatjulia-whole-ao.jpg",
+    1.817
+   ],
+   [
+    "quatjulia-whole-aa.jpg",
+    0.551
+   ],
+   [
+    "quatjulia-whole-trap.jpg",
+    0.551
+   ],
+   [
+    "quatjulia-whole-fog.jpg",
+    0.551
+   ],
+   [
+    "quatjulia-whole-baseline.jpg",
+    0.301
+   ]
+  ],
+  "quatjulia-close": [
+   [
+    "quatjulia-close-shadow.jpg",
+    2.014
+   ],
+   [
+    "quatjulia-close-camera.jpg",
+    2.014
+   ],
+   [
+    "quatjulia-close-aa.jpg",
+    2.014
+   ],
+   [
+    "quatjulia-close-all.jpg",
+    2.014
+   ],
+   [
+    "quatjulia-close-ao.jpg",
+    2.014
+   ],
+   [
+    "quatjulia-close-trap.jpg",
+    0.628
+   ],
+   [
+    "quatjulia-close-dof.jpg",
+    0.628
+   ],
+   [
+    "quatjulia-close-baseline.jpg",
+    0.387
+   ],
+   [
+    "quatjulia-close-fog.jpg",
+    0.197
+   ]
+  ],
+  "menger-whole": [
+   [
+    "menger-whole-dof.jpg",
+    2.434
+   ],
+   [
+    "menger-whole-ao.jpg",
+    2.434
+   ],
+   [
+    "menger-whole-shadow.jpg",
+    2.434
+   ],
+   [
+    "menger-whole-aa.jpg",
+    0.801
+   ],
+   [
+    "menger-whole-fog.jpg",
+    0.801
+   ],
+   [
+    "menger-whole-camera.jpg",
+    0.801
+   ],
+   [
+    "menger-whole-all.jpg",
+    0.801
+   ],
+   [
+    "menger-whole-baseline.jpg",
+    0.64
+   ],
+   [
+    "menger-whole-trap.jpg",
+    0.264
+   ]
+  ],
+  "menger-close": [
+   [
+    "menger-close-shadow.jpg",
+    3.0
+   ],
+   [
+    "menger-close-camera.jpg",
+    3.0
+   ],
+   [
+    "menger-close-aa.jpg",
+    1.0
+   ],
+   [
+    "menger-close-all.jpg",
+    1.0
+   ],
+   [
+    "menger-close-ao.jpg",
+    1.0
+   ],
+   [
+    "menger-close-dof.jpg",
+    1.0
+   ],
+   [
+    "menger-close-baseline.jpg",
+    1.0
+   ],
+   [
+    "menger-close-trap.jpg",
+    0.333
+   ],
+   [
+    "menger-close-fog.jpg",
+    0.333
+   ]
+  ]
+ }
+}

@@ -1,0 +1,214 @@
+{
+ "askwright": 1,
+ "id": "fractalwright-3d-gate-2026-11-14",
+ "title": "fractalwright: 3D look gate",
+ "context": "",
+ "asked_by": "fractalwright 3D gate agent",
+ "product": "Claude Code",
+ "working_dir": "D:/m4bwa/Claude/Projects/Ai/fractalwright",
+ "media_roots": [],
+ "project": {
+  "name": "fractalwright",
+  "path": "D:/m4bwa/Claude/Projects/Ai/fractalwright"
+ },
+ "questions": [
+  {
+   "id": "keep",
+   "kind": "multi",
+   "title": "Which 3D renders would you keep",
+   "question": "Which of these 3D renders would you keep as finished pictures?",
+   "background": "fw.py 3d raymarches distance-estimated fractals in headless Edge. 54 renders (3 formulas x 2 views x baseline, 7 remedies alone, all together) went through blind artwright-judge pairs. These nine are the judge's best per formula. Full sheets: D:/m4bwa/Claude/Projects/Ai/fractalwright/ask/fractalwright-3d-gate-2026-11-14/gate/sheet-mandelbulb-whole.jpg, D:/m4bwa/Claude/Projects/Ai/fractalwright/ask/fractalwright-3d-gate-2026-11-14/gate/sheet-mandelbulb-close.jpg, D:/m4bwa/Claude/Projects/Ai/fractalwright/ask/fractalwright-3d-gate-2026-11-14/gate/sheet-quatjulia-whole.jpg, D:/m4bwa/Claude/Projects/Ai/fractalwright/ask/fractalwright-3d-gate-2026-11-14/gate/sheet-quatjulia-close.jpg, D:/m4bwa/Claude/Projects/Ai/fractalwright/ask/fractalwright-3d-gate-2026-11-14/gate/sheet-menger-whole.jpg, D:/m4bwa/Claude/Projects/Ai/fractalwright/ask/fractalwright-3d-gate-2026-11-14/gate/sheet-menger-close.jpg.",
+   "why": "The gate ships 3D as a normal route only if you keep at least one render.",
+   "look_for": [
+    "Does the shape read as a solid object with depth?",
+    "Is the colour pleasant or the magenta 'iteration' look?",
+    "Noise, speckle or blurred-away detail?",
+    "Full-size files: D:/m4bwa/Claude/Projects/Ai/fractalwright/ask/fractalwright-3d-gate-2026-11-14/gate/renders/"
+   ],
+   "media": [
+    {
+     "src": "gate/renders/mandelbulb-whole-all.jpg",
+     "alt": "Mandelbulb, whole, all remedies",
+     "label": "Mandelbulb, whole, all remedies",
+     "option": "mandelbulb-whole-all"
+    },
+    {
+     "src": "gate/renders/mandelbulb-close-all.jpg",
+     "alt": "Mandelbulb, close, all remedies",
+     "label": "Mandelbulb, close, all remedies",
+     "option": "mandelbulb-close-all"
+    },
+    {
+     "src": "gate/renders/mandelbulb-whole-shadow.jpg",
+     "alt": "Mandelbulb, whole, soft shadows only",
+     "label": "Mandelbulb, whole, soft shadows only",
+     "option": "mandelbulb-whole-shadow"
+    },
+    {
+     "src": "gate/renders/quatjulia-close-all.jpg",
+     "alt": "Quaternion Julia, close, all remedies",
+     "label": "Quaternion Julia, close, all remedies",
+     "option": "quatjulia-close-all"
+    },
+    {
+     "src": "gate/renders/quatjulia-whole-all.jpg",
+     "alt": "Quaternion Julia, whole, all remedies",
+     "label": "Quaternion Julia, whole, all remedies",
+     "option": "quatjulia-whole-all"
+    },
+    {
+     "src": "gate/renders/quatjulia-close-camera.jpg",
+     "alt": "Quaternion Julia, close, composed camera",
+     "label": "Quaternion Julia, close, composed camera",
+     "option": "quatjulia-close-camera"
+    },
+    {
+     "src": "gate/renders/menger-close-camera.jpg",
+     "alt": "Menger, close, composed camera",
+     "label": "Menger, close, composed camera",
+     "option": "menger-close-camera"
+    },
+    {
+     "src": "gate/renders/menger-whole-shadow.jpg",
+     "alt": "Menger, whole, soft shadows",
+     "label": "Menger, whole, soft shadows",
+     "option": "menger-whole-shadow"
+    },
+    {
+     "src": "gate/renders/menger-close-shadow.jpg",
+     "alt": "Menger, close, soft shadows",
+     "label": "Menger, close, soft shadows",
+     "option": "menger-close-shadow"
+    }
+   ],
+   "media_layout": "gallery",
+   "options": [
+    {
+     "id": "mandelbulb-whole-all",
+     "label": "Mandelbulb, whole, all remedies",
+     "media": [
+      {
+       "src": "gate/renders/mandelbulb-whole-all.jpg",
+       "alt": "Mandelbulb, whole, all remedies"
+      }
+     ]
+    },
+    {
+     "id": "mandelbulb-close-all",
+     "label": "Mandelbulb, close, all remedies",
+     "media": [
+      {
+       "src": "gate/renders/mandelbulb-close-all.jpg",
+       "alt": "Mandelbulb, close, all remedies"
+      }
+     ]
+    },
+    {
+     "id": "mandelbulb-whole-shadow",
+     "label": "Mandelbulb, whole, soft shadows only",
+     "media": [
+      {
+       "src": "gate/renders/mandelbulb-whole-shadow.jpg",
+       "alt": "Mandelbulb, whole, soft shadows only"
+      }
+     ]
+    },
+    {
+     "id": "quatjulia-close-all",
+     "label": "Quaternion Julia, close, all remedies",
+     "media": [
+      {
+       "src": "gate/renders/quatjulia-close-all.jpg",
+       "alt": "Quaternion Julia, close, all remedies"
+      }
+     ]
+    },
+    {
+     "id": "quatjulia-whole-all",
+     "label": "Quaternion Julia, whole, all remedies",
+     "media": [
+      {
+       "src": "gate/renders/quatjulia-whole-all.jpg",
+       "alt": "Quaternion Julia, whole, all remedies"
+      }
+     ]
+    },
+    {
+     "id": "quatjulia-close-camera",
+     "label": "Quaternion Julia, close, composed camera",
+     "media": [
+      {
+       "src": "gate/renders/quatjulia-close-camera.jpg",
+       "alt": "Quaternion Julia, close, composed camera"
+      }
+     ]
+    },
+    {
+     "id": "menger-close-camera",
+     "label": "Menger, close, composed camera",
+     "media": [
+      {
+       "src": "gate/renders/menger-close-camera.jpg",
+       "alt": "Menger, close, composed camera"
+      }
+     ]
+    },
+    {
+     "id": "menger-whole-shadow",
+     "label": "Menger, whole, soft shadows",
+     "media": [
+      {
+       "src": "gate/renders/menger-whole-shadow.jpg",
+       "alt": "Menger, whole, soft shadows"
+      }
+     ]
+    },
+    {
+     "id": "menger-close-shadow",
+     "label": "Menger, close, soft shadows",
+     "media": [
+      {
+       "src": "gate/renders/menger-close-shadow.jpg",
+       "alt": "Menger, close, soft shadows"
+      }
+     ]
+    }
+   ],
+   "guess": {
+    "options": [
+     "mandelbulb-whole-all",
+     "quatjulia-close-all"
+    ],
+    "why": "The judge ranked 'all' top or tied-top on both; they look most like finished objects.",
+    "confidence": "low"
+   }
+  },
+  {
+   "id": "ship",
+   "kind": "choice",
+   "title": "How 3D ships",
+   "question": "Should 3D ship as a normal route, experimental, or be left out?",
+   "background": "Judge, remedy vs baseline over 6 formula-views (win/loss/tie, ties include order splits): shadow 6/0/0, ao 5/0/1, camera 5/0/1, all 4/0/2, dof 2/2/2, aa 1/0/5, trap 1/2/3, fog 0/4/2. Renders take 0.02 to 0.11 s each on the RTX 5060 Ti. Notes: ai-docs/notes/2026-11-14-3d-gate.md.",
+   "why": "Sets the README and SKILL.md status of fw.py 3d and whether the remedied stack becomes its default.",
+   "options": [
+    {
+     "id": "normal",
+     "label": "Normal route, remedied stack (shadow, AO, composed camera) as default"
+    },
+    {
+     "id": "experimental",
+     "label": "Ship marked experimental"
+    },
+    {
+     "id": "out",
+     "label": "Leave 3D out"
+    }
+   ],
+   "guess": {
+    "option": "normal",
+    "why": "The judge preferred shadow, AO and the composed camera on nearly every view and never preferred the baseline over 'all'; fog and DOF as tuned now should stay off by default.",
+    "confidence": "low"
+   }
+  }
+ ]
+}

@@ -836,6 +836,7 @@ def cmd_doctor(a):
     if edge.exists():
         browsers.append("msedge")
     rows.append(("browser", ", ".join(sorted(set(browsers))) or "none on PATH", "for the playwright route"))
+    rows.append(("3d", "browser route only", "fw.py 3d needs the playwright route above; no NumPy fallback for 3D"))
     rows.append(("ffmpeg", shutil.which("ffmpeg") or "missing", "video commands: zoom, morph, loop (H.264 encode), flashcheck"))
     if a.json:
         print(json.dumps([{"name": n, "value": v, "role": r} for n, v, r in rows], indent=2))
@@ -1501,6 +1502,8 @@ def main(argv=None):
     fw_gen.register(sub, EXPLAIN)
     import fw_audio  # song -> frame-stepped video; live page at /audio on serve
     fw_audio.register(sub)
+    import fw_3d  # 3D distance-estimator fractals, browser route only
+    fw_3d.register(sub, EXPLAIN)
     a = ap.parse_args(argv)
     return a.fn(a)
 

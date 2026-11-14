@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-10 · 2026-11-14 · fw.py 3d: raymarched DE fractals, look gate (Step E)
+- because: T-20261114-10, user request (Step E), references/07-3d.md sections 2-5, ai-docs/notes/2026-11-14-3d-gate.md
+- files: scripts/fw_3d.py (new), scripts/page/fractal3d.frag (new), scripts/fw.py (`main` registers it; one doctor row), tests/test_3d.py (new), skills/fractalwright/SKILL.md (Step 2e), README.md, CODEMAP.md, ask/fractalwright-3d-gate-2026-11-14 (new)
+- Own GLSL sphere tracer (Hart 1996) with Mandelbulb p8, Mandelbox, quaternion Julia, Menger, a box-fold/bulb hybrid; remedies ao, shadow, fog, trap, dof, aa, camera as switches. Browser route only, no NumPy fallback. Blind judge: shadow, AO and the composed camera beat the baseline; fog lost; status pending Mark's gate verdict.
+
 ### C-20261114-9 · 2026-11-14 · audio: song to fractal video, live audio page (Step D batch 4b)
 - because: T-20261114-9, user request (Step D batch 4b), references/09 sections 3, 4, 5.3 and 8b
 - files: scripts/fw_audio.py (new), scripts/page/audio.html (new), scripts/fw.py (`main` registers fw_audio), scripts/fw_serve.py (GET /audio), tests/test_audio.py (new), skills/fractalwright/SKILL.md (Step 2d), README.md, CODEMAP.md
