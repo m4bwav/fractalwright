@@ -15,6 +15,11 @@ Entry shape: `### T-20261114-10 · 2026-11-14 · unittest (tests/) · Windows, P
 
 ## Runs
 
+### T-20261114-11 · 2026-11-14 · unittest (tests/) + live smoke · Windows, Python 3.14.6, ComfyUI on loopback 8199 (RTX 5060 Ti) · 93/93
+- tests/test_ai.py: workflow builder (seed, denoise, cfg 1, 9 steps, wiring, no Krea or SAM 3, bad denoise refused); residual smoothing (alpha 1 = identity, constant offset kept, flicker cut on noise); no-host fallback with FW_COMFY_HOSTS=""; fake ComfyUI echo server end to end (_ai.mp4, _ai_frames, _ai.json interpreted); broken host gives status failed and keeps the exact video.
+- Live smoke: `fw.py zoom seahorse --size 512x512 --fps 12 --duration 1 --to-width 0.002`, 12 frames, Z-Image Turbo denoise 0.3 seed 7 alpha 0.5: 62.7 s total (61.7 s generate). Flicker (mean abs neighbour diff, 0-255): exact 69.0, styled raw 54.3, styled smoothed 57.3. Flashcheck on smoke_ai.mp4: 2 swings/s, pass.
+- led to: C-20261114-11
+
 ### T-20261114-10 · 2026-11-14 · evergreen-tester (routing proxy: subagent picks from a 9-skill catalog file; not the main loop) · Windows · 12/13, 13/13 after fix
 - trigger-visualizer · trigger · undertrigger · picked none: description listed stills only; zoom and flame picked fractalwright on the bare words "animate" and "wallpaper" (testers flagged both as weak).
 - Passed: triggers zoom, identify, coastline, flame; decoys shader, master, mesh, critique, image (1 run each, routing proxy). After the description fix: visualizer (reworded prompt) picks fractalwright; new decoy-musicvideo picks comfyui-gen.

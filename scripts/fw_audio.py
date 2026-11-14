@@ -423,18 +423,12 @@ def cmd_audio(a):
                         "audio": {"file": song.name, "sha256": _sha256(song), "envelopes": src, "bands": a.bands},
                         "flash": {"damped_frames": lim.damped, "check": fc}, "streams_s": dur}
     notes = [f"envelopes: {src}", f"route: {route}"] + ([rnote] if rnote else [])
-    if a.ai:
-        host = fw.probe_comfy()
-        if host:
-            rec["ai_pass"] = {"status": "pending-not-implemented", "host": host}
-            notes.append(f"AI styling: ComfyUI at {host} reachable; the pass is not implemented yet, exact video kept")
-        else:
-            notes.append("AI styling: no ComfyUI host reachable, exact video kept")
-    else:
-        notes.append("AI styling off (--no-ai): exact video")
+    import fw_ai
+    fw_ai.apply(rec, notes, fdir, out, a.fps, ai=a.ai)
     rec["notes"] = notes
     rp = out.with_suffix(".json")
     rp.write_text(json.dumps(rec, indent=2) + "\n", encoding="utf-8")
+    fw_ai.write_ai_recipe(rec, out)
     print(f"wrote {out}, {rp} and {n} frames")
     for s in notes:
         print("note:", s)
