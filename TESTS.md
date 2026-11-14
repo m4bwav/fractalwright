@@ -8,6 +8,12 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261114-6 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2, Playwright + Edge headless (ANGLE D3D11, RTX 5060 Ti) · 51/51
+- Browser route vs NumPy, 320x240 full views, 300 iterations, mean abs diff per channel: mandelbrot 0.144, julia 0.023, tricorn 0.052, multibrot-3 0.148 (bar 1.0); burning ship 2.726 (bar 3.0), because NumPy itself run in float32 differs from float64 by 2.628 on the same view (abs folds amplify rounding).
+- Page: zoom 4x about a point and pan by script, hash read, Export over POST, NumPy render of the exported recipe vs the page canvas: 0.251 (bar 1.5). Hash -> recipe -> hash identical for 6 hashes, including a 33-digit centre and rotation.
+- Routing: seahorse (width 1e-4) with `--route browser` at 96x64 goes to NumPy (the first rule, pixel under 1e-6 of the coordinate, let it through at 96 px; the width rule 1e-3 catches it). Server refuses 0.0.0.0, a LAN address, a hostname and ""; `fw.py serve --host 0.0.0.0` exits 2.
+- led to: C-20261114-6
+
 ### T-20261114-5 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2 · 43/43 (after rebase on batch 3)
 - Deep zoom (fw_deep.py, perturbation with rebasing, Decimal reference orbit): width 1e-6 at 96x64, 2000 iterations, mean diff 0.405 vs plain NumPy (bar 1.0). Width 1e-20 and 1e-30 at 24x16, 3000 iterations: 384/384 pixels give the same iteration count as direct Decimal iteration (bar 99%, no wrong blob over 4 px); counts 1164-1978 and 2078-2815.
 - Timings: perturbation 0.03 s (1e-20) and 0.04 s (1e-30) for 384 px; direct Decimal 0.44 s and 0.74 s. At 1e-6, 96x64: plain 0.03 s, perturbation 0.13 s.

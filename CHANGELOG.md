@@ -4,6 +4,10 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-6 · 2026-11-14 · explorer: serve, export, render --route browser (Step D batch 4a)
+- because: T-20261114-6, user request (Step D batch 4a), design.md section 2 (headless browser first accelerator)
+- files: scripts/fw_serve.py (new), scripts/page/fractal.frag (new), scripts/page/explorer.html (new), scripts/fw.py (`serve`, `export`, `render --route`, `doctor` playwright row), tests/test_serve.py (new), skills/fractalwright/SKILL.md (Step 2a), README.md, CODEMAP.md
+- A WebGL2 explorer served on 127.0.0.1 only, with the full view in the URL hash, Export (recipe JSON) and Render exact (server NumPy or perturbation PNG). The browser route renders through headless Edge with the page's own shader and falls back to NumPy for views float32 cannot hold. Recipe schema unchanged; exported recipes record `render.route: browser`.
 ### C-20261114-5 · 2026-11-14 · deep zoom by perturbation (fw_deep.py)
 - because: T-20261114-5, user request (deep-zoom path)
 - files: scripts/fw_deep.py (new), scripts/fw.py (`render` routing and `--deep`), tests/test_deep.py (new), references/03-deep-zoom.md (sections 2.3 and 4), CODEMAP.md

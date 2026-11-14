@@ -14,6 +14,7 @@ The banner above is `fw.py render seahorse --palette ultra --size 1536x640`. Its
 - **Measurements with error bars.** Box-counting dimension with a verdict on the fit range, lacunarity, IFS similarity dimension from scale ratios, profile and heightmap roughness (Hurst exponent), Katz, and the area of the Mandelbrot set. Each is tested against a shape whose answer is known.
 - **Plain explanations.** `fw.py explain <family>` prints the formula and how it is drawn, for a reader who has not met it before.
 - **Sheets and video.** `fw.py sheet` lays variations of one parameter or palette out on a labelled contact sheet with each tile's recipe. `zoom`, `morph` and `loop` write exact frames, an H.264 mp4 and an animation recipe; `flashcheck` counts luminance swings per second against the three-per-second photosensitivity limit.
+- **Explorer.** `fw.py serve` opens a WebGL2 page on 127.0.0.1: pan, zoom, pinch, five formulas, cosine palettes. The URL is a share link, Export writes the recipe, and Render exact draws the same view in float64 on the server. `render --route browser` uses the same shader headless.
 - **Identify.** `fw.py identify` lists hand-built features of a preset, recipe, image or Julia `c`, for example whether a Julia set is connected and why.
 
 ## Install
@@ -38,6 +39,9 @@ python scripts/fw.py sheet julia-rabbit --palettes classic,fire,ocean,ultra -o s
 python scripts/fw.py zoom seahorse --from-width 3 --to-width 1e-4 --size 640x360 --duration 8 -o zoom.mp4
 python scripts/fw.py loop julia-rabbit --circle -0.123,0.745,0.02 --phase --size 640x360 -o loop.mp4
 python scripts/fw.py flashcheck zoom.mp4
+python scripts/fw.py serve --open
+python scripts/fw.py export "http://127.0.0.1:8765/#f=mandelbrot&cx=-0.75&cy=0&w=3.5" -o view.json
+python scripts/fw.py render view.json --route browser -o view.png
 ```
 
 ## Status
