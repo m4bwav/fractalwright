@@ -1494,6 +1494,8 @@ def main(argv=None):
     fw_extra.register(sub, EXPLAIN)
     import fw_gen  # flame, lsystem, attractor
     fw_gen.register(sub, EXPLAIN)
+    import fw_neighbours  # reaction-diffusion, cellular automata, tilings, Kleinian limit sets
+    fw_neighbours.register(sub, EXPLAIN)
     import fw_audio  # song -> frame-stepped video; live page at /audio on serve
     fw_audio.register(sub)
     import fw_3d  # 3D distance-estimator fractals, browser route only

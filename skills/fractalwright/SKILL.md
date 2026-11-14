@@ -42,6 +42,10 @@ Read `evergreen.json` at the repository root. If `contradiction` is set or today
 
 `FW flame [sierpinski|swirl-sierpinski|recipe.json] -o f.png [--seed N --tries 24]` (chaos game over xforms, 12 Draves-Reckase variations, final xform, colour blending, log-density with gamma and vibrancy, supersample 2, density estimation; no preset = seeded random flames scored on coverage, best kept). `FW lsystem koch|koch-snowflake|dragon|hilbert|sierpinski-arrowhead|plant-a|plant-b|plant-d|plant-e|plant-f|plant-stochastic -o p.png [--n N --seed N]` writes PNG, SVG and recipe. `FW attractor clifford|dejong|icon|icon-3|lorenz -o a.png [--params a,b,c,d] [--search]` (density shading; search ranks random Clifford or de Jong sets by Sprott's rule). Every command writes a recipe JSON that redraws it.
 
+## Step 2f: neighbours (not all fractal)
+
+`FW rd coral|mitosis|default [--f F --k K --steps N --seed N]` (Gray-Scott). `FW ca 90|30|B3/S23 [--steps N]` (elementary rule or Life-like). `FW tiling square|triangle|hex|penrose [--n N]`. `FW kleinian apollonian|grandma [--ta T --tb T]` (Apollonian gasket, or a two-generator limit set from Grandma's recipe). Each writes a PNG and recipe. Say plainly that reaction-diffusion and tilings are not fractals; `FW measure box` on a tiling says "not fractal" ([references/12-neighbours.md](../../references/12-neighbours.md)).
+
 ## Step 2e: 3D (pending Mark's gate verdict)
 
 `FW 3d render mandelbulb|mandelbox|quatjulia|menger|hybrid [--view whole|close] [--remedy ao|shadow|fog|trap|dof|aa|camera|all] -o x.png` (sphere-traced DE in headless Edge; writes the recipe with the camera made explicit). `FW 3d recipe ...` prints the recipe; `FW 3d gate -o DIR` renders the gate matrix and sheets. Browser route only, no NumPy fallback. Judge so far: turn on shadow, ao and camera; leave fog and dof off unless asked. Status pending Mark's verdict on ask/fractalwright-3d-gate-2026-11-14.

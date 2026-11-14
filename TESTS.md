@@ -11,6 +11,13 @@ Entry shape: `### T-20261114-10 · 2026-11-14 · unittest (tests/) · Windows, P
 - Gate: 54 renders at 768x512 in 3.44 s total GPU plus readback (0.01-0.11 s each).
 - led to: C-20261114-10
 
+### T-20261114-12 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2 · 104/104 (11 new in tests/test_neighbours.py)
+- Rule 90, 1023 steps: box D 1.5409, error -0.044 against log3/log2 over 2.11 decades (bar 0.06); 255 steps hold exactly 3^8 cells.
+- Apollonian gasket, circles to half a pixel: 2048 px D 1.30664 (+0.0010), 1024 px 1.30728 (+0.0016) against 1.3056867 (bar 0.01).
+- Tilings at 1024 px: verdict "not fractal" for square (spread 0.65), triangle (0.76), hex (0.70), penrose (0.79); slope drifts ~1.0 to 1.66-1.89.
+- Penrose thick:thin ratio within 0.01 of phi at 8 steps. Grandma ta = tb = 2: commutator trace -2 to 1e-9.
+- Gray-Scott: same seed identical array, other seed differs; recipe JSON redraws identical PNG bytes; 128 px 5000 steps B std 0.142/0.117/0.143 (bar > 0.05). B = 1 seeds gave NaN at 64 px: seeds now A 0.5 B 0.25.
+
 ### T-YYYYMMDD-n · date · harness · env · passed/total`, then one line per failing case (`id · kind · class · what the evidence showed`), then `led to:` (L-, C-, R- ids or none). Newest first. Budget 150 lines; archive older runs to `TESTS-ARCHIVE.md`.
 
 ## Runs
