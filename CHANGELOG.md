@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-12 · 2026-11-14 · neighbours: rd, ca, tiling, kleinian
+- because: T-20261114-12, user request (Mark's scope answers: all neighbours in), references/12-neighbours.md
+- files: scripts/fw_neighbours.py (new), scripts/fw.py (`main` registers it), tests/test_neighbours.py (new), references/12-neighbours.md (new), skills/fractalwright/SKILL.md (Step 2f), CODEMAP.md
+- Gray-Scott with Karl Sims' presets, elementary and Life-like CA, regular and Penrose P3 tilings (measure says not fractal), Apollonian gasket and Grandma's recipe limit sets. Each writes a PNG and recipe.
+
 ### C-20261114-11 · 2026-11-14 · AI styling pass for video (replaces the pending stub)
 - because: T-20261114-11, ai-docs/plans/design.md (Mark's ruling: AI styling on by default for video), references/10-ai-models.md
 - files: scripts/fw_ai.py (new), scripts/fw.py (`write_video`, `--ai` help), scripts/fw_audio.py (AI block), tests/test_ai.py (new), tests/test_fw.py (old stub test removed), skills/fractalwright/SKILL.md (Video), CODEMAP.md
