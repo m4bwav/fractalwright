@@ -110,8 +110,8 @@ construction, so outputs tile.
 | fBm graph (1D trace), H in (0,1) | D = 2 - H (Hausdorff and box, a.s.) | [S11] [S12] |
 | fBm 1D power spectrum | S(f) ~ 1/f^(2H+1), i.e. beta = 2H + 1 (inferred from "white noise filtered by w^(-H-1/2)") | [S11] |
 | 1D spectral -> D | D = (5 - beta)/2 (consistent with the two rows above) | [S13] |
-| fBm surface z(x,y) | D = 3 - H **(unverified, standard Voss/Saupe result; not on fetched pages)** |  |
-| 2D surface spectrum (radial) | amplitude ~ 1/k^(H+1), so power beta_2D = 2H + 2, D = (8 - beta_2D)/2 **(unverified)** |  |
+| fBm surface z(x,y) | D = 3 - H = profile D + 1 (checked by measurement: profile cuts of a 1024^2 synthetic surface return H within 0.021; differential cube counting read 0.1-0.3 low, so the D side rests on the spectral relation) | Turcotte ch. 7.8; fw.py tests |
+| 2D surface spectrum (radial) | amplitude ~ 1/k^(H+1), so power per mode beta_2D = 2H + 2 = profile beta + 1, D = (8 - beta_2D)/2 (checked by measurement: radial minus profile beta 0.96-1.01 over 4 seeds and H 0.3-0.8; fit every mode, integer-k bin averages read H 0.04 low) | Turcotte ch. 7.8; fw.py tests |
 | fBm covariance | E[B(t)B(s)] = 1/2(|t|^2H + |s|^2H - |t-s|^2H) | [S11] |
 | Octave fBm | gain G = L^(-H) | [S4] |
 | Coastline of Britain | D ~ 1.25 (Mandelbrot 1967) **(unverified this session)** |  |

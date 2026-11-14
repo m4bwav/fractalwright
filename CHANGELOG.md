@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-3 · 2026-11-14 · measure v2 and identify v1 (book verdicts)
+- because: R-20261114-3, T-20261114-3, user request (continue prompt Step D batch 2)
+- files: scripts/fw.py (measure v2, self-affine, kronecker, identify blocks), tests/test_fw.py, skills/fractalwright/SKILL.md (Steps 1, 3, 4), references/08-measuring.md (sections 1, 2, 6, 7, 8, 10, 12), references/06-noise-natural.md (section 7)
+- `measure box` now fits 16 geometric box sizes averaged over 8 seeded offsets, reports decades, local slopes and curvature, removes 1-2 px specks with a warning, and gives a verdict that refuses "fractal" under two decades or with a drifting local slope. New: `measure lacunarity|ifs|profile|katz|heightmap`, `identify`, the `kronecker` render family with three presets. Two unverified rows in references/06 section 7 are now checked by measurement.
+
 ### C-20261114-2 · 2026-11-14 · fw.py first batch: doctor, explain, render, measure, palette
 - because: user request (continue prompt Step D), T-20261114-2
 - files: scripts/fw.py, tests/test_fw.py, skills/fractalwright/SKILL.md
