@@ -9,7 +9,7 @@ Topic: Fractal rendering, deep zoom, colouring, measuring and audio-reactive vis
 - The creation pass ran as Step A of the build (2026-11-14): eleven reference files under [references/](references/) with dated sources. They are the research record; this file indexes them.
 - Escape-time maths and smooth colouring are settled (references/02). Deep zoom past ~1e13 needs perturbation with series approximation or bilinear approximation (references/03); fw.py stops at float64.
 - Render core measured in [ai-docs/plans/design.md](ai-docs/plans/design.md): NumPy float64 is the reference; headless Edge WebGL2 and moderngl are optional accelerators; float32 fails at width 1e-4.
-- Known measuring values and their honest error bars: references/08. Proven in tests: Sierpinski, Koch, Mandelbrot area, mirror symmetry (TESTS.md).
+- Known measuring values and their honest error bars: references/08. Proven in tests: Sierpinski, Koch, Mandelbrot area, mirror symmetry, Kronecker grids, decoys (spiral, random discs), lacunarity pair, fBm profile and surface H (TESTS.md).
 - Moving: AI styling models (references/10), audio-visual tools and MilkDrop successors (references/09), renderer releases (references/11).
 
 ## Open questions
@@ -58,6 +58,14 @@ Best sources (primary first): <official docs / changelog / official forums of th
 ## Findings log
 
 Newest first. One entry per material finding; a quiet refresh gets one entry saying so. `Track` is subject, tooling, practice, or testing.
+
+### R-20261114-3 · 2026-11-14 · Book rules for measure and identify
+- Summary: seven books read into technique-harvest notes gave the measure/identify rules built in C-20261114-3. Falconer, *Fractal Geometry* (2nd ed.): speck removal, similarity dimension as an upper bound under overlap, never identify by D alone. Mandelbrot, *The Fractal Geometry of Nature*: lacunarity as a second number. Turcotte, *Fractals and Chaos in Geology and Geophysics*: profile and heightmap path (spectral slope, semivariogram, radial spectrum), no box counting on profiles. Rosenberg, *Fractal Dimensions of Networks*: fit range in decades, two-decade minimum, 15+ sizes over random offsets, local slopes and curvature, spiral and random-disc decoys. Feldman, *Chaos and Fractals*: coarse-box bias, Julia connectedness from the orbit of 0. Steeb, *The Nonlinear Workbook*: Kronecker grid family as exact inputs. Banerjee et al., *Fractal Patterns with MATLAB*: Katz dimension.
+- Track: practice
+- Sources: technique-harvest ai-docs/books/<slug>/notes.md for each book (chapters cited there)
+- Magnitude: moderate (new commands, verdict rules)
+- Measured, not taken on trust: radial beta = profile beta + 1 and D = 3 - H held on synthetic fBm (T-20261114-3). Not built (book rule, unverified): Rosenberg's 0.8-0.9 correction and N/10 point rule, sandbox estimator, Turcotte's log-normal skew flag.
+- Applied: C-20261114-3
 
 ### R-20261114-1 · 2026-11-14 · Creation pass
 - Summary: Step A research subagents wrote references/01-11 (history, escape-time, deep zoom, IFS and flames, L-systems and attractors, noise, 3D, measuring, audio visuals, AI models, tools and prior art), each with dated sources; the measured render core is ai-docs/plans/design.md. Cost not recorded per track (subagent runs).

@@ -19,7 +19,10 @@ Promote [recalled] rows to [checked] before using them as a release gate.
 
 Ordering for any measure: D2 <= D1 <= D0 (box). For self-similar sets satisfying the open set
 condition (Sierpinski, Koch, Cantor, Menger) Hausdorff = box = similarity dimension log N / log(1/r),
-so those are clean tests. [recalled: Falconer, *Fractal Geometry*, 3rd ed., Wiley 2014, ch. 2-3, 9]
+so those are clean tests. [checked: Falconer, *Fractal Geometry*, 2nd ed., Wiley 2003, ch. 2-3, 9]
+For an IFS of similarities with ratios r_i the similarity dimension is the root s of sum r_i^s = 1
+(`fw.py measure ifs --ratios`). It equals the Hausdorff dimension only when the pieces do not overlap;
+with overlap it is an upper bound. [checked: Falconer 2nd ed. ch. 9.2]
 
 ## 2. Box counting
 
@@ -41,11 +44,20 @@ box_dimension(mask, sizes=None, fit=None):
 ```
 
 Rules taken from the literature:
-- Power law needs a range of box sizes over well more than one decade; Jones-Smith and Mathur
-  argued one to two orders of magnitude is the minimum and that Pollock analyses lacked it.
+- Power law needs a fit range of at least two decades (log10 of largest over smallest box) before
+  any "fractal" verdict; one to two decades is a descriptor only. Jones-Smith and Mathur made the
+  same point against the Pollock analyses. [book rule: Rosenberg, *Fractal Dimensions of Networks*, ch. 6.1]
+- Use 15 or more box sizes, each averaged over random grid offsets (seeded), and report the
+  local-slope curve; a drifting local slope means no single scaling range. Random discs and
+  spirals give a convincing slope over a short range and must not pass. [book rule: Rosenberg ch. 6.1, 6.4;
+  fw.py measured: spiral spread 1.02, random discs 0.53, fractals 0.05-0.29]
+- Coarse boxes bias D low (a line read 0.93, a filled disc 1.88 at 1024 px); never trust a fit over
+  three or four coarse sizes. [book rule: Feldman, *Chaos and Fractals*, ch. 18]
+- Remove specks (1-2 pixel components) before counting and warn: 3000 specks on a Koch curve moved
+  D from 1.258 to 1.176. A dust (most pixels isolated) keeps its points. [checked: Falconer 2nd ed. ch. 3.2; measured in tests]
   [checked: https://www.nature.com/articles/nature05398 ; summary https://plus.maths.org/content/rollicking-pollock-debate]
 - Small boxes saturate (every box on a 1-px line is filled, slope drifts to 1 or 2); large boxes
-  have too few counts. Report the plateau of local slopes, not just one global fit. [recalled: Falconer ch. 3]
+  have too few counts. Report the plateau of local slopes, not just one global fit. [checked: Falconer 2nd ed. ch. 3]
 - Grid offset (box placement) changes N by tens of percent at large s; minimising over offsets
   or averaging reduces bias. [recalled: standard practice; see Foroutan-pour et al., Appl. Math. Comput. 105 (1999) 195]
 - Thresholding a picture: decide what "the set" is. For an escape-time render, the boundary
@@ -108,6 +120,14 @@ Plotnick et al., Landscape Ecology 8 (1993) 201]. NumPy: integral image makes it
 
 R/S: split series into windows of length n, R/S averaged, H = slope of log(R/S) vs log n.
 DFA is more robust to trends. For a self-affine graph, box dimension D = 2 - H.
+Profiles and heightmaps are self-affine: measure them with the spectral slope (beta = 2H + 1) and the
+semivariogram (gamma(l) ~ l^(2H)), never with square boxes (`fw.py measure profile`, `measure heightmap`;
+`measure box` refuses a numbers file). Semivariogram for walks (1 < beta < 3); R/S or DFA for noises.
+[book rule: Turcotte, *Fractals and Chaos in Geology and Geophysics*, ch. 7; recovery measured, see section 7]
+Katz dimension of a sampled curve: log10(n) / (log10(n) + log10(d / L)), L the length, d the largest
+distance from the first point, n = L / mean step (`fw.py measure katz`). Exact on a Koch polyline, about
+1.03 on any fBm profile whatever its H: a cheap roughness number, not D. [book rule: Banerjee et al.,
+*Fractal Patterns with MATLAB*, ch. 1; behaviour measured]
 [recalled: Hurst 1951; Peng et al., Phys. Rev. E 49 (1994) 1685 (DFA); Mandelbrot, *The Fractal Geometry of Nature*, 1982]
 Use for fractional Brownian terrain profiles, coastlines read as heights, audio.
 
@@ -125,7 +145,10 @@ Use for fractional Brownian terrain profiles, coastlines read as heights, audio.
 | Mandelbrot area | ~1.50659177 +- 0.00000008 (pixel count) ; also cited 1.5065918849 +- 2.8e-9 | area | pixel count at 4096^2 with 10^4 iterations: within ~1e-3 | Förstemann via Munafo [checked: https://mrob.com/pub/muency/pixelcounting.html , https://mrob.com/pub/muency/areahistory.html ; arXiv 1410.1212 checked] |
 | Lorenz attractor (s=10, r=28, b=8/3) | D2 ~ 2.05, D ~ 2.06 | correlation / Lyapunov | +-0.05 with 10^4-10^5 points | Grassberger-Procaccia 1983 [Lorenz figure checked via secondary notes https://arxiv.org/pdf/2105.14863] |
 | Henon map (a=1.4, b=0.3) | D2 = 1.21 +- 0.01 ; box/Hausdorff ~1.26-1.28 | correlation ; capacity | +-0.03 with 10^4-10^5 points | GP 1983 (D2) [unverified after check (GP paper paywalled; Wikipedia correlation-dimension page gives no value)]; Russell, Hanson & Ott, PRL 45 (1980) 1175 (capacity 1.26) [checked: https://en.wikipedia.org/wiki/List_of_fractals_by_Hausdorff_dimension lists 1.261 +- 0.003, accessed 2026-11-14] |
-| fBm profile, H = 0.7 | box D = 1.3 | self-affine | +-0.05 | Mandelbrot 1982 [recalled] |
+| fBm profile, H = 0.7 | D = 2 - H = 1.3 | self-affine | not by box counting; spectral H +-0.045, semivariogram H +-0.07 on 2^16 Davies-Harte steps (measured max 0.033 and 0.055 over 10 seeds) | Mandelbrot 1982; Turcotte ch. 7 [measured] |
+| fBm surface, H | D = 3 - H; radial beta = 2H + 2 = profile beta + 1 | self-affine | radial H +-0.025 at 1024^2 (measured max 0.015); radial minus profile beta 0.96-1.01 | Turcotte ch. 7.8 [measured] |
+| Kronecker mask (k x k, m ones) | log m / log k | similarity | exact with boxes k^j; -0.05 to -0.07 with general boxes (log-periodic lattice bias) | Steeb, *The Nonlinear Workbook*, ch. 9.6 [measured] |
+| Unequal Cantor, ratios 1/2 and 1/4 | log(golden ratio)/log 2 = 0.6942 | similarity | `measure ifs` to 1e-9 | Falconer 2nd ed. ch. 9.2 [checked] |
 
 Note: the Mandelbrot area via the Laurent (Ewing-Schober) series converges toward 1.60-1.70,
 which disagrees with pixel counting; pixel counting is the accepted practical estimate.
@@ -135,9 +158,10 @@ Pixel counting: Förstemann used grids up to 2,097,152^2 on GPUs, about 35 days 
 
 ## 8. What the numbers cannot say
 
-- A picture has at most ~log2(width) octaves of scale; with fit-range trimming, 1024 px gives
-  roughly 1.5-2 decades. That is at the edge of what the Pollock critics call the minimum, so
-  any D from a single picture is a descriptor, not proof that the object is fractal.
+- Two decades minimum. A picture has at most ~log2(width) octaves of scale; boxes from 2 px to a
+  quarter of the side give 2.1 decades at 1024 px and 1.9 at a 729 px Kronecker render. Under two
+  decades `measure` says "descriptor only" and never "fractal"; over two, D is still a descriptor,
+  not proof. [book rule: Rosenberg ch. 6.1]
 - Rendering decides the answer: iteration cap (boundary thins as maxiter rises), colouring
   (smooth colouring has no edge to threshold), antialiasing, JPEG, resize filters, zoom window.
   `measure` must report these inputs alongside the number.
@@ -178,7 +202,8 @@ location: match minibrot/bulb periods.
 ## 10. Implications for fractalwright (proof bar)
 
 - `measure` outputs: slope, stderr, r2, fit range in px and decades, local-slope plateau width,
-  threshold used, image size; refuse a verdict if the range is under 1 decade.
+  threshold used, image size; refuse a "fractal" verdict if the range is under two decades
+  (built: `fw.py measure box`, verdict thresholds in TESTS.md T-20261114-3).
 - Gate tests (generated at runtime, no downloads): Cantor, Koch, Sierpinski triangle and carpet
   within +-0.03 at >=1024 px; Menger +-0.05 on 243^3 voxels; line/square +-0.01;
   Henon D2 within 1.21 +- 0.04 and Lorenz D2 within 2.05 +- 0.07 using <=20k points;
@@ -205,5 +230,5 @@ location: match minibrot/bulb periods.
 - Bittner et al., area of the Mandelbrot set (arXiv 1410.1212) - https://arxiv.org/pdf/1410.1212v2.pdf
 - Grassberger & Procaccia 1983 record - https://portal.mardi4nfdi.de/wiki/Publication:1076387
 - Lorenz dimension (secondary) - https://arxiv.org/pdf/2105.14863
-- Recalled (not fetched): Falconer *Fractal Geometry* 2014; Shishikura Ann. Math. 1998; Halsey et al. 1986;
+- Checked against the book (2nd ed., 2003): Falconer *Fractal Geometry*. Recalled (not fetched): Shishikura Ann. Math. 1998; Halsey et al. 1986;
   Chhabra & Jensen 1989; Allain & Cloitre 1991; Eckmann & Ruelle 1992; Russell, Hanson & Ott 1980; Peng et al. 1994.

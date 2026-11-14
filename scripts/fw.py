@@ -5,7 +5,7 @@ Standard library first. NumPy is the reference core (probed; renders and
 measures fall back to pure Python for small sizes). Pillow is optional (a
 stdlib PNG writer is built in). Playwright and moderngl are only probed.
 
-Commands: doctor, explain, render, measure, palette.
+Commands: doctor, explain, render, measure, identify, palette.
 """
 import argparse
 import importlib.util
@@ -26,7 +26,7 @@ try:
 except ImportError:  # pragma: no cover - probed by doctor
     np = None
 
-FAMILIES = ("mandelbrot", "julia", "burning-ship", "tricorn", "multibrot")
+FAMILIES = ("mandelbrot", "julia", "burning-ship", "tricorn", "multibrot", "kronecker")
 
 EXPLAIN = {
     "mandelbrot": ("z <- z^2 + c, z0 = 0, c = pixel",
@@ -44,6 +44,9 @@ EXPLAIN = {
     "multibrot": ("z <- z^d + c (params.power = d)",
                   "Generalised Mandelbrot with d-1 fold rotational symmetry. Smooth colour divides by log d.",
                   "references/02-escape-time.md#multibrot"),
+    "kronecker": ("M_n = M kron M_(n-1), M a k x k 0/1 mask",
+                  "Kronecker powers of a small mask draw grid fractals (carpet, Vicsek, Cantor dust) exactly on a k^n pixel grid. Similarity dimension log(ones)/log(k); box counting with boxes k^j returns it exactly, so these are exact test inputs for measure.",
+                  "references/08-measuring.md#7-test-values"),
 }
 
 PRESETS = {
@@ -59,6 +62,9 @@ PRESETS = {
                             "view": {"centre": ["-1.762", "-0.028"], "width": "0.08"}},
     "tricorn-full": {"formula": "tricorn", "view": {"centre": ["-0.3", "0"], "width": "4"}},
     "multibrot-3": {"formula": "multibrot", "params": {"power": 3}, "view": {"centre": ["0", "0"], "width": "3.2"}},
+    "kronecker-carpet": {"family": "kronecker", "formula": "kronecker", "params": {"mask": ["111", "101", "111"], "power": 6}},
+    "kronecker-vicsek": {"family": "kronecker", "formula": "kronecker", "params": {"mask": ["010", "111", "010"], "power": 6}},
+    "kronecker-cantor-dust": {"family": "kronecker", "formula": "kronecker", "params": {"mask": ["101", "000", "101"], "power": 6}},
 }
 
 PALETTES = {
@@ -111,6 +117,24 @@ def load_recipe(spec):
 def normalise(r):
     if r["formula"] not in FAMILIES:
         raise SystemExit(f"unknown formula {r['formula']!r}; known: {', '.join(FAMILIES)}")
+    if r["formula"] == "kronecker":
+        p = r["params"]
+        p["mask"] = [str(x) for x in p.get("mask", KRONECKER["carpet"])]
+        p["power"] = int(p.get("power", 5))
+        k = len(p["mask"])
+        if any(len(x) != k or set(x) - set("01") for x in p["mask"]):
+            raise SystemExit("kronecker mask must be k rows of k characters 0 or 1")
+        if k ** p["power"] > 8192:
+            raise SystemExit(f"kronecker side {k}^{p['power']} is over 8192 px")
+        r["family"] = "kronecker"
+        r["size"] = {"w": k ** p["power"], "h": k ** p["power"], "supersample": 1}
+        for key in ("bailout", "max_iter"):
+            p.pop(key, None)
+        r["view"] = None
+        r["colouring"] = {"method": "mask", "filled": r["colouring"].get("filled", "#000000"),
+                          "empty": r["colouring"].get("empty", "#ffffff")}
+        r["palette"] = None
+        return r
     v = r["view"]
     v["centre"] = [str(Decimal(str(x))) for x in v["centre"]]
     v["width"] = str(Decimal(str(v["width"])))
@@ -230,6 +254,12 @@ def colour(r, nu, inside):
 def render_array(r):
     """Recipe -> uint8 HxWx3 (NumPy)."""
     r = normalise(r)
+    if r["formula"] == "kronecker":
+        m = kronecker_mask(r["params"]["mask"], r["params"]["power"])
+        out = np.empty(m.shape + (3,), np.uint8)
+        out[...] = np.array([int(v * 255 + 0.5) for v in _hex(r["colouring"]["empty"])], np.uint8)
+        out[m] = [int(v * 255 + 0.5) for v in _hex(r["colouring"]["filled"])]
+        return out
     X, Y, ss = _grid(r)
     nu, inside = escape_numpy(r, X, Y)
     rgb = colour(r, nu, inside)
@@ -242,6 +272,23 @@ def render_array(r):
 def render_rows_py(r):
     """Pure-Python fallback: list of rows of bytes. Slow; small sizes only."""
     r = normalise(r)
+    if r["formula"] == "kronecker":
+        mask, k, n = r["params"]["mask"], len(r["params"]["mask"]), r["params"]["power"]
+        on = bytes(int(v * 255 + 0.5) for v in _hex(r["colouring"]["filled"]))
+        off = bytes(int(v * 255 + 0.5) for v in _hex(r["colouring"]["empty"]))
+        rows = []
+        for y in range(k ** n):
+            row = bytearray()
+            for x in range(k ** n):
+                yy, xx, fill = y, x, True
+                for _ in range(n):
+                    if mask[yy % k][xx % k] != "1":
+                        fill = False
+                        break
+                    yy, xx = yy // k, xx // k
+                row += on if fill else off
+            rows.append(bytes(row))
+        return rows
     w, h = r["size"]["w"], r["size"]["h"]
     p = r["params"]
     f, d = r["formula"], int(p.get("power", 2))
@@ -372,6 +419,390 @@ def mandelbrot_area(n=1024, max_iter=10000):
     return 2 * inside * px * px
 
 
+# ---------------------------------------------------------------- measure v2
+# Book rules behind this block are credited in RESEARCH.md (R-20261114-3): fit
+# range in decades, no "fractal" verdict under two decades, 15+ box sizes over
+# random offsets, local-slope curve and curvature, speck removal, coarse-box
+# bias, lacunarity, similarity dimension, self-affine profile path.
+MIN_DECADES = 2.0
+# Verdict thresholds come from measured cases (tests/test_fw.py, TESTS.md T-20261114-3).
+SLOPE_SPREAD_MAX = 0.30   # local-slope max-min; fractals measured <= 0.287, decoys >= 0.349
+INTEGER_BAND = 0.10       # |D - round(D)| under this reads as an ordinary set (line read 0.931)
+SPECK_DUST = 0.5          # more isolated pixels than this share: a dust (Cantor dust), not noise
+
+
+def remove_specks(mask):
+    """Drop specks: 8-connected components of one or two pixels.
+    Returns (clean, removed)."""
+    m = np.asarray(mask, bool)
+    h, w = m.shape
+    shifts = [(dy, dx) for dy in (-1, 0, 1) for dx in (-1, 0, 1) if dy or dx]
+
+    def shift(a, dy, dx):  # out[y, x] = a[y + dy, x + dx], zero outside
+        p = np.pad(a, 1)
+        return p[1 + dy:1 + dy + h, 1 + dx:1 + dx + w]
+    nb = sum(shift(m, dy, dx).astype(np.int8) for dy, dx in shifts)
+    speck = m & (nb == 0)
+    one = m & (nb == 1)
+    for dy, dx in shifts:
+        speck |= one & shift(one, dy, dx)
+    return m & ~speck, int(speck.sum())
+
+
+def box_sizes(h, w, n=16, smin=2, frac=4):
+    smax = max(smin + 1, min(h, w) // frac)
+    return [int(v) for v in np.unique(np.round(np.geomspace(smin, smax, n)).astype(int))]
+
+
+def box_counts(mask, sizes, offsets=8, seed=0):
+    """Mean occupied-box count per size over random grid offsets (seeded)."""
+    m = np.asarray(mask, bool)
+    h, w = m.shape
+    smax = max(sizes)
+    big = np.zeros((h + 2 * smax, w + 2 * smax), bool)
+    big[smax:smax + h, smax:smax + w] = m
+    rng = np.random.default_rng(seed)
+    out = []
+    for s in sizes:
+        offs = [(0, 0)] + [tuple(int(v) for v in rng.integers(0, s, 2)) for _ in range(max(0, offsets - 1))]
+        ns = []
+        for oy, ox in offs:
+            ny, nx = -(-(h + oy) // s), -(-(w + ox) // s)
+            v = big[smax - oy:smax - oy + ny * s, smax - ox:smax - ox + nx * s]
+            ns.append(int(v.reshape(ny, s, nx, s).any(axis=(1, 3)).sum()))
+        out.append(float(np.mean(ns)))
+    return out
+
+
+def local_slopes(lx, ly, win=5):
+    win = min(win, len(lx))
+    return [float(np.polyfit(lx[i:i + win], ly[i:i + win], 1)[0]) for i in range(len(lx) - win + 1)]
+
+
+def box_analysis(mask, n_sizes=16, offsets=8, seed=0, specks=True, smin=2, frac=4, sizes=None):
+    """Box-counting report with fit range, local slopes and a verdict.
+    The verdict never names a shape: D alone cannot identify."""
+    m = np.asarray(mask, bool)
+    warnings, removed, D_raw = [], 0, None
+    h, w = m.shape
+    sizes = list(sizes) if sizes else box_sizes(h, w, n=n_sizes, smin=smin, frac=frac)
+    lx = np.log([1.0 / s for s in sizes])
+    if specks:
+        clean, removed = remove_specks(m)
+        if removed > SPECK_DUST * m.sum():
+            warnings.append(f"{removed} of {int(m.sum())} filled pixels are isolated: read as a dust, specks kept")
+            removed = 0
+        elif removed:
+            D_raw = float(np.polyfit(lx, np.log(np.maximum(box_counts(m, sizes, offsets, seed), 1)), 1)[0])
+            m = clean
+    if not m.any():
+        return {"measure": "box-dimension", "verdict": "empty mask", "warnings": ["no filled pixels"]}
+    N = box_counts(m, sizes, offsets, seed)
+    ly = np.log(np.maximum(N, 1))
+    D = float(np.polyfit(lx, ly, 1)[0])
+    fit = np.polyval(np.polyfit(lx, ly, 1), lx)
+    ss = float(((ly - ly.mean()) ** 2).sum())
+    r2 = 1 - float(((ly - fit) ** 2).sum()) / ss if ss > 0 else 1.0
+    curv = float(np.polyfit(lx, ly, 2)[0])
+    ls = local_slopes(lx, ly)
+    spread = max(ls) - min(ls)
+    decades = math.log10(max(sizes) / min(sizes))
+    if D_raw is not None and abs(D_raw - D) > 0.01:
+        warnings.append(f"removed {removed} isolated pixels (specks); D moved {D_raw:.3f} -> {D:.3f}")
+    elif removed:
+        warnings.append(f"removed {removed} isolated pixels (D moved under 0.01)")
+    if len(sizes) < 15:
+        warnings.append(f"only {len(sizes)} distinct box sizes (15+ wanted): the image is small")
+    warnings.append("coarse boxes bias D; read the local-slope curve, not one number")
+    if decades < MIN_DECADES:
+        verdict = f"descriptor only: fit range {decades:.2f} decades is under {MIN_DECADES:.0f}"
+    elif spread > SLOPE_SPREAD_MAX:
+        verdict = (f"not fractal over this range: local slope drifts {min(ls):.2f}..{max(ls):.2f}"
+                   " (no single scaling range)")
+    elif abs(D - round(D)) < INTEGER_BAND:
+        verdict = f"ordinary set: D {D:.3f} is near the integer {round(D)}"
+    else:
+        verdict = f"fractal-like over {decades:.2f} decades (D alone cannot identify the shape)"
+    return {"measure": "box-dimension", "dimension": D, "r2": r2, "curvature": curv,
+            "fit_px": [min(sizes), max(sizes)], "decades": decades, "sizes": sizes, "counts": N,
+            "local_slopes": ls, "slope_spread": spread, "offsets": offsets, "seed": seed,
+            "specks_removed": removed, "image": [w, h], "verdict": verdict, "warnings": warnings}
+
+
+def lacunarity(mask, radii=None):
+    """Gliding-box lacunarity: Lambda(r) = E[S^2] / E[S]^2 over every r x r box."""
+    m = np.asarray(mask, float)
+    h, w = m.shape
+    if radii is None:
+        radii, r = [], 2
+        while r <= min(h, w) // 8:
+            radii.append(r)
+            r *= 2
+    I = np.zeros((h + 1, w + 1))
+    I[1:, 1:] = m.cumsum(0).cumsum(1)
+    out = []
+    for r in radii:
+        S = I[r:, r:] - I[:-r, r:] - I[r:, :-r] + I[:-r, :-r]
+        mu = S.mean()
+        out.append((int(r), float((S * S).mean() / (mu * mu)) if mu > 0 else float("nan")))
+    return out
+
+
+def similarity_dimension(ratios, tol=1e-12):
+    """Root s of sum r_i^s = 1 (Moran equation), by bisection. Exact only when
+    the pieces do not overlap (open set condition); an upper bound otherwise."""
+    rs = [float(x) for x in ratios]
+    if not rs or any(not 0 < x < 1 for x in rs):
+        raise ValueError("ratios must lie in (0, 1)")
+    lo, hi = 0.0, 1.0
+    while sum(x ** hi for x in rs) > 1:
+        hi *= 2
+    while hi - lo > tol:
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if sum(x ** mid for x in rs) > 1 else (lo, mid)
+    return (lo + hi) / 2
+
+
+# ---------------------------------------------------------------- self-affine
+def _slope(x, y):
+    return float(np.polyfit(np.log(x), np.log(y), 1)[0])
+
+
+def _logbin(x, y, nb=24):
+    edges = np.geomspace(x.min(), x.max() * 1.0000001, nb + 1)
+    idx = np.digitize(x, edges) - 1
+    xs, ys = [], []
+    for b in range(nb):
+        s = idx == b
+        if s.any():
+            xs.append(math.exp(float(np.log(x[s]).mean())))
+            ys.append(math.exp(float(np.log(y[s]).mean())))
+    return np.array(xs), np.array(ys)
+
+
+def spectral_slope(y, fmax=1 / 8):
+    """Periodogram slope beta (P ~ f^-beta) of a 1D profile, end-matched
+    (the line joining the ends is removed), least squares over every
+    frequency from 2/n to fmax."""
+    y = np.asarray(y, float)
+    n = y.size
+    y = y - (y[0] + (y[-1] - y[0]) * np.arange(n) / (n - 1))
+    P = np.abs(np.fft.rfft(y)) ** 2
+    f = np.arange(P.size) / n
+    k = (f >= 2 / n) & (f <= fmax)
+    return -_slope(f[k], P[k])
+
+
+def semivariogram_h(y, lags=None):
+    """Ha from gamma(l) = mean((y[i+l] - y[i])^2) / 2 ~ l^(2 Ha); lags 1..n/10."""
+    y = np.asarray(y, float)
+    if lags is None:
+        lags = np.unique(np.round(np.geomspace(1, max(2, y.size // 10), 20)).astype(int))
+    g = [0.5 * float(np.mean((y[l:] - y[:-l]) ** 2)) for l in lags]
+    return _slope(lags, g) / 2
+
+
+def katz_dimension(x, y=None):
+    """Katz dimension of a sampled curve: log10(n) / (log10(n) + log10(d / L)),
+    L total length, d largest distance from the first point, n = L / mean step.
+    A 1D signal is read as the curve (i, y_i). Book rule: cheap, biased."""
+    if y is None:
+        y = np.asarray(x, float)
+        x = np.arange(y.size, dtype=float)
+    x, y = np.asarray(x, float), np.asarray(y, float)
+    steps = np.hypot(np.diff(x), np.diff(y))
+    L, a = float(steps.sum()), float(steps.mean())
+    d = float(np.hypot(x - x[0], y - y[0]).max())
+    n = L / a
+    return math.log10(n) / (math.log10(n) + math.log10(d / L))
+
+
+def profile_analysis(y):
+    y = np.asarray(y, float)
+    beta = spectral_slope(y)
+    Hs = semivariogram_h(y)
+    res = {"measure": "profile", "n": int(y.size), "beta": beta,
+           "H_spectral": (beta - 1) / 2, "D_spectral": (5 - beta) / 2,
+           "H_semivariogram": Hs, "D_semivariogram": 2 - Hs, "katz": katz_dimension(y),
+           "relations": "beta = 2H + 1; D = 2 - H = (5 - beta) / 2", "warnings": []}
+    if not 1 < beta < 3:
+        res["warnings"].append(f"beta {beta:.2f} is outside 1..3: a noise, not a walk; the semivariogram H does not apply (use R/S or DFA)")
+    res["warnings"].append("Katz is a roughness number with known bias; do not read it as D")
+    return res
+
+
+def radial_psd(z, kmin=2, kmax_frac=1 / 8):
+    """2D power per Fourier mode with kmin <= |k| <= n * kmax_frac: (|k|, P).
+    A least-squares fit over every mode is the radial exponent; fitting
+    integer-k bin averages biased H by -0.04 (convexity in the low bins)."""
+    z = np.asarray(z, float)
+    F = np.abs(np.fft.fft2(z - z.mean())) ** 2
+    ny, nx = z.shape
+    ky, kx = np.meshgrid(np.fft.fftfreq(ny) * ny, np.fft.fftfreq(nx) * nx, indexing="ij")
+    k = np.hypot(kx, ky).ravel()
+    sel = (k >= kmin) & (k <= min(nx, ny) * kmax_frac)
+    return k[sel], F.ravel()[sel]
+
+
+def dbc_dimension(z, sizes=(2, 4, 8, 16, 32, 64, 128)):
+    """Differential box (cube) counting of a heightmap whose heights are in pixel units."""
+    z = np.asarray(z, float)
+    n = min(z.shape)
+    sizes = [s for s in sizes if s <= n // 8]
+    N = []
+    for s in sizes:
+        m = n // s * s
+        b = z[:m, :m].reshape(m // s, s, m // s, s)
+        N.append(float((np.floor(b.max(axis=(1, 3)) / s) - np.floor(b.min(axis=(1, 3)) / s) + 1).sum()))
+    return -_slope(sizes, N)
+
+
+def heightmap_analysis(z):
+    z = np.asarray(z, float)
+    b2 = -_slope(*radial_psd(z))
+    Hr = (b2 - 2) / 2
+    step_r = max(1, z.shape[0] // 32)
+    step_c = max(1, z.shape[1] // 32)
+    b1 = float(np.mean([spectral_slope(z[i]) for i in range(0, z.shape[0], step_r)]
+                       + [spectral_slope(z[:, j]) for j in range(0, z.shape[1], step_c)]))
+    Hp = (b1 - 1) / 2
+    rms = float(np.sqrt(np.mean(np.diff(z, axis=1) ** 2)))
+    return {"measure": "heightmap", "shape": list(z.shape), "beta_radial": b2, "beta_profiles": b1,
+            "radial_minus_profile": b2 - b1, "H_radial": Hr, "D_surface": 3 - Hr,
+            "H_profiles": Hp, "D_profiles_plus_1": 3 - Hp,
+            "D_cube_count": dbc_dimension(z / rms * min(z.shape)) if rms > 0 else float("nan"),
+            "relations": "radial beta = 2H + 2 = profile beta + 1; surface D = 3 - H = profile D + 1",
+            "warnings": ["D_cube_count (differential box counting) read 0.1 to 0.3 low on synthetic fBm at 1024 px; use D_surface"]}
+
+
+def synth_fbm1d(n, H, seed=0):
+    """Exact fBm (n + 1 samples) by Davies-Harte circulant embedding of fGn."""
+    rng = np.random.default_rng(seed)
+    k = np.arange(n + 1, dtype=float)
+    g = 0.5 * (np.abs(k + 1) ** (2 * H) - 2 * k ** (2 * H) + np.abs(k - 1) ** (2 * H))
+    c = np.concatenate([g, g[-2:0:-1]])
+    lam = np.clip(np.fft.fft(c).real, 0, None)
+    M = c.size
+    Z = rng.normal(size=M) + 1j * rng.normal(size=M)
+    fgn = np.fft.fft(np.sqrt(lam / M) * Z)[:n].real
+    return np.concatenate([[0.0], np.cumsum(fgn)])
+
+
+def synth_fbm2d(n, H, seed=0):
+    """Spectral synthesis on an n x n torus: white noise filtered by k^-(H+1)."""
+    rng = np.random.default_rng(seed)
+    W = np.fft.fft2(rng.normal(size=(n, n)))
+    ky, kx = np.meshgrid(np.fft.fftfreq(n) * n, np.fft.fftfreq(n) * n, indexing="ij")
+    k = np.hypot(kx, ky)
+    k[0, 0] = 1.0
+    A = k ** -(H + 1)
+    A[0, 0] = 0.0
+    return np.fft.ifft2(W * A).real
+
+
+def read_numbers(path):
+    """A profile file: one number per line, or x,y (comma, space or tab) pairs."""
+    rows = []
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line[0] in "#%":
+            continue
+        try:
+            rows.append([float(v) for v in line.replace(",", " ").split()])
+        except ValueError:
+            continue  # header
+    return np.array(rows, float)
+
+
+# ---------------------------------------------------------------- kronecker
+KRONECKER = {
+    "carpet": ["111", "101", "111"],
+    "vicsek": ["010", "111", "010"],
+    "cantor-dust": ["101", "000", "101"],
+    "sierpinski": ["11", "10"],
+}
+
+
+def kronecker_mask(rows, power):
+    """Kronecker power of a k x k 0/1 mask: an exact grid fractal of side k^power."""
+    base = np.array([[ch == "1" for ch in r] for r in rows], bool)
+    if base.ndim != 2 or base.shape[0] != base.shape[1]:
+        raise SystemExit("kronecker mask must be square, rows of 0 and 1")
+    m = np.ones((1, 1), bool)
+    for _ in range(int(power)):
+        m = np.kron(m, base)
+    return m
+
+
+def kronecker_dimension(rows):
+    """log(ones) / log(k): the similarity dimension of the mask's attractor."""
+    return math.log(sum(r.count("1") for r in rows)) / math.log(len(rows))
+
+
+# ---------------------------------------------------------------- identify
+def julia_connected(c, max_iter=1000):
+    """The quadratic Julia set of z^2 + c is connected iff the orbit of 0 stays bounded."""
+    z = 0j
+    for n in range(max_iter):
+        z = z * z + c
+        if abs(z) > 2:
+            return False, n + 1
+    return True, max_iter
+
+
+def mirror_scores(img):
+    """Fraction of pixels unchanged by a left-right, up-down or 180-degree flip."""
+    a = np.asarray(img)
+
+    def eq(b):
+        e = a == b
+        return float((e.all(axis=-1) if a.ndim == 3 else e).mean())
+    return {"left-right": eq(a[:, ::-1]), "up-down": eq(a[::-1]), "rot180": eq(a[::-1, ::-1])}
+
+
+def identify(recipe=None, image=None):
+    """identify v1: hand-built features. Never names a shape from dimension alone."""
+    feats, hints = {}, []
+    if recipe is not None:
+        formula = recipe.get("formula")
+        feats["family"] = recipe.get("family", "escape-time")
+        feats["formula"] = formula
+        if formula == "julia":
+            cr, ci = (float(Decimal(str(x))) for x in recipe["params"]["c"])
+            conn, n = julia_connected(complex(cr, ci))
+            feats["julia_connected"] = conn
+            hints.append("connected Julia set: the orbit of 0 stays bounded, so c is in the Mandelbrot set" if conn
+                         else f"Cantor dust: the orbit of 0 escapes after {n} steps, so c is outside the Mandelbrot set")
+            q = (cr - 0.25) ** 2 + ci * ci
+            if q * (q + (cr - 0.25)) <= 0.25 * ci * ci:
+                feats["c_region"] = "main cardioid"
+                hints.append("c in the main cardioid: one attracting fixed point; the set is a deformed circle")
+            elif (cr + 1) ** 2 + ci * ci <= 1 / 16:
+                feats["c_region"] = "period-2 bulb"
+                hints.append("c in the period-2 bulb: an attracting 2-cycle; basilica-like")
+        elif formula in ("mandelbrot", "tricorn"):
+            v = recipe.get("view") or {}
+            on_axis = Decimal(str(v.get("centre", ["0", "0"])[1])) == 0 and not v.get("rotation_deg")
+            hints.append("the set is mirror symmetric across the real axis"
+                         + ("; this view is centred on it, so the picture is too" if on_axis else "; this view is off the axis"))
+        elif formula == "multibrot":
+            hints.append(f"{int(recipe['params'].get('power', 2)) - 1}-fold rotational symmetry")
+        elif formula == "kronecker":
+            rows = recipe["params"]["mask"]
+            feats["similarity_dimension"] = kronecker_dimension(rows)
+            hints.append(f"exact grid fractal: D = log({sum(r.count('1') for r in rows)}) / log({len(rows)})")
+    if image is not None:
+        a = np.asarray(image)
+        sc = mirror_scores(a)
+        feats["mirror"] = sc
+        hints += [f"{k} mirror symmetric ({v:.3f} of pixels match)" for k, v in sc.items() if v > 0.995]
+        grey = a.mean(axis=-1) if a.ndim == 3 else a
+        rep = box_analysis(grey < 128, offsets=4)
+        feats["box"] = {k: rep.get(k) for k in ("dimension", "decades", "slope_spread", "verdict")}
+        hints.append("box dimension is a descriptor here, not an identification")
+    return {"identify": "v1", "features": feats, "hints": hints}
+
+
 # ---------------------------------------------------------------- commands
 def cmd_doctor(a):
     def has(m):
@@ -430,6 +861,12 @@ def cmd_render(a):
         r["palette"] = dict(PALETTES[a.palette])
     if a.supersample:
         r["size"]["supersample"] = a.supersample
+    if a.mask or a.power:
+        r["formula"] = "kronecker"
+        if a.mask:
+            r["params"]["mask"] = KRONECKER.get(a.mask, a.mask.split(","))
+        if a.power:
+            r["params"]["power"] = a.power
     r = normalise(r)
     out = Path(a.out)
     if np is not None:
@@ -447,21 +884,110 @@ def cmd_render(a):
     return 0
 
 
+PROFILE_EXT = (".csv", ".txt", ".tsv", ".dat")
+
+
+def _out(res, as_json):
+    if as_json:
+        print(json.dumps(res, indent=2))
+        return
+    for k, v in res.items():
+        if isinstance(v, float):
+            v = f"{v:.4f}"
+        elif isinstance(v, list) and v and isinstance(v[0], float):
+            v = "[" + ", ".join(f"{x:.3f}" for x in v) + "]"
+        print(f"{k}: {v}")
+
+
+def _load_mask(a):
+    if Path(a.image).suffix.lower() == ".npy":
+        return np.load(a.image).astype(bool)
+    return read_mask(a.image, a.threshold, a.invert)
+
+
+def _load_grey(path):
+    if Path(path).suffix.lower() == ".npy":
+        return np.load(path).astype(float)
+    from PIL import Image
+    return np.asarray(Image.open(path).convert("F"), float)
+
+
 def cmd_measure(a):
     if np is None:
         print("measure needs NumPy (pip install numpy)", file=sys.stderr)
         return 3
-    if a.what == "area":
+    w = a.what
+    if w == "area":
         A = mandelbrot_area(a.size, a.iter)
         res = {"measure": "mandelbrot-area", "size": a.size, "max_iter": a.iter, "area": A,
                "reference": 1.50659177, "error": A - 1.50659177}
+    elif w == "ifs":
+        if not a.ratios:
+            print("measure ifs needs --ratios r1,r2,...", file=sys.stderr)
+            return 2
+        rs = [float(x) for x in a.ratios.split(",")]
+        res = {"measure": "similarity-dimension", "ratios": rs, "dimension": similarity_dimension(rs),
+               "note": "exact only when the pieces do not overlap (open set condition); with overlap it is an upper bound"}
     else:
         if not a.image:
-            print("measure box needs an image path", file=sys.stderr)
+            print(f"measure {w} needs a file", file=sys.stderr)
             return 2
-        D, pts = box_dimension(read_mask(a.image, a.threshold, a.invert))
-        res = {"measure": "box-dimension", "image": a.image, "dimension": D, "boxes": pts}
-    print(json.dumps(res, indent=2) if a.json else "\n".join(f"{k}: {v}" for k, v in res.items()))
+        ext = Path(a.image).suffix.lower()
+        if w in ("box", "lacunarity") and ext in PROFILE_EXT:
+            print(f"refused: {a.image} is a profile (numbers), and box counting a self-affine profile gives the wrong D. "
+                  "Use: fw.py measure profile FILE", file=sys.stderr)
+            return 2
+        if w == "box":
+            res = box_analysis(_load_mask(a), offsets=a.offsets, seed=a.seed, specks=not a.keep_specks)
+            res["image_file"] = a.image
+            if ext != ".npy":
+                grey = _load_grey(a.image)
+                levels = np.unique(grey.astype(np.uint8)).size
+                if levels > 64:
+                    res["warnings"].append(f"{levels} grey levels: if this is a heightmap use 'measure heightmap'; box counting reads only the thresholded shape")
+        elif w == "lacunarity":
+            lac = lacunarity(_load_mask(a))
+            res = {"measure": "lacunarity", "image_file": a.image, "lacunarity": lac,
+                   "note": "gliding box E[S^2]/E[S]^2; compare shapes at the same box sizes; a second number beside D"}
+        elif w in ("profile", "katz"):
+            data = read_numbers(a.image)
+            if data.ndim != 2 or data.size == 0:
+                print("no numbers read", file=sys.stderr)
+                return 2
+            if w == "katz":
+                kd = katz_dimension(data[:, 0], data[:, 1]) if data.shape[1] >= 2 else katz_dimension(data[:, 0])
+                res = {"measure": "katz", "points": int(data.shape[0]), "katz": kd,
+                       "note": "book rule (Katz 1988 via Banerjee): cheap, scale dependent, biased; exact on a Koch polyline"}
+            else:
+                res = profile_analysis(data[:, -1])
+        elif w == "heightmap":
+            res = heightmap_analysis(_load_grey(a.image))
+    _out(res, a.json)
+    return 0
+
+
+def cmd_identify(a):
+    if np is None:
+        print("identify needs NumPy", file=sys.stderr)
+        return 3
+    recipe = image = None
+    if a.target:
+        p = Path(a.target)
+        if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp"):
+            from PIL import Image
+            image = np.asarray(Image.open(p).convert("RGB"))
+            rec = p.with_suffix(".json")
+            if rec.is_file():
+                recipe = normalise(load_recipe(str(rec)))
+        else:
+            recipe = normalise(load_recipe(a.target))
+    if a.c:
+        cr, ci = a.c.split(",")
+        recipe = normalise(_merge(default_recipe(), {"formula": "julia", "params": {"c": [cr, ci]}}))
+    if recipe is None and image is None:
+        print("identify needs a preset, recipe, image or --c re,im", file=sys.stderr)
+        return 2
+    _out(identify(recipe, image), a.json)
     return 0
 
 
@@ -505,16 +1031,27 @@ def main(argv=None):
     s.add_argument("--iter", type=int)
     s.add_argument("--palette", choices=list(PALETTES))
     s.add_argument("--supersample", type=int)
+    s.add_argument("--mask", help=f"kronecker mask: {', '.join(KRONECKER)} or rows like 111,101,111")
+    s.add_argument("--power", type=int, help="kronecker power (side = k^power)")
     s.set_defaults(fn=cmd_render)
-    s = sub.add_parser("measure", help="box dimension of an image, or Mandelbrot area")
-    s.add_argument("what", choices=["box", "area"])
-    s.add_argument("image", nargs="?")
+    s = sub.add_parser("measure", help="box/lacunarity of an image, profile/katz of numbers, heightmap, IFS ratios, Mandelbrot area")
+    s.add_argument("what", choices=["box", "lacunarity", "profile", "katz", "heightmap", "ifs", "area"])
+    s.add_argument("image", nargs="?", help="image or .npy (box, lacunarity, heightmap); numbers file (profile, katz)")
+    s.add_argument("--ratios", help="ifs: piece scale ratios, comma separated")
+    s.add_argument("--offsets", type=int, default=8, help="box: random grid offsets per size")
+    s.add_argument("--seed", type=int, default=0)
+    s.add_argument("--keep-specks", action="store_true", help="box: do not remove 1-2 pixel specks")
     s.add_argument("--threshold", type=int, default=128, help="grey level; darker pixels count as filled")
     s.add_argument("--invert", action="store_true", help="lighter pixels count as filled")
     s.add_argument("--size", type=int, default=2048, help="area grid side")
     s.add_argument("--iter", type=int, default=10000)
     s.add_argument("--json", action="store_true")
     s.set_defaults(fn=cmd_measure)
+    s = sub.add_parser("identify", help="hand-built features of a preset, recipe, image or Julia c")
+    s.add_argument("target", nargs="?")
+    s.add_argument("--c", help="Julia parameter re,im")
+    s.add_argument("--json", action="store_true")
+    s.set_defaults(fn=cmd_identify)
     s = sub.add_parser("palette", help="list palettes, print one, or write a swatch")
     s.add_argument("name", nargs="?")
     s.add_argument("-o", "--out")

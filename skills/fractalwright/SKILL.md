@@ -18,7 +18,7 @@ Read `evergreen.json` at the repository root. If `contradiction` is set or today
 
 ## Step 1: pick the family
 
-`FW explain <family>` gives the formula, how it is made and the presets. Families: mandelbrot, julia, burning-ship, tricorn, multibrot. Read [references/02-escape-time.md](../../references/02-escape-time.md) only when the user asks for depth or a colouring method beyond smooth.
+`FW explain <family>` gives the formula, how it is made and the presets. Families: mandelbrot, julia, burning-ship, tricorn, multibrot, kronecker (exact grid fractals: `FW render kronecker-carpet`, or `--mask 111,101,111 --power 6`). Read [references/02-escape-time.md](../../references/02-escape-time.md) only when the user asks for depth or a colouring method beyond smooth.
 
 ## Step 2: render
 
@@ -26,8 +26,16 @@ Read `evergreen.json` at the repository root. If `contradiction` is set or today
 
 ## Step 3: measure
 
-- `FW measure box image.png [--invert] [--threshold T]`: box-counting dimension of the dark (or light) pixels. Give the result with its error bar from [references/08-measuring.md](../../references/08-measuring.md) (about +-0.02 to 0.05 on a clean 1-2k px render), never as exact.
+- `FW measure box image.png [--invert] [--threshold T]`: box-counting dimension of the dark (or light) pixels over 15+ box sizes and seeded random offsets, with the fit range in decades, the local-slope curve and a verdict. Pass the verdict on as written: under two decades it is "descriptor only"; a drifting local slope is "not fractal". Give D with its error bar from [references/08-measuring.md](../../references/08-measuring.md), never as exact, and never name a shape from D.
+- `FW measure lacunarity image.png`: gappiness per box size, the second number beside D (same D can look different).
+- `FW measure ifs --ratios 0.5,0.5,0.5`: similarity dimension; exact only when the pieces do not overlap, else an upper bound.
+- Height profiles and heightmaps are self-affine: `FW measure profile numbers.txt` (spectral slope, semivariogram, Katz) and `FW measure heightmap map.png|.npy` (radial spectrum, surface D = 3 - H). `measure box` refuses a numbers file.
+- `FW measure katz curve.txt` (x,y or one column): a cheap roughness number, not D.
 - `FW measure area --size 1024`: Mandelbrot area by pixel count (proven within 0.0002 of 1.50659 at 1024 px).
+
+## Step 4: identify
+
+`FW identify <preset | recipe.json | image.png> [--c re,im]`: hand-built features (mirror symmetry of the pixels, Julia connected or dust from the orbit of 0, main cardioid or period-2 bulb for c, the family's known symmetry). An image's box D is reported as a descriptor only. Never identify a fractal by its dimension.
 
 ## Maintenance
 
