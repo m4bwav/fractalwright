@@ -1495,6 +1495,8 @@ def main(argv=None):
     s.add_argument("--fps", type=float, help="frame folder fps (default 24)")
     s.add_argument("--json", action="store_true")
     s.set_defaults(fn=cmd_flashcheck)
+    import fw_extra  # book-derived commands: logistic plots, attractor-search, ifs, terrain, fif
+    fw_extra.register(sub, EXPLAIN)
     a = ap.parse_args(argv)
     return a.fn(a)
 

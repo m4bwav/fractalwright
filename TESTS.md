@@ -8,6 +8,14 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261114-7 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2 · 63/63 (after rebase on batch 4a; 12 new in test_extra.py)
+- Logistic: 1, 2, 4, 8 branches at r 2.8, 3.2, 3.5, 3.56; Lyapunov r = 4 0.9999995 bits (bar 0.01), r 3.2 negative. Henon (1.4, 0.3): L 0.6036 bits (bar 0.603 +- 0.02), D2 1.201 and 1.195 on two subsets (bar 1.21 +- 0.05). Search: 5 hits in 177 tries, 1.1 s.
+- IFS: unequal tiles 8x8 histogram cv 0.014 with |det| p, 1.049 with equal p (bars 0.05, 0.5). Ball cover: max distance / R 1.0 Sierpinski, 0.973 fern, 0.995 worst of 20 random 3-map IFS (bar 1). Start 50 units away: 8 of 50 points outside without discard, 0 with 20.
+- Terrain crease ratio (n/8 lines): diamond-square 1.188, 1.177, 1.174; spectral 1.000, 0.983, 0.990 (bars > 1.10 and 1 +- 0.04).
+- FIF: d = 0 equals the line join (error 0); passes through all points (1e-12); semivariogram D vs 1 + log(sum|d|)/log 4: 1.524/1.5, 1.604/1.632, 1.374/1.339, 1.745/1.743 (bar 0.05).
+- Mariani-Silver (not shipped): 800x600, max_iter 200-5000, full Mandelbrot and a rotated view differ by 0-10 pixels (slow-escaping pixels inside rectangles whose border never escaped); seahorse, two Julias and multibrot-3 identical. Speed x2.4-3.0 on interior-heavy views, x0.25-0.77 on views with little interior.
+- Multi-scroll sine-Chua (not shipped): recalled parameters (alpha 10.814, beta 14, a 1.3, b 0.11) diverged at c = 1 and 3 and gave one broad lobe at c = 2.
+
 ### T-20261114-6 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2, Playwright + Edge headless (ANGLE D3D11, RTX 5060 Ti) · 51/51
 - Browser route vs NumPy, 320x240 full views, 300 iterations, mean abs diff per channel: mandelbrot 0.144, julia 0.023, tricorn 0.052, multibrot-3 0.148 (bar 1.0); burning ship 2.726 (bar 3.0), because NumPy itself run in float32 differs from float64 by 2.628 on the same view (abs folds amplify rounding).
 - Page: zoom 4x about a point and pan by script, hash read, Export over POST, NumPy render of the exported recipe vs the page canvas: 0.251 (bar 1.5). Hash -> recipe -> hash identical for 6 hashes, including a 33-digit centre and rotation.

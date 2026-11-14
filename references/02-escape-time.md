@@ -62,7 +62,7 @@ escaped = n < max_iter
 
 ### Lyapunov
 - Logistic map x ← r x (1-x), with r switching between a and b according to a periodic sequence such as "AB" or "AABAB". The pixel is (a, b) [S14].
-- Exponent λ = (1/N) Σ log|r_n (1 - 2 x_n)| after a warm-up [S14]. λ < 0 is stable (one colour ramp, often yellow) and λ > 0 is chaotic (black or blue) [S14].
+- Exponent λ = (1/N) Σ log|r_n (1 - 2 x_n)| after a warm-up [S14]. Units: with the natural log λ is in nats per iteration; divide by ln 2 for bits. Always print the unit (`fw.py` reports bits) [book rule: Feldman, *Chaos and Fractals*, ch. 10]. λ < 0 is stable (one colour ramp, often yellow) and λ > 0 is chaotic (black or blue) [S14].
 - Parameters: sequence, x_0 = 0.5, warm-up iterations (e.g. 100 to 600), N (e.g. 1000 or more), clamp on λ.
 - Default view: a, b in [2, 4]; "Zircon Zity" is sequence BBBBBBAAAAAA on a in [2.5, 3.4], b in [3.4, 4.0] [S14].
 - Tell: smooth folded "swallow" shapes on a two-tone field. Not complex-plane.
@@ -134,7 +134,7 @@ Numeric tests:
 - Points: c = 0, -1, -2, 0.25 are in M; c = 0.26, 1, -2.01 are not [S3].
 - Julia with c = 0: the unit disc, area π [S8].
 - Newton z^3-1: z_0 = 2 converges to the root 1 [S12].
-- Lyapunov at a = b = 3.2 (period-2 regime) gives λ < 0; a = b = 4 gives λ = ln 2 ≈ 0.693 [S14].
+- Lyapunov at a = b = 3.2 (period-2 regime) gives λ < 0; a = b = 4 gives λ = ln 2 ≈ 0.693 nats = exactly 1 bit per iteration [S14]; `fw.py` logistic r = 4 measures 0.99999 bits.
 - Smooth mu continuity: for adjacent pixels across an iteration-band boundary, |Δmu| stays small.
 
 Design consequences:

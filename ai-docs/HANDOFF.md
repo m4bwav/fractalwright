@@ -16,8 +16,8 @@ Continue prompt: [plans/fractalwright-continue-prompt.md](plans/fractalwright-co
 ## Books
 
 - Read and noted (technique-harvest/ai-docs/books/<slug>/notes.md): Falconer, Mandelbrot FGoN (OCR scan), Pickover (OCR), Feldman, Steeb, Banerjee MATLAB, numerical fractal-fractional, Turcotte, Rosenberg, Musimathics 1-2. Closed: fractional calculus (skipped), Blender x2 (built into polywright 0.6.7), Microscope (ludowright 0.1.34), 3ds Max (skipped). sfxwright 0.1.26 / musicwright 0.1.33 got the Musimathics sfx/music items.
-- fractalwright book items not yet built are listed in ai-docs/log.md "book verdicts" lines (2026-11-14). Built in batch 2: the measure/identify items. Still to build: Sprott preference ranking in attractor search, IFS |det| probabilities, Mariani-Silver (test-first, pixel-identical bar), Canright framing (test-first), Lyapunov units bits/nats fix in refs/02, beginner teaching order + cobweb/bifurcation in explain, Richardson coastline in explain, FFT terrain default (test-first vs midpoint creases), fractal interpolation family (test-first), grey-level IFS (test-first), multi-scroll attractor (test-first), audio items (critical-band edges, 200 ms loudness window, chroma->hue, no MP3, longer sub-bass frame, Shepard-Risset note).
-- Close each book with `book_harvest.py done <slug> --verdict built` once its fractalwright items are built. Still wanted: Peitgen, Chaos and Fractals: New Frontiers of Science (#4).
+- All fractalwright book items are built or ruled out (log 2026-11-14 books batch; scripts/fw_extra.py). Retry the multi-scroll attractor from a primary paper when the batch-4 `attractor` command lands.
+- Books closed except Turcotte (open for polywright). Still wanted: Peitgen, Chaos and Fractals: New Frontiers of Science (#4).
 
 ## Decisions and small rulings (change freely)
 

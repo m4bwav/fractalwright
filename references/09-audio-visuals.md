@@ -155,6 +155,24 @@ Proposal: fractalwright calls `mw.py analyze --sections` and `pulse` for tempo, 
 6. Ship no third-party presets. Write our own presets; link to projectM/Butterchurn packs for users who want them. Port MilkDrop ideas from BSD 2.25c or MIT Butterchurn only, with notices.
 7. Dependencies: librosa optional (ISC); numpy FFT for the core; no aubio/Essentia.
 
+## 8b. Design rules from perception (for the `audio` command)
+
+Book rules from Loy, *Musimathics* vol. 1-2, not yet checked on our own material:
+
+1. Band edges follow critical bands (Bark or ERB), not equal octaves: about 100 Hz wide below
+   500 Hz, then about a fifth of the centre frequency. The 3 MilkDrop bands stay, built from them.
+2. Loudness is an energy sum over about 200 ms; drive "intensity" from a 200 ms window, and keep
+   the short frames for onsets only.
+3. Pitch class (chroma, 12 bins) maps to hue round the colour wheel, so a key change reads as a
+   colour change and octaves keep their colour.
+4. Never measure from an MP3 or other lossy file when a lossless one exists: encoders cut what is
+   masked, so band energies and onsets shift. Warn when the input is lossy.
+5. Sub-bass (below about 60 Hz) needs a longer frame (4096 or 8192 at 44.1 kHz) to separate
+   40 from 60 Hz; use it for the bass band only. Masking is why a soft onset right after a loud
+   one is missed: keep the onset minimum gap.
+6. Endless zooms take a Shepard-Risset glide: octave-spaced tones under a fixed bell-shaped level
+   curve, all rising with the zoom, so pitch seems to rise forever as the picture does.
+
 ## 9. Open questions
 
 1. Does the plugin owner want to import user-supplied `.milk` presets (a translator) or only borrow the model? Translator scope is large.

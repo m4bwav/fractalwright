@@ -129,13 +129,21 @@ From *Strange Attractors: Creating Patterns in Chaos* (1993, free online) [S5][S
   - unbounded: |x| or |y| exceeds 10^6 -> reject;
   - fixed point: successive iterates differ by < 10^-6 -> reject;
   - Lyapunov: track a neighbour, renormalise its separation to 10^-6 every step, average
-    ln(d/d0); require largest exponent > 0;
+    ln(d/d0); require largest exponent > 0 (Sprott quotes L in bits per iteration: divide the
+    ln average by ln 2; `fw.py` reports bits);
   - accept as strange attractor if still bounded and LE > 0 after 11,000 iterations.
 - Dimension: correlation dimension is displayed, not a hard filter; Sprott notes visually
   appealing 2D attractors tend to have dimension slightly above 1, and suggests rejecting
   dimensions well below 1 or near 2; Chapter 8 returns to aesthetics [S6].
-- Sprott's 1993 paper "Automatic generation of strange attractors" (Computers & Graphics 17)
-  reports a survey preference for D ~1.1-1.5 and small positive LE (unverified; not fetched).
+- Preference window: viewers preferred D2 about 1.1-1.5 and a small positive L (Sprott's 1993
+  survey, reprinted in Pickover ed., *Chaos and Fractals: A Computer Graphical Journey*, ch. 9).
+  Book rule, unverified by our own viewers. `fw.py attractor-search` ranks hits by distance from
+  that window (score = window distance of D2 + 0.1 L); the filter stays bounded + L > 0.
+- Checks on our tools: Henon (1.4, 0.3) measures L 0.604 bits (0.418 nats) and D2 1.20 with the
+  random-subset Grassberger-Procaccia estimate (2,500 points, 12 radii), against 0.603 and ~1.21.
+- Cautions (Steeb, *The Nonlinear Workbook*, ch. 1 and 11): a forward Euler step makes chaos
+  that the ODE does not have, so integrate with RK4 and halve dt to confirm the picture holds;
+  a second positive exponent (hyperchaos) can be an optional search filter for 3D+ systems.
 
 ## 6. Rendering notes
 
@@ -164,7 +172,8 @@ From *Strange Attractors: Creating Patterns in Chaos* (1993, free online) [S5][S
 3. `attractor` command: a registry of named systems (map or ODE) with default params from
    section 4, plus `--sprott CODE` that decodes Sprott letter strings.
 4. `attractor search`: Sprott's tests (bound, fixed point, LE>0, 11k iterations) plus a
-   correlation-dimension window (start 1.1-1.6, tunable) and save hits as presets with thumbnails.
+   correlation-dimension window (1.1-1.5, section 5) and save hits as presets with thumbnails.
+   Built as `fw.py attractor-search` (2D quadratic maps; ranking, not a filter).
 5. One shared density-histogram renderer with log tone map, used by attractors and by IFS/flames.
 6. Video: parameter interpolation between two good sets, with a check that every frame passes
    the LE test (otherwise the attractor collapses mid-clip).
@@ -174,7 +183,8 @@ From *Strange Attractors: Creating Patterns in Chaos* (1993, free online) [S5][S
 - Exact figure numbers and angle for ABOP context-sensitive and parametric examples
   (1.31, 1.33, 1.35+) were not read; pages 30-45 of [S1] need a pass.
 - Symmetric icon parameter table: need the book or a secondary source with the listed sets.
-- Dimension window for "pleasing": confirm from Sprott ch. 8 / 1993 paper.
+- Dimension window for "pleasing": answered from the Pickover reprint (section 5), still a book
+  rule until our own viewers agree.
 - Should the GPU path (WebGL explorer) share code with the CLI renderer?
 
 ## Sources

@@ -16,14 +16,14 @@ Status values: wanted, owned (path), distilled (date, what it fed). Listed from 
 
 | # | Title | Author | Feeds | Status |
 |---|---|---|---|---|
-| 1 | The Fractal Geometry of Nature | Benoit Mandelbrot | history, vocabulary | owned (D:/RawStorage/BigDownloads/Unorganized/Mandelbrot/Benoit Mandelbrot- The Fractal Geometry of Nature.pdf, scan, OCRed 2026-11-14); notes written 2026-11-14: technique-harvest/ai-docs/books/benoit-mandelbrot-the-fractal-geometry-of/notes.md |
+| 1 | The Fractal Geometry of Nature | Benoit Mandelbrot | history, vocabulary | owned (D:/RawStorage/BigDownloads/Unorganized/Mandelbrot/Benoit Mandelbrot- The Fractal Geometry of Nature.pdf, scan, OCRed 2026-11-14); notes written 2026-11-14; built 2026-11-14 (Richardson, lacunarity, spectral terrain default) |
 | 2 | The Beauty of Fractals | Heinz-Otto Peitgen, Peter Richter | escape-time pictures, colouring | wanted |
 | 3 | The Science of Fractal Images | Peitgen, Dietmar Saupe (eds.) | algorithms: escape time, distance estimate, fBm, terrain | wanted |
 | 4 | Chaos and Fractals: New Frontiers of Science | Peitgen, Hartmut Jürgens, Saupe | explain, measure, IFS, L-systems | wanted |
 | 5 | Fractals Everywhere | Michael Barnsley | IFS, collage theorem | wanted |
 | 6 | The Algorithmic Beauty of Plants | Przemyslaw Prusinkiewicz, Aristid Lindenmayer | L-systems (free PDF from the authors' site) | wanted, free |
 | 7 | Indra's Pearls | David Mumford, Caroline Series, David Wright | Kleinian groups, limit sets | wanted |
-| 8 | Fractal Geometry: Mathematical Foundations and Applications | Kenneth Falconer | dimension, the maths behind `measure` | owned, 2nd ed. 2003 (D:/RawStorage/BigDownloads/Unorganized/Fractal_Geometry_Mathematical_Foundations_and_Applications_2nd_Edition..pdf/Fractal_Geometry_Mathematical_Foundations_and_Applications_2nd_Edition.pdf); notes written 2026-11-14: technique-harvest/ai-docs/books/fractal-geometry-mathematical-foundations-and-applications/notes.md |
+| 8 | Fractal Geometry: Mathematical Foundations and Applications | Kenneth Falconer | dimension, the maths behind `measure` | owned, 2nd ed. 2003 (D:/RawStorage/BigDownloads/Unorganized/Fractal_Geometry_Mathematical_Foundations_and_Applications_2nd_Edition..pdf/Fractal_Geometry_Mathematical_Foundations_and_Applications_2nd_Edition.pdf); built 2026-11-14 (measure v2; ruler walk and IFS fit left out) |
 | 9 | Chaos: Making a New Science | James Gleick | history and people | wanted |
 | 10 | Nonlinear Dynamics and Chaos | Steven Strogatz | attractors, bifurcations | wanted |
 | 11 | Strange Attractors: Creating Patterns in Chaos | Julien C. Sprott | attractor search and aesthetics (author offers a free PDF) | wanted, free |
@@ -35,8 +35,8 @@ Status values: wanted, owned (path), distilled (date, what it fed). Listed from 
 
 | Title | Author | Feeds | Status |
 |---|---|---|---|
-| Chaos and Fractals: A Computer Graphical Journey (1998 paper collection; not Peitgen's #4) | Clifford Pickover (ed.) | attractor/IFS search scoring, IFS probabilities and bounds, Mariani-Silver fill, family origins | owned (D:/RawStorage/BigDownloads/Unorganized/Chaos_Fractal/Clifford Pickover - Chaos and Fractals [OCR].pdf); notes read 2026-11-14 at technique-harvest/ai-docs/books/pickover-chaos-and-fractals/notes.md; verdicts pending |
-| Chaos and Fractals: An Elementary Introduction (2012) | David P. Feldman | explain beginner path, cobweb/bifurcation, box-count cautions, Lyapunov units | owned (D:/RawStorage/BigDownloads/Unorganized/Chaos and Fractals_ An Elementa - David P. Feldman.pdf); notes read 2026-11-14 at technique-harvest/ai-docs/books/feldman-chaos-and-fractals/notes.md; verdicts pending |
+| Chaos and Fractals: A Computer Graphical Journey (1998 paper collection; not Peitgen's #4) | Clifford Pickover (ed.) | attractor/IFS search scoring, IFS probabilities and bounds, Mariani-Silver fill, family origins | owned (D:/RawStorage/BigDownloads/Unorganized/Chaos_Fractal/Clifford Pickover - Chaos and Fractals [OCR].pdf); built 2026-11-14 (attractor-search window, IFS |det| + discard + ball cover; Mariani-Silver failed its bar) |
+| Chaos and Fractals: An Elementary Introduction (2012) | David P. Feldman | explain beginner path, cobweb/bifurcation, box-count cautions, Lyapunov units | owned (D:/RawStorage/BigDownloads/Unorganized/Chaos and Fractals_ An Elementa - David P. Feldman.pdf); built 2026-11-14 (explain logistic, cobweb/bifurcation, Lyapunov bits, shadowing, box-count cautions) |
 
 ## Rendering, shaders and generative art
 
@@ -54,7 +54,7 @@ Status values: wanted, owned (path), distilled (date, what it fed). Listed from 
 |---|---|---|---|---|
 | 20 | The Scientist and Engineer's Guide to Digital Signal Processing | Steven W. Smith | FFT, windows, filters (free online) | wanted, free |
 | 21 | Designing Sound | Andy Farnell | how sounds are built, so mappings follow what is heard | wanted |
-| 22 | Musimathics (2 volumes) | Gareth Loy | spectra, tuning, perception | read 2026-11-14: notes at technique-harvest/ai-docs/books/loy-musimathics-vol1 and -vol2 (critical-band band edges, 200 ms loudness, chroma to hue, Shepard glide for endless zoom, frame and MP3 cautions) |
+| 22 | Musimathics (2 volumes) | Gareth Loy | spectra, tuning, perception | read 2026-11-14: notes at technique-harvest/ai-docs/books/loy-musimathics-vol1 and -vol2 (critical-band band edges, 200 ms loudness, chroma to hue, Shepard glide for endless zoom, frame and MP3 cautions); built 2026-11-14 as references/09 section 8b |
 | 23 | The Computer Music Tutorial (2nd ed.) | Curtis Roads | analysis methods, onset and pitch detection | wanted |
 | 24 | Visual Music: Synaesthesia in Art and Music Since 1900 | Kerry Brougher and others | the history audio visualizers come from | wanted |
 | 25 | Fractals in Music | Charles Madden | fractal structure in music itself | wanted |
@@ -88,9 +88,9 @@ Notes under `Ai/technique-harvest/ai-docs/books/<slug>/notes.md`; verdicts pendi
 
 | Title | Author | Status | Notes slug | Main yield |
 |---|---|---|---|---|
-| The Nonlinear Workbook | Willi-Hans Steeb | distilled 2026-11-14, notes only | willi-hans-steeb-the-nonlinear-workbook | Kronecker-power grid fractals, Weierstrass test signal, Hénon capacity target, grey-level IFS |
-| Fractal Patterns with MATLAB | Banerjee, Gowrisankar, Reddy | distilled 2026-11-14, notes only | fractal-patterns-with-matlab-santo-banerjee | fractal interpolation (curves and surfaces through given points), Katz dimension |
-| Numerical Methods for Fractal-Fractional Differential Equations and Engineering | (edited volume, Atangana school) | distilled 2026-11-14, mostly skip | numerical-methods-fractal-engineering | multi-scroll attractor presets only; fractional-order mode skipped |
+| The Nonlinear Workbook | Willi-Hans Steeb | built 2026-11-14 (kronecker, Weierstrass, cautions; grey-level IFS left out) | willi-hans-steeb-the-nonlinear-workbook | Kronecker-power grid fractals, Weierstrass test signal, Hénon capacity target, grey-level IFS |
+| Fractal Patterns with MATLAB | Banerjee, Gowrisankar, Reddy | built 2026-11-14 (Katz, `fif`) | fractal-patterns-with-matlab-santo-banerjee | fractal interpolation (curves and surfaces through given points), Katz dimension |
+| Numerical Methods for Fractal-Fractional Differential Equations and Engineering | (edited volume, Atangana school) | closed 2026-11-14, nothing built (multi-scroll failed its test) | numerical-methods-fractal-engineering | multi-scroll attractor presets only; fractional-order mode skipped |
 
 ## Supplied and read
 
@@ -98,6 +98,6 @@ Notes live in `Ai/technique-harvest/ai-docs/books/<slug>/notes.md` (ledger there
 
 | Title | Author | Feeds | Status |
 |---|---|---|---|
-| Fractals and Chaos in Geology and Geophysics, 2nd ed. | Donald L. Turcotte (1997) | measure (self-affine path: spectra, semivariogram, roughness maps), terrain targets, rivers; polywright DEM character | distilled 2026-11-14, notes `turcotte-1997-fractals-and-chaos-in`; nothing built yet |
-| Fractal Dimensions of Networks | Eric Rosenberg (2020) | measure (decades rule, offsets, local slopes, sandbox, D2 point counts, lacunarity), test shapes | distilled 2026-11-14, notes `fractal-dimensions-of-networks-eric-rosenberg`; nothing built yet |
+| Fractals and Chaos in Geology and Geophysics, 2nd ed. | Donald L. Turcotte (1997) | measure (self-affine path: spectra, semivariogram, roughness maps), terrain targets, rivers; polywright DEM character | distilled 2026-11-14, notes `turcotte-1997-fractals-and-chaos-in`; fractalwright items built 2026-11-14, open for polywright |
+| Fractal Dimensions of Networks | Eric Rosenberg (2020) | measure (decades rule, offsets, local slopes, sandbox, D2 point counts, lacunarity), test shapes | distilled 2026-11-14, notes `fractal-dimensions-of-networks-eric-rosenberg`; built 2026-11-14 (measure v2) |
 | Fractional Calculus for Skeptics I | West and co-authors | nothing (advocacy essays) | read 2026-11-14, skip; notes `fractional-calculus-for-skeptics-i` |

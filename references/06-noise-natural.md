@@ -90,6 +90,24 @@ smoky or geological stills. Animate by adding time to the inner offsets.
 - Known artefact: axis-aligned "creases" (Miller 1986); Lewis 1987 generalised the weights to fix it [S8].
 - 1D midpoint displacement gives coastline/mountain profiles; same amplitude rule.
 - Use: fast, tileable when wrapped, a teaching/explorer mode. Prefer spectral or noise fBm for quality.
+- Measured creases (`fw_extra.crease_ratio`: mean |second difference| across the coarse grid lines
+  at multiples of n/8 over the mean elsewhere): diamond-square 1.17-1.19 at 513 px, H 0.8, three
+  seeds; spectral synthesis 0.98-1.00. So `fw.py terrain` defaults to spectral; `--method midpoint`
+  stays for teaching [book rule confirmed: Mandelbrot, *The Fractal Geometry of Nature*, ch. 26].
+
+## 5b. Fractal interpolation and the Weierstrass sum
+
+- Affine fractal interpolation function (FIF): maps w_i(x, y) = (a_i x + e_i, c_i x + d_i y + f_i)
+  send the whole graph onto interval i; the curve passes through the given points and |d_i| < 1
+  sets roughness. d = 0 gives the straight-line join. For equally spaced points and sum|d_i| > 1
+  the graph has D = 1 + log(sum|d_i|) / log N. `fw.py fif` draws one; the semivariogram D of
+  `measure profile` matched the formula within 0.035 on four scaling sets. The alpha-fractal mode
+  (an FIF that perturbs a given function) uses the same maps with the base function in f_i.
+  Source: Banerjee, Gowrisankar, Reddy, *Fractal Patterns with MATLAB*, ch. 2 and 4 (book rule
+  for alpha mode; the affine case is checked). Row-and-column surfaces and splines: left out.
+- Weierstrass sum W(t) = sum_k lambda^(-k H) sin(lambda^k t) with lambda > 1 gives a profile of
+  known D = 2 - H, a generated test input beside fBm (Steeb, *The Nonlinear Workbook*, ch. 9).
+  A Levy flight (heavy-tailed steps) makes clustered point sets; note only.
 
 ## 6. Spectral synthesis (1/f^beta)
 
