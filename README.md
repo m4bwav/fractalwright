@@ -13,6 +13,7 @@ The banner above is `fw.py render seahorse --palette ultra --size 1536x640`. Its
 - **Stills from recipes.** Mandelbrot, Julia, Burning Ship, Tricorn, Multibrot and Kronecker (grid) fractals, with smooth colouring, supersampling and palettes. A preset name or a recipe JSON goes in; a PNG and the recipe that redraws it come out.
 - **Measurements with error bars.** Box-counting dimension with a verdict on the fit range, lacunarity, IFS similarity dimension from scale ratios, profile and heightmap roughness (Hurst exponent), Katz, and the area of the Mandelbrot set. Each is tested against a shape whose answer is known.
 - **Plain explanations.** `fw.py explain <family>` prints the formula and how it is drawn, for a reader who has not met it before.
+- **Sheets and video.** `fw.py sheet` lays variations of one parameter or palette out on a labelled contact sheet with each tile's recipe. `zoom`, `morph` and `loop` write exact frames, an H.264 mp4 and an animation recipe; `flashcheck` counts luminance swings per second against the three-per-second photosensitivity limit.
 - **Identify.** `fw.py identify` lists hand-built features of a preset, recipe, image or Julia `c`, for example whether a Julia set is connected and why.
 
 ## Install
@@ -33,11 +34,15 @@ python scripts/fw.py render seahorse -o seahorse.png --size 1280x720
 python scripts/fw.py measure box seahorse.png
 python scripts/fw.py measure area --size 1024
 python scripts/fw.py palette
+python scripts/fw.py sheet julia-rabbit --palettes classic,fire,ocean,ultra -o sheet.png
+python scripts/fw.py zoom seahorse --from-width 3 --to-width 1e-4 --size 640x360 --duration 8 -o zoom.mp4
+python scripts/fw.py loop julia-rabbit --circle -0.123,0.745,0.02 --phase --size 640x360 -o loop.mp4
+python scripts/fw.py flashcheck zoom.mp4
 ```
 
 ## Status
 
-Early, version 0.1.0 and not released yet. Stills and measuring work and have tests (30 passing). Planned next: contact sheets, zooms, morphs and loops (video), an interactive browser page, audio-driven visuals, and 3D fractals behind a look test. The eval suite is not written yet, so there is no release until it is.
+Early, version 0.1.0 and not released yet. Stills, measuring, contact sheets and video (zoom, morph, loop, flash check) work and have tests (37 passing). Planned next: the AI styling pass, an interactive browser page, audio-driven visuals, and 3D fractals behind a look test. The eval suite is not written yet, so there is no release until it is.
 
 ## Works with
 
