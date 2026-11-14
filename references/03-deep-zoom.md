@@ -179,8 +179,9 @@ copy their code if it is to stay permissively licensed; reimplement from the pub
 ## 6. Implications for fractalwright
 
 Recommended path:
-1. **Reference orbit in Python**, mpmath required-light (pure Python, BSD), gmpy2 optional for
-   speed. Store orbit as float64 (or mantissa + exponent pairs past 1e300). Small install.
+1. **Reference orbit in Python**. Measured 2026-11-14 (fw_deep.py): stdlib `decimal` is enough;
+   a 3000-iteration orbit at 55 digits takes well under a second, so mpmath is not needed
+   (gmpy2 stays an optional speed-up for very deep or long orbits). Store orbit as float64 (or mantissa + exponent pairs past 1e300). Small install.
 2. **Pixel loop: perturbation + rebasing**, implemented twice from one spec:
    NumPy float64 (CPU, always available) and WebGL2 float32 (browser explorer / headless video).
 3. **BLA** as phase 2 for high-iteration locations; SA skipped (BLA supersedes it).

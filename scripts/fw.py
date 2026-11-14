@@ -869,7 +869,13 @@ def cmd_render(a):
             r["params"]["power"] = a.power
     r = normalise(r)
     out = Path(a.out)
-    if np is not None:
+    if np is not None and r["formula"] == "mandelbrot" and (a.deep or Decimal(r["view"]["width"]) < Decimal("1e-12")):
+        import fw_deep  # perturbation: Decimal reference orbit, float64 deltas, rebasing
+        st = {}
+        r["render"] = {"route": "numpy-perturbation", "precision": "decimal+float64"}
+        write_png(out, arr=fw_deep.render_array(r, st))
+        print(f"deep: rebased {st['rebased_pixels']} pixels")
+    elif np is not None:
         r["render"] = {"route": "numpy", "precision": "float64"}
         write_png(out, arr=render_array(r))
     else:
@@ -1375,6 +1381,7 @@ def main(argv=None):
     s.add_argument("--supersample", type=int)
     s.add_argument("--mask", help=f"kronecker mask: {', '.join(KRONECKER)} or rows like 111,101,111")
     s.add_argument("--power", type=int, help="kronecker power (side = k^power)")
+    s.add_argument("--deep", action="store_true", help="perturbation route (automatic below width 1e-12)")
     s.set_defaults(fn=cmd_render)
     s = sub.add_parser("measure", help="box/lacunarity of an image, profile/katz of numbers, heightmap, IFS ratios, Mandelbrot area")
     s.add_argument("what", choices=["box", "lacunarity", "profile", "katz", "heightmap", "ifs", "area"])

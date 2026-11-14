@@ -8,6 +8,10 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261114-5 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2 · 43/43 (after rebase on batch 3)
+- Deep zoom (fw_deep.py, perturbation with rebasing, Decimal reference orbit): width 1e-6 at 96x64, 2000 iterations, mean diff 0.405 vs plain NumPy (bar 1.0). Width 1e-20 and 1e-30 at 24x16, 3000 iterations: 384/384 pixels give the same iteration count as direct Decimal iteration (bar 99%, no wrong blob over 4 px); counts 1164-1978 and 2078-2815.
+- Timings: perturbation 0.03 s (1e-20) and 0.04 s (1e-30) for 384 px; direct Decimal 0.44 s and 0.74 s. At 1e-6, 96x64: plain 0.03 s, perturbation 0.13 s.
+- Rebasing counter: at both deep views the reference orbit escapes early (1358 and 2191 iterations), so every pixel rebases at least once (384 and 374 pixels, 3316 and 2339 rebases) and counts still match exactly.
 ### T-20261114-4 · 2026-11-14 · unittest (tests/test_fw.py) · Windows, Python 3.14.6, numpy 2.5.2, ffmpeg on PATH · 37/37
 - Video at 160x90, max_iter 200, 12 frames at 12 fps. Same recipe twice: 12/12 frame hashes identical. Loop seam (julia c circle r 0.02 + palette phase): last-to-first mean abs diff 34.35 vs median neighbour diff 35.99, ratio 0.954 (bar 1.25). Zoom 3.5 -> 0.01 over 12 frames: width ratio spread 4.4e-16 (bar 1e-9). ffprobe: zoom, loop and morph mp4 each 12 frames at 12.0 fps.
 - flashcheck on the test outputs: zoom 1, loop 2, morph 1 swings per second (limit 3), mp4 and frame folder both pass; a black/white strobe decoy fails. Sheet tile 2 pixel-identical to its sidecar recipe re-rendered. AI hook: a local stub server on /system_stats gives ai_pass pending-not-implemented; no host gives the exact video with a note. Suite runtime 57 s.

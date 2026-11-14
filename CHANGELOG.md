@@ -4,6 +4,10 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-5 · 2026-11-14 · deep zoom by perturbation (fw_deep.py)
+- because: T-20261114-5, user request (deep-zoom path)
+- files: scripts/fw_deep.py (new), scripts/fw.py (`render` routing and `--deep`), tests/test_deep.py (new), references/03-deep-zoom.md (sections 2.3 and 4), CODEMAP.md
+- Mandelbrot renders below width 1e-12 (or with `--deep`) use a Decimal reference orbit and float64 deltas with Zhuoran rebasing; mpmath is not needed. Proven to width 1e-30 against direct Decimal iteration. Widths under 1e-290 are refused (floatexp not built). Series and bilinear approximation not built.
 ### C-20261114-4 · 2026-11-14 · sheet, zoom, morph, loop, flashcheck (Step D batch 3)
 - because: T-20261114-4, user request (continue prompt Step D batch 3), design.md section 6 (AI styling on by default for video)
 - files: scripts/fw.py (video block, colouring.phase), tests/test_fw.py (Video), skills/fractalwright/SKILL.md (Step 2b), README.md, CODEMAP.md
