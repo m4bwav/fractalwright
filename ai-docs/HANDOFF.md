@@ -6,12 +6,12 @@ Continue prompt: [plans/fractalwright-continue-prompt.md](plans/fractalwright-co
 
 ## Step D progress (2026-11-14)
 
-- Batch 1 done on branch `scaffold` (worktree `Ai/_wt/fractalwright-scaffold`, not merged): scaffold, evergreen unit at root, fw.py doctor/explain/render/measure/palette, tests 8/8. Next: identify, sheet, then zoom/morph/loop; evals in Step F; banner owed.
+- Batch 1 done on branch `scaffold` (worktree `Ai/_wt/fractalwright-scaffold`, not merged): scaffold, evergreen unit at root, fw.py doctor/explain/render/measure/palette, tests 8/8. Next: identify, sheet, then zoom/morph/loop; evals in Step F; banner done.
 - Batch 2 done on branch `measure` (worktree `Ai/_wt/fractalwright-measure`, not merged): measure v2 (box verdicts, lacunarity, ifs, profile, katz, heightmap), identify v1, kronecker render family; tests 30/30. Next: sheet, then zoom/morph/loop.
 
 ## What exists
 
-- This folder holds only `ai-docs/`. It is not a git repository yet; the first session creates it (private until Mark says public).
+- Public repo https://github.com/m4bwav/fractalwright (since 2026-11-14) with wiki https://github.com/m4bwav/fractalwright/wiki (7 pages, note ai-docs/notes/2026-11-14-github-wiki.md). No release yet: tag only after evals/evals.json is written and run. Banner/social rendered by fw.py, done.
 - Book list with status: [notes/books.md](notes/books.md).
 - Backlog entry: "Fractal plugin" in `Ai/plugin-backlog/new-plugins.md`.
 

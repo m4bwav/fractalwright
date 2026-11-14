@@ -1,0 +1,134 @@
+## $ python fw.py doctor
+python      3.14.6                                   required (3.9+)
+numpy       2.5.2                                    core: render, measure (pure Python fallback for small renders)
+Pillow      12.3.0                                   optional: measure on image files (PNG writing is built in)
+moderngl    missing                                  optional accelerator: float64 GLSL stills (not wired yet)
+playwright  installed                                optional accelerator: WebGL2 page and frames (not wired yet)
+browser     msedge                                   for the playwright route
+ffmpeg      <local path> optional: video commands (later)
+## $ python fw.py explain mandelbrot
+mandelbrot
+  formula: z <- z^2 + c, z0 = 0, c = pixel
+  how: Escape time: iterate each pixel's c until |z| > R or max_iter. Points that never escape form the set (area ~1.50659). Smooth colour mu = n + 1 - log(log|z|)/log 2 with R >= 256.
+  presets: mandelbrot-full, seahorse
+  more: references/02-escape-time.md#mandelbrot
+## $ python fw.py render seahorse -o seahorse.png --size 640x360
+wrote seahorse.png and seahorse.json
+## $ python fw.py measure box seahorse.png
+measure: box-dimension
+dimension: 1.8389
+r2: 0.9997
+curvature: 0.0257
+fit_px: [2, 90]
+decades: 1.6532
+sizes: [2, 3, 4, 6, 7, 9, 12, 15, 20, 25, 33, 42, 54, 70, 90]
+counts: [33498.500, 16066.250, 9371.125, 4361.125, 3265.500, 2033.625, 1181.500, 777.000, 451.875, 302.125, 180.875, 117.375, 75.625, 49.875, 32.625]
+local_slopes: [1.862, 1.882, 1.885, 1.884, 1.884, 1.870, 1.854, 1.835, 1.805, 1.754, 1.700]
+slope_spread: 0.1843
+offsets: 8
+seed: 0
+specks_removed: 355
+image: [640, 360]
+verdict: descriptor only: fit range 1.65 decades is under 2
+warnings: ['removed 355 isolated pixels (D moved under 0.01)', 'coarse boxes bias D; read the local-slope curve, not one number', "110 grey levels: if this is a heightmap use 'measure heightmap'; box counting reads only the thresholded shape"]
+image_file: seahorse.png
+## $ python fw.py measure area --size 512
+measure: mandelbrot-area
+size: 512
+max_iter: 10000
+area: 1.5071
+reference: 1.5066
+error: 0.0005
+## $ python fw.py palette
+classic  cosine
+fire     cosine
+ocean    cosine
+ultra    stops
+grey     stops
+## $ python fw.py identify julia-dendrite
+identify: v1
+features: {'family': 'escape-time', 'formula': 'julia', 'julia_connected': True}
+hints: ['connected Julia set: the orbit of 0 stays bounded, so c is in the Mandelbrot set']
+## $ python fw.py render kronecker-carpet -o carpet.png
+wrote carpet.png and carpet.json
+## $ python fw.py measure box carpet.png
+measure: box-dimension
+dimension: 1.8114
+r2: 0.9997
+curvature: 0.0222
+fit_px: [2, 182]
+decades: 1.9590
+sizes: [2, 3, 4, 5, 7, 9, 12, 16, 22, 30, 40, 55, 74, 100, 135, 182]
+counts: [82680.000, 39706.500, 23378.250, 15429.625, 8290.375, 5094.500, 3017.125, 1781.500, 993.625, 561.875, 333.500, 189.250, 109.750, 69.625, 40.250, 24.750]
+local_slopes: [1.837, 1.866, 1.868, 1.859, 1.847, 1.831, 1.831, 1.818, 1.812, 1.749, 1.726, 1.694]
+slope_spread: 0.1745
+offsets: 8
+seed: 0
+specks_removed: 0
+image: [729, 729]
+verdict: descriptor only: fit range 1.96 decades is under 2
+warnings: ['coarse boxes bias D; read the local-slope curve, not one number']
+image_file: carpet.png
+## $ python fw.py measure ifs --ratios 0.5,0.5,0.5
+measure: similarity-dimension
+ratios: [0.500, 0.500, 0.500]
+dimension: 1.5850
+note: exact only when the pieces do not overlap (open set condition); with overlap it is an upper bound
+## recipe
+{
+  "fractalwright": "0.1.0",
+  "family": "escape-time",
+  "formula": "mandelbrot",
+  "params": {
+    "power": 2,
+    "bailout": 256,
+    "max_iter": 1000
+  },
+  "view": {
+    "centre": [
+      "-0.7436447860",
+      "0.1318252536"
+    ],
+    "width": "0.0001",
+    "rotation_deg": 0
+  },
+  "size": {
+    "w": 640,
+    "h": 360,
+    "supersample": 1
+  },
+  "colouring": {
+    "method": "smooth",
+    "density": 0.02,
+    "inside": "#000000"
+  },
+  "palette": {
+    "type": "cosine",
+    "a": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "b": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "c": [
+      1,
+      1,
+      1
+    ],
+    "d": [
+      0.0,
+      0.33,
+      0.67
+    ]
+  },
+  "seed": 0,
+  "render": {
+    "route": "numpy",
+    "precision": "float64"
+  },
+  "ai_pass": null
+}
