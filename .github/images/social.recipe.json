@@ -1,0 +1,63 @@
+{
+  "fractalwright": "0.1.0",
+  "family": "escape-time",
+  "formula": "mandelbrot",
+  "params": {
+    "power": 2,
+    "bailout": 256,
+    "max_iter": 2000
+  },
+  "view": {
+    "centre": [
+      "-0.7436447860",
+      "0.1318252536"
+    ],
+    "width": "0.0001",
+    "rotation_deg": 0
+  },
+  "size": {
+    "w": 1280,
+    "h": 640,
+    "supersample": 2
+  },
+  "colouring": {
+    "method": "smooth",
+    "density": 0.02,
+    "inside": "#000000"
+  },
+  "palette": {
+    "type": "stops",
+    "stops": [
+      [
+        0.0,
+        "#000764"
+      ],
+      [
+        0.16,
+        "#206bcb"
+      ],
+      [
+        0.42,
+        "#edffff"
+      ],
+      [
+        0.6425,
+        "#ffaa00"
+      ],
+      [
+        0.8575,
+        "#000200"
+      ],
+      [
+        1.0,
+        "#000764"
+      ]
+    ]
+  },
+  "seed": 0,
+  "render": {
+    "route": "numpy",
+    "precision": "float64"
+  },
+  "ai_pass": null
+}
