@@ -18,7 +18,7 @@ Read `evergreen.json` at the repository root. If `contradiction` is set or today
 
 ## Step 1: pick the family
 
-`FW explain <family>` gives the formula, how it is made and the presets. Families: mandelbrot, julia, burning-ship, tricorn, multibrot, kronecker (exact grid fractals: `FW render kronecker-carpet`, or `--mask 111,101,111 --power 6`). Read [references/02-escape-time.md](../../references/02-escape-time.md) only when the user asks for depth or a colouring method beyond smooth.
+`FW explain <family>` gives the formula, how it is made and the presets. Families: mandelbrot, julia, burning-ship, tricorn, multibrot, kronecker (exact grid fractals: `FW render kronecker-carpet`, or `--mask 111,101,111 --power 6`). New to chaos: `FW explain logistic` gives the teaching order, `--plot cobweb|bifurcation -o out.png` draws it; `FW explain coastline` explains D by Richardson's rulers. Read [references/02-escape-time.md](../../references/02-escape-time.md) only when the user asks for depth or a colouring method beyond smooth.
 
 ## Step 2: render
 
@@ -31,6 +31,10 @@ Read `evergreen.json` at the repository root. If `contradiction` is set or today
 ## Step 2b: sheets and video
 
 `FW sheet <recipe> --palettes A,B,C` or `--vary params.max_iter --values 100,300,1000` (complex values as `re:im`) writes a labelled contact sheet PNG and a JSON with each tile's recipe. Video: `FW zoom <recipe> --to-width W [--from-width W0] [--to-centre re,im]` (exponential width, eased centre), `FW morph <recipe> --path "re,im;re,im"` (julia c by default, `--vary` for another param), `FW loop <recipe> --circle re,im,r [--phase]` (closed path, last frame wraps to the first). All take `--size WxH --fps N --duration S`, write exact frames in `<out>_frames/`, an H.264 mp4 (yuv420p, CRF 18) and `<out>.json` with `animation` (keyframes, fps, duration_s). AI styling is on by default (`--no-ai` to skip): today it only probes ComfyUI and records `ai_pass: pending-not-implemented`; the exact video is always the delivered file. Every video gets a flash check; `FW flashcheck <video or frame dir>` runs it alone and exits 4 above 3 luminance swings (10% of full range) per second. Report a failure, never ship it ([references/09](../../references/09-audio-visuals.md)).
+
+## Step 2c: IFS, attractors, terrain, interpolation
+
+`FW ifs sierpinski|fern|unequal-tiles -o out.png` (chaos game, p by |det|, first 20 points dropped, framed by a ball that provably holds the attractor). `FW attractor-search --hits 5 -o best.png` (Sprott quadratic maps ranked by D2 1.1-1.5 and small L, a book rule; Lyapunov in bits). `FW terrain -o t.png [--method midpoint] [--H 0.8]` (spectral by default; midpoint creases measured) writes a PNG and `.npy`. `FW fif --points "0,0;1,1;2,0" --d 0.5,-0.5 -o f.png [--numbers y.txt]` draws a fractal interpolation curve through the points.
 
 ## Step 3: measure
 

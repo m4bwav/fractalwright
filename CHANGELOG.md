@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-7 · 2026-11-14 · book items: logistic explain, attractor-search, ifs, terrain, fif (fw_extra.py)
+- because: T-20261114-7, book verdicts in ai-docs/log.md (Feldman, Pickover ed., Mandelbrot FGoN, Steeb, Banerjee, Loy *Musimathics*)
+- files: scripts/fw_extra.py (new), scripts/fw.py (`main` registers it), tests/test_extra.py (new), skills/fractalwright/SKILL.md (Steps 1, 2c), CODEMAP.md, references/01 (Richardson), 02 (Lyapunov units), 04 (|det| default, discard, ball cover), 05 (Sprott window, Henon checks, Euler and hyperchaos cautions), 06 (crease measurement, FIF and Weierstrass), 09 (section 8b audio design rules)
+- Lyapunov exponents are now stated in bits (ln 2 nats = 1 bit at r = 4). New commands are checked against known answers; the Sprott preference window and the audio rules stay book rules, unverified. Tested and left out: Mariani-Silver fill (not pixel-identical), multi-scroll attractor (recalled parameters failed), grey-level IFS (cost); reasons in ai-docs/log.md.
+
 ### C-20261114-6 · 2026-11-14 · explorer: serve, export, render --route browser (Step D batch 4a)
 - because: T-20261114-6, user request (Step D batch 4a), design.md section 2 (headless browser first accelerator)
 - files: scripts/fw_serve.py (new), scripts/page/fractal.frag (new), scripts/page/explorer.html (new), scripts/fw.py (`serve`, `export`, `render --route`, `doctor` playwright row), tests/test_serve.py (new), skills/fractalwright/SKILL.md (Step 2a), README.md, CODEMAP.md

@@ -26,6 +26,18 @@ repeat ITER times:
 ```
 Probabilities only change the density, not the attractor. For uniform density,
 weight each map by |det| of its linear part. (KNOWN)
+`fw.py ifs` defaults to p proportional to |det|, with a floor of 0.01 for a zero-det map (the fern
+stem), and discards the first 20 points [book rule: Pickover ed., *Chaos and Fractals*, p. 391].
+Measured: four unequal tiles of the unit square give an 8x8 histogram spread (cv) of 0.014 with
+|det| weights against 1.05 with equal weights; from a start 50 units away, 8 of the first 50
+points lie off the attractor without the discard and none with it.
+
+### Framing a view before rendering (ball cover)
+Pick a centre c; with s_i the largest singular value of map i, the ball of radius
+R = max_i |f_i(c) - c| / (1 - s_i) is sent into itself by every map, so the attractor lies in it.
+A short pattern search on c tightens R. `fw.py ifs --frame envelope` uses it. Every chaos-game
+point fell inside on the presets and 20 random 3-map IFS (max distance / R: Sierpinski 1.0, fern
+0.97, random 0.995) [idea after Canright, in Pickover ed., p. 383].
 
 ### Barnsley fern
 Each map is f(x,y) = (a x + b y + e, c x + d y + f). Coefficients from
