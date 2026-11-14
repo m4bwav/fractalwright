@@ -3,7 +3,7 @@ name: fractalwright
 description: "Render, animate, measure and identify fractals as reproducible recipes (PNG or mp4 plus a recipe JSON that redraws it): Mandelbrot, Julia, Burning Ship and Multibrot stills, deep zooms, zoom, morph and loop videos with a flash check, audio-reactive music videos and visualizers from a song, fractal flames, IFS, L-systems, strange attractors, fBm terrain, box-counting dimension. Use whenever the user wants a fractal image, wallpaper or video, asks 'render a Mandelbrot zoom', 'make a fractal flame', 'winamp-style visualizer for this song', 'what fractal is this picture', 'measure the fractal dimension of this coastline', or wants to redraw a fractal exactly. Also 'refresh fractalwright'. Not for general shaders (threewright), mastering music (musicwright) or pixel art (pixelwright)."
 license: MIT
 metadata:
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # fractalwright
@@ -46,9 +46,9 @@ Read `evergreen.json` at the repository root. If `contradiction` is set or today
 
 `FW rd coral|mitosis|default [--f F --k K --steps N --seed N]` (Gray-Scott). `FW ca 90|30|B3/S23 [--steps N]` (elementary rule or Life-like). `FW tiling square|triangle|hex|penrose [--n N]`. `FW kleinian apollonian|grandma [--ta T --tb T]` (Apollonian gasket, or a two-generator limit set from Grandma's recipe). Each writes a PNG and recipe. Say plainly that reaction-diffusion and tilings are not fractals; `FW measure box` on a tiling says "not fractal" ([references/12-neighbours.md](../../references/12-neighbours.md)).
 
-## Step 2e: 3D (pending Mark's gate verdict)
+## Step 2e: 3D
 
-`FW 3d render mandelbulb|mandelbox|quatjulia|menger|hybrid [--view whole|close] [--remedy ao|shadow|fog|trap|dof|aa|camera|all] -o x.png` (sphere-traced DE in headless Edge; writes the recipe with the camera made explicit). `FW 3d recipe ...` prints the recipe; `FW 3d gate -o DIR` renders the gate matrix and sheets. Browser route only, no NumPy fallback. Judge so far: turn on shadow, ao and camera; leave fog and dof off unless asked. Status pending Mark's verdict on ask/fractalwright-3d-gate-2026-11-14.
+`FW 3d render mandelbulb|mandelbox|quatjulia|menger|hybrid [--view whole|close] [--remedy ao|shadow|fog|trap|dof|aa|camera|all|none] -o x.png` (sphere-traced DE in headless Edge; writes the recipe with the camera made explicit). Default look: soft shadows, ambient occlusion and a composed camera (40 mm, low angle, subject on the left third); `--remedy` adds to it, `--remedy none` clears it first. Leave fog and dof off unless asked: fog washed the subject out in the look gate and dof blurs close views. `FW 3d recipe ...` prints the recipe; `FW 3d gate -o DIR` renders the remedy matrix and sheets. Browser route only, no NumPy fallback. A normal route since the 3D look gate (2026-11-14).
 
 ## Step 3: measure
 

@@ -4,6 +4,16 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-15 · 2026-11-14 · release 0.2.0
+- because: user request
+- files: plugin.json, .claude-plugin/plugin.json, skills/fractalwright/SKILL.md (metadata), scripts/fw.py (`VERSION`, doctor wording for moderngl and ffmpeg), README.md (Status)
+- Since 0.1.0: AI styling pass for video (C-11), neighbours rd, ca, tiling and kleinian (C-12), Julia deep zoom and the WCAG 2.x flash area and red rules (C-13), and 3D as a normal route with shadow, ao and a composed camera by default (C-14). `fw.py --version` now prints 0.2.0; doctor no longer calls moderngl "not wired yet" and lists audio under ffmpeg.
+
+### C-20261114-14 · 2026-11-14 · 3D ships as a normal route
+- because: T-20261114-14, Mark's 3D gate answers (would keep all 9 renders shown), ai-docs/notes/2026-11-14-3d-gate.md
+- files: scripts/fw_3d.py (`DEFAULT_REMEDIES`, Mandelbox scale and views, hybrid scale and views, `--remedy none`, gate baseline forced flat), scripts/page/fractal3d.frag (`DE`: hybrid at p*scale), tests/test_3d.py, skills/fractalwright/SKILL.md (Step 2e), README.md, CODEMAP.md
+- Shadow, ao and the composed camera are on by default. Mandelbox moves from scale -1.5 to 2.0 (it read as a plain cube). Hybrid is evaluated at p*2.5 so it fits the bulb's frame. Recipes saved before this without a full remedies dict now render with the new defaults.
+
 ### C-20261114-13 · 2026-11-14 · gaps: Julia deep zoom, WCAG flash area rule, JS limiter test, Lorenz D2 fit
 - because: T-20261114-13, HANDOFF Next item 4, W3C Understanding SC 2.3.1 (general flash and red flash thresholds, fetched 2026-11-14)
 - files: scripts/fw_deep.py (Julia reference orbit and rebase against Z[0]), scripts/fw.py (`flash_check` area and red rules, `swing_walk`; render routes quadratic Julia to perturbation), scripts/fw_gen.py (`LORENZ_D2_FIT`, printed D2), scripts/fw_audio.py (docstring), tests

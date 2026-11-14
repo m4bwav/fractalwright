@@ -19,22 +19,25 @@ PAGE_DIR = Path(__file__).resolve().parent / "page"
 FRAG3D = PAGE_DIR / "fractal3d.frag"
 FORMULAS3D = ("mandelbulb", "mandelbox", "quatjulia", "menger", "hybrid")
 REMEDIES = ("ao", "shadow", "fog", "trap", "dof", "aa", "camera")
+# Default look (Mark's 3D gate 2026-11-14 kept all-remedies, shadow and camera renders; judge: shadow 6-0,
+# ao 5-0-1, camera 5-0-1, fog 0-4-2). Fog, trap, dof and aa stay off unless asked.
+DEFAULT_REMEDIES = ("shadow", "ao", "camera")
 PALETTE3D = {"a": [0.5, 0.5, 0.5], "b": [0.5, 0.5, 0.5], "c": [1.0, 1.0, 1.0], "d": [0.0, 0.33, 0.67]}
 
 # Per formula: params, and named views as (target, direction from target to eye, distance).
 FORMULA_DEFAULTS = {
     "mandelbulb": {"iter": 10, "power": 8.0},
-    "mandelbox": {"iter": 14, "scale": -1.5},
+    "mandelbox": {"iter": 14, "scale": 2.0},   # -1.5 read as a plain cube from outside (3D gate)
     "quatjulia": {"iter": 12, "c": [-0.2, 0.6, 0.2, 0.0]},
     "menger": {"iter": 5},
-    "hybrid": {"iter": 10, "power": 8.0},
+    "hybrid": {"iter": 10, "power": 8.0, "scale": 2.5},
 }
 VIEWS = {
     "mandelbulb": {"whole": ([0, 0, 0], [0.55, 0.45, 0.7], 2.9), "close": ([0.25, 0.45, 0.35], [0.4, 0.6, 0.7], 0.9)},
-    "mandelbox": {"whole": ([0, 0, 0], [0.6, 0.5, 0.65], 10.0), "close": ([2.2, 2.2, 2.2], [0.55, 0.3, 0.8], 2.6)},
+    "mandelbox": {"whole": ([0, 0, 0], [0.6, 0.5, 0.65], 15.0), "close": ([4.0, 4.0, 4.0], [0.6, 0.5, 0.65], 5.0)},
     "quatjulia": {"whole": ([0, 0, 0], [0.3, 0.55, 0.8], 3.2), "close": ([0.1, 0.3, 0.3], [0.5, 0.6, 0.6], 1.3)},
     "menger": {"whole": ([0, 0, 0], [0.75, 0.55, 0.9], 4.0), "close": ([0.6, 0.6, 1.0], [0.25, 0.2, 0.95], 1.0)},
-    "hybrid": {"whole": ([0, 0, 0], [0.55, 0.45, 0.7], 7.0), "close": ([1.0, 1.0, 1.0], [0.4, 0.6, 0.7], 2.5)},
+    "hybrid": {"whole": ([0, 0, 0], [0.55, 0.45, 0.7], 3.2), "close": ([0.4, 0.4, 0.4], [0.4, 0.6, 0.7], 1.0)},
 }
 LAZY_FOV = 60.0          # vertical degrees: the "default" camera
 COMPOSED_MM = 40.0       # full-frame focal length for the composed camera (35-50 mm band)
@@ -56,7 +59,7 @@ def default_recipe(formula="mandelbulb", view="whole"):
     return {
         "kind": "3d", "formula": formula, "params": dict(copy.deepcopy(FORMULA_DEFAULTS[formula])),
         "view": view, "camera": None,
-        "remedies": {k: False for k in REMEDIES},
+        "remedies": {k: k in DEFAULT_REMEDIES for k in REMEDIES},
         "size": {"w": 768, "h": 512},
         "palette": copy.deepcopy(PALETTE3D),
         "light": [0.55, 0.75, 0.35],
@@ -304,7 +307,7 @@ def run_gate(out_dir, size=(768, 512), formulas=GATE_FORMULAS, views=GATE_VIEWS)
                 for name, rem in gate_variants():
                     r = default_recipe(f, v)
                     r["size"] = {"w": size[0], "h": size[1]}
-                    r["remedies"].update(rem)
+                    r["remedies"] = {k: bool(rem.get(k)) for k in REMEDIES}
                     r = normalise(r)
                     arr, dt = b.render(r)
                     stem = f"{f}-{v}-{name}"
@@ -343,8 +346,10 @@ def _apply_args(r, a):
     for k in (a.remedy or []):
         if k == "all":
             rem.update({x: True for x in REMEDIES})
+        elif k == "none":
+            rem.update({x: False for x in REMEDIES})
         elif k not in REMEDIES:
-            raise SystemExit(f"3d: unknown remedy {k}; one of {', '.join(REMEDIES)}, all")
+            raise SystemExit(f"3d: unknown remedy {k}; one of {', '.join(REMEDIES)}, all, none")
         else:
             rem[k] = True
     return r
@@ -393,18 +398,19 @@ EXPLAIN_3D = {
     "3d": "3D distance-estimator fractals (fw.py 3d). Sphere tracing (Hart 1996): march each ray by DE(p), a lower "
           "bound on the distance to the set. Mandelbulb power 8 and quaternion Julia use 0.5 r log r / dr with a "
           "running derivative; Mandelbox |z|/|dr| after box and sphere folds; Menger is the cube minus crosses; "
-          "hybrid box-folds before each bulb step. Remedies as switches: ao, shadow, fog, trap, dof, aa, camera. "
-          "Browser route only (no NumPy fallback). Status: pending Mark's gate verdict.",
+          "hybrid box-folds before each bulb step (evaluated at p*2.5 so it fits the bulb's frame). Default look: shadow, ao and a composed camera. Remedies as switches: ao, shadow, fog, trap, dof, aa, camera. "
+          "Browser route only (no NumPy fallback). Shipped as a normal route after Mark's 3D gate (2026-11-14).",
 }
 
 
 def register(sub, explain):
     explain.update(EXPLAIN_3D)
-    s = sub.add_parser("3d", help="3D DE fractals (browser route): recipe, render, gate [pending gate verdict]")
+    s = sub.add_parser("3d", help="3D DE fractals (browser route): recipe, render, gate")
     s.add_argument("action", choices=["recipe", "render", "gate"])
     s.add_argument("target", nargs="?", help=f"recipe.json or a formula ({', '.join(FORMULAS3D)})")
     s.add_argument("-o", "--out")
     s.add_argument("--view", help="whole or close (the formula's named views)")
     s.add_argument("--size", help="WxH, default 768x512")
-    s.add_argument("--remedy", action="append", help=f"repeatable: {', '.join(REMEDIES)}, all")
+    s.add_argument("--remedy", action="append", help=f"repeatable, added to the default ({', '.join(DEFAULT_REMEDIES)}): "
+                   f"{', '.join(REMEDIES)}, all; none clears them first")
     s.set_defaults(fn=cmd_3d)

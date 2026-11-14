@@ -18,7 +18,7 @@ import zlib
 from decimal import Decimal
 from pathlib import Path
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 ROOT = Path(__file__).resolve().parent.parent
 
 try:
@@ -823,7 +823,7 @@ def cmd_doctor(a):
             ctx.release()
         except Exception as e:  # noqa: BLE001
             mgl = f"installed, no context: {e.__class__.__name__}"
-    rows.append(("moderngl", mgl, "optional accelerator: float64 GLSL stills (not wired yet)"))
+    rows.append(("moderngl", mgl, "optional accelerator: probed only; no command uses it (renders go through NumPy or Playwright)"))
     if has("playwright"):
         import fw_serve
         ok, note = fw_serve.probe_browser()
@@ -837,7 +837,7 @@ def cmd_doctor(a):
         browsers.append("msedge")
     rows.append(("browser", ", ".join(sorted(set(browsers))) or "none on PATH", "for the playwright route"))
     rows.append(("3d", "browser route only", "fw.py 3d needs the playwright route above; no NumPy fallback for 3D"))
-    rows.append(("ffmpeg", shutil.which("ffmpeg") or "missing", "video commands: zoom, morph, loop (H.264 encode), flashcheck"))
+    rows.append(("ffmpeg", shutil.which("ffmpeg") or "missing", "video and audio commands: zoom, morph, loop, audio (H.264 encode, audio decode and mux), flashcheck"))
     if a.json:
         print(json.dumps([{"name": n, "value": v, "role": r} for n, v, r in rows], indent=2))
     else:

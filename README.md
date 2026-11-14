@@ -17,7 +17,7 @@ The banner above is `fw.py render seahorse --palette ultra --size 1536x640`. Its
 - **Audio visuals.** `fw.py audio song.wav` turns a song into a fractal video in sync with it: bass swells the shape and kicks the zoom, mids drift the colour, the key sets the hue. Frames are stepped, never captured live, and a flash limiter keeps big brightness swings to 3 a second or fewer. The explorer server also has a live page at `/audio` for a file or the microphone.
 - **Explorer.** `fw.py serve` opens a WebGL2 page on 127.0.0.1: pan, zoom, pinch, five formulas, cosine palettes. The URL is a share link, Export writes the recipe, and Render exact draws the same view in float64 on the server. `render --route browser` uses the same shader headless.
 - **Flames, L-systems, attractors.** `fw.py flame` runs the fractal flame algorithm (12 variations, final xform, log-density, gamma and vibrancy, supersampling, density estimation); with no preset it scores seeded random flames and keeps the best. `fw.py lsystem` draws Koch, dragon, Hilbert, arrowhead and plant grammars to PNG and SVG. `fw.py attractor` shades Clifford, de Jong, symmetric icons and Lorenz by density, and `--search` ranks new ones by Sprott's rule.
-- **3D (pending the look gate).** `fw.py 3d render mandelbulb --remedy all -o bulb.png` raymarches Mandelbulb, Mandelbox, quaternion Julia, Menger or a hybrid in headless Edge, with ambient occlusion, soft shadows, fog, orbit-trap colour, depth of field, anti-aliasing and a composed camera as switches. Browser only; no NumPy fallback.
+- **3D.** `fw.py 3d render mandelbulb -o bulb.png` raymarches Mandelbulb, Mandelbox, quaternion Julia, Menger or a hybrid in headless Edge. Soft shadows, ambient occlusion and a composed camera are on by default; fog, orbit-trap colour, depth of field and anti-aliasing are switches. Browser only; no NumPy fallback.
 - **Identify.** `fw.py identify` lists hand-built features of a preset, recipe, image or Julia `c`, for example whether a Julia set is connected and why.
 
 ## Install
@@ -52,7 +52,7 @@ python scripts/fw.py render view.json --route browser -o view.png
 
 ## Status
 
-Early, version 0.1.0 and not released yet. Stills, measuring, contact sheets and video (zoom, morph, loop, flash check) work and have tests (37 passing). Planned next: the AI styling pass, and 3D fractals behind a look test. The eval suite is not written yet, so there is no release until it is.
+Version 0.2.0. Stills, deep zoom (Mandelbrot and Julia), measuring, video with an optional AI styling pass, audio visuals, flames, L-systems, attractors, reaction-diffusion, cellular automata, tilings, Kleinian limit sets and 3D work and have tests (114 passing). See [CHANGELOG.md](CHANGELOG.md).
 
 ## Works with
 
