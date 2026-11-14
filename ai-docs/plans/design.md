@@ -59,14 +59,15 @@ Enough to redraw the picture exactly. Centre and width are decimal strings so de
 
 Fields: `family` (escape-time, flame, lsystem, ifs, attractor, 3d-de, and any neighbour admitted below), `formula` (named preset or formula id), `params` (formula-specific; julia adds `c` as two decimal strings), `palette` (`cosine`, `stops` with colour/position list, or a named preset), `seed` (for anything random: flames, noise, jitter), `render.route` is a hint, not a requirement; the redraw may use any route that meets the precision. `ai_pass` holds a ComfyUI workflow name, model, prompt, seed and denoise when styling was applied. Animation recipes (`zoom`, `morph`, `loop`, `audio`) add `keyframes` (list of views with times), `fps`, `duration_s` and, for audio, `audio` (file hash and band mapping).
 
-## 4. Scope edges (guesses, open for Mark)
+## 4. Scope edges (Mark's answers, 2026-11-14)
 
-| Neighbour | Guess | Why |
+| Neighbour | Ruling | Note |
 |---|---|---|
 | Escape-time, flames/IFS, L-systems, attractors, 3D DE, noise as fractal terrain | in | the plugin's core per Step A |
-| Cellular automata (Life, elementary rules, Lenia) | **out, pointer** (open) | different maths and tools; fractal only incidentally (Rule 90 = Sierpinski: kept as one `explain` note) |
-| Reaction-diffusion (Gray-Scott) | **in as one GPU preset** (open) | same shader/page machinery, same audience of generative art; cheap to add |
-| Tilings (Penrose, Truchet, hyperbolic) | **out, pointer** (open) | self-similar but not fractal in the measured sense; better in a pattern plugin |
+| Reaction-diffusion (Gray-Scott) | **in**, as a GPU preset | same shader/page machinery |
+| Cellular automata (elementary rules, Life, Lenia) | **in** (Mark overruled the guess "out") | build after the escape-time video path; Rule 90 = Sierpinski ties it to `measure` |
+| Tilings (Penrose, Truchet, hyperbolic) | **in** (overruled "out") | self-similar substitution tilings; `measure` must say they are not fractal in the box-count sense |
+| Kleinian limit sets (Indra's Pearls) | **in v1** (overruled "later") | Indra's Pearls (book #7) is the reference; wanted |
 
 ## 5. Commands mapped to the core
 
@@ -83,10 +84,10 @@ Fields: `family` (escape-time, flame, lsystem, ifs, attractor, 3d-de, and any ne
 | `flame`, `lsystem` | NumPy (histogram/turtle) first; GPU later if slow |
 | 3D (Step E) | the browser page raymarching a DE shader |
 
-## 6. Open choices for Mark (askwright page)
+## 6. Settled choices (askwright set fractalwright-scope-2026-11-14, closed)
 
-1. **Name**: fractalwright (guess: keep).
-2. **Repository**: public m4bwav/fractalwright (guess: public, like the other -wright plugins).
-3. **Neighbours in scope**: cellular automata out, reaction-diffusion in as one preset, tilings out (guesses above).
-4. **AI styling amount**: guess = optional `ai_pass`, off by default, never needed for a render.
-5. **Playwright as the first accelerator** (118 MB pip, browser reused from the system): guess = yes, optional and probed.
+1. Name: fractalwright.
+2. Repository: public from the first commit.
+3. Neighbours: all four in (above).
+4. AI styling: **on by default for video** (`zoom`, `morph`, `loop`, `audio`) when a ComfyUI host is reachable; stills stay exact by default. `--no-ai` gives the exact video; the exact frames are always kept beside the styled file, and the styled file and recipe are marked interpreted (`ai_pass` filled). No host reachable: exact video, with a note, never an error.
+5. Playwright + system Edge is the first optional accelerator.
