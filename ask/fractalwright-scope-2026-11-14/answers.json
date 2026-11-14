@@ -1,0 +1,71 @@
+{
+  "askwright": 1,
+  "rev": 10,
+  "answers": {
+    "name": {
+      "choice": "fractalwright",
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": false,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 1,
+      "updated": "2026-11-14T10:39:15-06:00",
+      "state": "answered"
+    },
+    "visibility": {
+      "choice": "public-now",
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": false,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 2,
+      "updated": "2026-11-14T10:39:21-06:00",
+      "state": "answered"
+    },
+    "neighbours": {
+      "choices": [
+        "reaction-diffusion",
+        "cellular-automata",
+        "tilings",
+        "kleinian"
+      ],
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": false,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 8,
+      "updated": "2026-11-14T10:39:31-06:00",
+      "state": "answered"
+    },
+    "ai-styling": {
+      "choice": "on-video",
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": false,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 9,
+      "updated": "2026-11-14T10:40:51-06:00",
+      "state": "answered"
+    },
+    "browser-accel": {
+      "choice": "playwright-edge",
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": false,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 10,
+      "updated": "2026-11-14T10:40:55-06:00",
+      "state": "answered"
+    }
+  }
+}

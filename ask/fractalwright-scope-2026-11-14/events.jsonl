@@ -1,2 +1,13 @@
 {"t": "2026-11-14T09:56:39-06:00", "type": "added", "q": ["name", "visibility", "neighbours", "ai-styling", "browser-accel"]}
 {"t": "2026-11-14T09:56:39-06:00", "type": "serve", "port": 47631, "pid": 44140}
+{"t": "2026-11-14T10:39:13-06:00", "type": "visit"}
+{"t": "2026-11-14T10:39:15-06:00", "type": "answer", "q": "name", "state": "answered", "rev": 1}
+{"t": "2026-11-14T10:39:21-06:00", "type": "answer", "q": "visibility", "state": "answered", "rev": 2}
+{"t": "2026-11-14T10:39:28-06:00", "type": "answer", "q": "neighbours", "state": "answered", "rev": 3}
+{"t": "2026-11-14T10:39:29-06:00", "type": "answer", "q": "neighbours", "state": "answered", "rev": 4}
+{"t": "2026-11-14T10:39:29-06:00", "type": "answer", "q": "neighbours", "state": "answered", "rev": 5}
+{"t": "2026-11-14T10:39:30-06:00", "type": "answer", "q": "neighbours", "state": "answered", "rev": 6}
+{"t": "2026-11-14T10:39:30-06:00", "type": "answer", "q": "neighbours", "state": "answered", "rev": 7}
+{"t": "2026-11-14T10:39:31-06:00", "type": "answer", "q": "neighbours", "state": "answered", "rev": 8}
+{"t": "2026-11-14T10:40:51-06:00", "type": "answer", "q": "ai-styling", "state": "answered", "rev": 9}
+{"t": "2026-11-14T10:40:55-06:00", "type": "answer", "q": "browser-accel", "state": "answered", "rev": 10}
