@@ -8,6 +8,13 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261114-9 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2, ffmpeg, musicwright 0.1.34 mw.py · 84/84 after rebase on batch 4c (8 new in test_audio.py)
+- Sine sweep 40 Hz to 8 kHz, 4 s, 30 fps: the dominant driver steps bass to mid to treble only forward, switching at frames 48 and 104 (internal envelopes) and 47 and 102 (musicwright).
+- Silence, 1.5 s at 12 fps, 64x36: per-pixel variance over time 0.0 (bar 1e-6); limiter damped 0 frames.
+- Click track, 120 bpm, 30 fps: 7 beat accents, each 0 frames from its click with both envelope sources (bar 1 frame).
+- Flash: white-noise bursts at 10 Hz, intensity 1.0, julia-pulse 64x36: 1 swing/s (the mapping alone stays under). Black/white frame strobe: 30 swings/s raw, 2 after the limiter (28 of 60 frames damped; bar 3).
+- A/V: 1.5 s song at 12 fps gives 18 frames; video and audio streams within one frame of 18/12 s (3 s clip: 3.000 and 3.000). Two runs wrote byte-identical PNG frames.
+- Live page: served on loopback at /audio with the analyser, smoothing 0, raw microphone constraints and the limiter; its mapping constants match fw_audio.py. The JS limiter itself is not run in a browser by the tests.
 ### T-20261114-8 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2 · 76/76 (13 new in test_gen.py)
 - Flame: same seed gives identical pixels (64x64, supersample 2), seed 4 differs. Sierpinski flame (3 linear xforms, 3M points, 1024 px): D - log3/log2 = -0.021 (bar 0.05). All 12 variations stay finite. Recipe JSON redraws byte-identical PNG. Random search seed 0, 12 tries: best score 0.312, coverage 0.39, 0.3 s.
 - L-system: Koch n 7 at 2048 px D - log4/log3 = -0.022 (n 6: -0.033; bar 0.05). Hilbert order 2-6 visits all 4^n cells once, span 2^n - 1.

@@ -1499,6 +1499,8 @@ def main(argv=None):
     fw_extra.register(sub, EXPLAIN)
     import fw_gen  # flame, lsystem, attractor
     fw_gen.register(sub, EXPLAIN)
+    import fw_audio  # song -> frame-stepped video; live page at /audio on serve
+    fw_audio.register(sub)
     a = ap.parse_args(argv)
     return a.fn(a)
 

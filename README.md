@@ -14,6 +14,7 @@ The banner above is `fw.py render seahorse --palette ultra --size 1536x640`. Its
 - **Measurements with error bars.** Box-counting dimension with a verdict on the fit range, lacunarity, IFS similarity dimension from scale ratios, profile and heightmap roughness (Hurst exponent), Katz, and the area of the Mandelbrot set. Each is tested against a shape whose answer is known.
 - **Plain explanations.** `fw.py explain <family>` prints the formula and how it is drawn, for a reader who has not met it before.
 - **Sheets and video.** `fw.py sheet` lays variations of one parameter or palette out on a labelled contact sheet with each tile's recipe. `zoom`, `morph` and `loop` write exact frames, an H.264 mp4 and an animation recipe; `flashcheck` counts luminance swings per second against the three-per-second photosensitivity limit.
+- **Audio visuals.** `fw.py audio song.wav` turns a song into a fractal video in sync with it: bass swells the shape and kicks the zoom, mids drift the colour, the key sets the hue. Frames are stepped, never captured live, and a flash limiter keeps big brightness swings to 3 a second or fewer. The explorer server also has a live page at `/audio` for a file or the microphone.
 - **Explorer.** `fw.py serve` opens a WebGL2 page on 127.0.0.1: pan, zoom, pinch, five formulas, cosine palettes. The URL is a share link, Export writes the recipe, and Render exact draws the same view in float64 on the server. `render --route browser` uses the same shader headless.
 - **Flames, L-systems, attractors.** `fw.py flame` runs the fractal flame algorithm (12 variations, final xform, log-density, gamma and vibrancy, supersampling, density estimation); with no preset it scores seeded random flames and keeps the best. `fw.py lsystem` draws Koch, dragon, Hilbert, arrowhead and plant grammars to PNG and SVG. `fw.py attractor` shades Clifford, de Jong, symmetric icons and Lorenz by density, and `--search` ranks new ones by Sprott's rule.
 - **Identify.** `fw.py identify` lists hand-built features of a preset, recipe, image or Julia `c`, for example whether a Julia set is connected and why.
@@ -50,7 +51,7 @@ python scripts/fw.py render view.json --route browser -o view.png
 
 ## Status
 
-Early, version 0.1.0 and not released yet. Stills, measuring, contact sheets and video (zoom, morph, loop, flash check) work and have tests (37 passing). Planned next: the AI styling pass, an interactive browser page, audio-driven visuals, and 3D fractals behind a look test. The eval suite is not written yet, so there is no release until it is.
+Early, version 0.1.0 and not released yet. Stills, measuring, contact sheets and video (zoom, morph, loop, flash check) work and have tests (37 passing). Planned next: the AI styling pass, and 3D fractals behind a look test. The eval suite is not written yet, so there is no release until it is.
 
 ## Works with
 
