@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-16 · 2026-11-14 · release 0.2.1: AI pass flags, RD palettes and video
+- because: user request, T-20261114-15
+- files: scripts/fw_ai.py (`add_args`, `kw_from`), scripts/fw.py (`_video_args`, `_video_base`, `write_video`, `VERSION`), scripts/fw_audio.py (`register`, `cmd_audio`), scripts/fw_neighbours.py (`gray_scott` snaps, `Snaps`, `rd_rgb`, `_rd_video`, rd flags), tests/test_ai.py, tests/test_neighbours.py, plugin.json, .claude-plugin/plugin.json, skills/fractalwright/SKILL.md (metadata)
+- zoom, morph, loop and audio take --ai-prompt, --ai-denoise (default 0.3, checked before rendering) and --ai-seed; they reach every img2img graph and the _ai.json recipe. `fw.py rd` takes --palette (any fw.py palette; default grey look unchanged) and --video OUT.mp4 with --frames and --fps: frames evenly spaced over --steps, one brightness scale for all frames, the zoom command's ffmpeg encode, flashcheck, recipe with an animation block.
+
 ### C-20261114-15 · 2026-11-14 · release 0.2.0
 - because: user request
 - files: plugin.json, .claude-plugin/plugin.json, skills/fractalwright/SKILL.md (metadata), scripts/fw.py (`VERSION`, doctor wording for moderngl and ffmpeg), README.md (Status)

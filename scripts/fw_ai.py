@@ -167,6 +167,22 @@ def apply(rec, notes, frame_dir, out, fps, ai=True, **kw):
         notes.append(f"AI styling failed on {host} ({ex.__class__.__name__}); exact video kept")
 
 
+def add_args(s):
+    """--ai-prompt/--ai-denoise/--ai-seed for zoom, morph, loop and audio."""
+    s.add_argument("--ai-prompt", default=DEFAULT_PROMPT, help="img2img prompt for the AI pass")
+    s.add_argument("--ai-denoise", type=float, default=DEFAULT_DENOISE, help="img2img denoise in (0, 1] (default 0.3)")
+    s.add_argument("--ai-seed", type=int, default=DEFAULT_SEED, help="sampler seed, the same for every frame")
+
+
+def kw_from(a):
+    """argparse namespace -> run_pass keywords; validates denoise before any frame renders."""
+    d = float(getattr(a, "ai_denoise", DEFAULT_DENOISE))
+    if not 0 < d <= 1:
+        raise SystemExit("--ai-denoise must be in (0, 1]")
+    return {"prompt": getattr(a, "ai_prompt", DEFAULT_PROMPT), "denoise": d,
+            "seed": int(getattr(a, "ai_seed", DEFAULT_SEED))}
+
+
 def write_ai_recipe(rec, out):
     """Second recipe beside the styled video, marked interpreted. Only when the pass applied."""
     ap = rec.get("ai_pass") or {}

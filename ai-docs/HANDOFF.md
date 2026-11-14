@@ -1,6 +1,6 @@
 # HANDOFF: fractalwright
 
-Status: v0.2.0 released and installed 2026-11-14 (session 3). Steps A-F done; 3D passed Mark's look gate and ships as a normal route. Not finished: items left under Next, Peitgen and Indra's Pearls books, Mark's verdict on the AI video look.
+Status: v0.2.1 (AI flags, RD palettes and video) on top of v0.2.0 released and installed 2026-11-14 (session 3). Steps A-F done; 3D passed Mark's look gate and ships as a normal route. Not finished: items left under Next, Peitgen and Indra's Pearls books, Mark's verdict on the AI video look.
 
 Continue prompt: [plans/fractalwright-continue-prompt.md](plans/fractalwright-continue-prompt.md)
 
@@ -24,8 +24,8 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 ## Next (in order)
 
 1. Done 2026-11-14 (3dship, v0.2.0): 3D default remedies, normal route, Mandelbox scale 2.0, hybrid at p*2.5, quatjulia DE test (T-20261114-14). Left: path tracing, meshing for print.
-2. AI styling pass for video: done 2026-11-14 (fw_ai.py, img2img per frame). Next: --ai-prompt/--ai-denoise flags, Wan VACE v2v route, Mark's look verdict.
-3. Neighbours done 2026-11-14 (rd, ca, tiling, kleinian). Left: check Grandma's recipe against Indra's Pearls, DFS word enumeration, RD colour palettes and video.
+2. AI styling pass for video: done 2026-11-14 (fw_ai.py, img2img per frame). Flags --ai-prompt/--ai-denoise/--ai-seed done in 0.2.1. Next: Wan VACE v2v route, Mark's look verdict.
+3. Neighbours done 2026-11-14 (rd, ca, tiling, kleinian). Left: check Grandma's recipe against Indra's Pearls, DFS word enumeration, (RD palettes and video done in 0.2.1).
 4. Gaps: GPU perturbation in the browser, series approximation; page rotation and stop palettes; symmetric-icon params checked against Field and Golubitsky; multi-scroll attractor from a primary paper. Done 2026-11-14 (gaps PR): Julia deep zoom, WCAG flash-area rule, JS limiter browser test, Lorenz D2 range; floatexp past 1e-290 ruled out for now (log).
-5. Wiki done for 0.2.0 (11 pages, PR #15). Left: evergreen-worth heavy run; RD palettes/video; next release.
+5. Wiki done for 0.2.0 (11 pages, PR #15). Left: evergreen-worth heavy run; wiki pages for rd palettes/video and the AI flags.
 6. Waits on Mark: look of the AI-styled zoom D:/ComfyUI/output/video/fractalwright_aipass/smoke_ai.mp4 vs smoke.mp4 (put on an askwright page next session if still unasked).

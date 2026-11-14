@@ -58,12 +58,14 @@ def fake_comfy(full=True):
                 g = json.loads(body)["prompt"]
                 pid = f"p{len(store.setdefault('prompts', {}))}"
                 store["prompts"][pid] = g["4"]["inputs"]["image"]
+                store.setdefault("graphs", []).append(g)
                 return self._send(json.dumps({"prompt_id": pid}).encode())
             self._send(b"{}", code=404)
 
         def log_message(self, *a):
             pass
     srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+    srv.store = store
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     return srv, f"127.0.0.1:{srv.server_address[1]}"
 
@@ -153,6 +155,44 @@ class TestAiPass(unittest.TestCase):
         self.assertTrue(side["interpreted"])
         # echo server: styled == exact, so the residual is zero and flicker matches the exact frames
         self.assertAlmostEqual(ap["flicker"]["styled"], ap["flicker"]["exact"], delta=0.01)
+
+    def test_cli_flags_parse_and_validate(self):
+        ap = fw.argparse.ArgumentParser()
+        fw._video_args(ap, "x.mp4")
+        a = ap.parse_args(["seahorse", "--ai-prompt", "stained glass", "--ai-denoise", "0.45", "--ai-seed", "99"])
+        self.assertEqual(fw_ai.kw_from(a), {"prompt": "stained glass", "denoise": 0.45, "seed": 99})
+        d = ap.parse_args(["seahorse"])
+        self.assertEqual(fw_ai.kw_from(d), {"prompt": fw_ai.DEFAULT_PROMPT, "denoise": 0.3, "seed": fw_ai.DEFAULT_SEED})
+        for bad in ("0", "1.2"):
+            with self.assertRaises(SystemExit):
+                fw_ai.kw_from(ap.parse_args(["seahorse", "--ai-denoise", bad]))
+
+    def test_flags_land_in_workflow_and_ai_recipe(self):
+        srv, host = fake_comfy()
+        kw = {"prompt": "stained glass", "denoise": 0.45, "seed": 99}
+        try:
+            with Hosts(host):
+                rp, notes = fw.write_video("loop", self.recs, {"fps": 4, "duration_s": 1}, self.dir / "fl.mp4",
+                                           ai_kw=kw)
+        finally:
+            srv.shutdown()
+        graphs = srv.store["graphs"]
+        self.assertEqual(len(graphs), 4)
+        for g in graphs:
+            self.assertEqual(g["6"]["inputs"]["text"], "stained glass")
+            self.assertEqual((g["8"]["inputs"]["denoise"], g["8"]["inputs"]["seed"]), (0.45, 99))
+        side = json.loads((self.dir / "fl_ai.json").read_text(encoding="utf-8"))
+        ap = side["ai_pass"]
+        self.assertEqual((ap["prompt"], ap["denoise"], ap["seed"]), ("stained glass", 0.45, 99))
+
+    def test_audio_has_ai_flags(self):
+        ap = fw.argparse.ArgumentParser()
+        sub = ap.add_subparsers()
+        import fw_audio
+        fw_audio.register(sub)
+        a = ap.parse_args(["audio", "song.wav", "--ai-denoise", "0.2", "--ai-seed", "5"])
+        self.assertEqual(fw_ai.kw_from(a)["denoise"], 0.2)
+        self.assertEqual(fw_ai.kw_from(a)["seed"], 5)
 
     def test_broken_host_keeps_exact(self):
         srv, host = fake_comfy(full=False)

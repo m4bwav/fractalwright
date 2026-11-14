@@ -66,9 +66,11 @@ def _lap(a):
     return 0.2 * n + 0.05 * d - a
 
 
-def gray_scott(f, k, w=256, h=256, steps=5000, seed=0, seeds=12, da=RD_DA, db=RD_DB, dt=RD_DT):
+def gray_scott(f, k, w=256, h=256, steps=5000, seed=0, seeds=12, da=RD_DA, db=RD_DB, dt=RD_DT, snaps=None):
     """Wrapping grid, A=1 B=0, one centre square plus `seeds` random squares perturbed.
-    Returns B (float64, h x w). Same arguments -> same array."""
+    Returns B (float64, h x w). Same arguments -> same array. snaps: a Snaps list that receives
+    a copy of B after each step number in snaps.steps."""
+    want = set(getattr(snaps, "steps", ()))
     rng = np.random.default_rng(seed)
     A = np.ones((h, w))
     B = np.zeros((h, w))
@@ -82,7 +84,53 @@ def gray_scott(f, k, w=256, h=256, steps=5000, seed=0, seeds=12, da=RD_DA, db=RD
         abb = A * B * B
         A, B = (A + (da * _lap(A) - abb + f * (1 - A)) * dt,
                 B + (db * _lap(B) + abb - (k + f) * B) * dt)
+        if snaps is not None and (_ + 1) in want:
+            snaps.append(B.copy())
     return B
+
+
+class Snaps(list):
+    """Frame store for gray_scott: n snapshots evenly spaced over `steps`."""
+    def __init__(self, steps, n):
+        super().__init__()
+        self.steps = [max(1, round(steps * (i + 1) / n)) for i in range(n)]
+
+
+def rd_rgb(B, palette=None, scale=None):
+    """B -> uint8 image. No palette: grey, dark where B is high (the 0.2.0 look). A palette name from
+    fw.PALETTES maps t = B/scale through it. scale defaults to B.max()."""
+    scale = max(float(scale if scale is not None else B.max()), 1e-9)
+    if not palette:
+        return np.clip(255 - B / scale * 255, 0, 255).astype(np.uint8)
+    fw = _fw()
+    rgb = fw.palette_rgb(fw.PALETTES[palette], np.clip(B / scale, 0, 1))
+    return np.clip(rgb * 255 + 0.5, 0, 255).astype(np.uint8)
+
+
+def _rd_video(a, name, p, seed):
+    fw = _fw()
+    out = Path(a.video)
+    n = int(a.frames)
+    snaps = Snaps(p["steps"], n)
+    gray_scott(p["f"], p["k"], p["w"], p["h"], p["steps"], seed, p["seeds"], p["da"], p["db"], p["dt"], snaps=snaps)
+    scale = max(float(b.max()) for b in snaps)  # one scale for all frames: no per-frame brightness pumping
+    fdir = out.with_name(out.stem + "_frames")
+    fdir.mkdir(parents=True, exist_ok=True)
+    imgs = []
+    for i, b in enumerate(snaps):
+        img = rd_rgb(b, p.get("palette"), scale)
+        fw.write_png(fdir / f"f_{i:05d}.png", arr=img)
+        imgs.append((np.stack([img] * 3, -1) if img.ndim == 2 else img).astype(np.float64) / 255)
+    fw.encode_mp4(fdir, a.fps, out)
+    fc = fw.flash_check(imgs, a.fps)
+    rec = _recipe("reaction-diffusion", name, p, seed)
+    rec["animation"] = {"kind": "rd", "frames": n, "fps": a.fps, "snap_steps": snaps.steps, "scale": scale,
+                        "frame_dir": fdir.name, "flash": {"pass": fc["pass"], "max_swings_per_s": fc["max_swings_per_s"]}}
+    rp = out.with_suffix(".json")
+    rp.write_text(json.dumps(rec, indent=2) + "\n", encoding="utf-8")
+    print(f"wrote {out}, {rp} and {n} frames")
+    print(f"flashcheck: {fc['max_swings_per_s']} swings/s (limit {fw.FLASH_MAX_PER_S}) {'pass' if fc['pass'] else 'FAIL'}")
+    return 0 if fc["pass"] else 4
 
 
 def cmd_rd(a):
@@ -99,8 +147,12 @@ def cmd_rd(a):
             p["f"] = a.f
         if a.k is not None:
             p["k"] = a.k
+    if a.palette:
+        p["palette"] = a.palette
+    if a.video:
+        return _rd_video(a, name, p, seed)
     B = gray_scott(p["f"], p["k"], p["w"], p["h"], p["steps"], seed, p["seeds"], p["da"], p["db"], p["dt"])
-    img = np.clip(255 - B / max(B.max(), 1e-9) * 255, 0, 255).astype(np.uint8)
+    img = rd_rgb(B, p.get("palette"))
     _fw().write_png(a.out, arr=img)
     rec = _recipe("reaction-diffusion", name, p, seed)
     print(f"wrote {a.out} and {_write_recipe(a.out, rec)} (B max {B.max():.3f})")
@@ -392,6 +444,10 @@ def register(sub, explain):
     s.add_argument("--f", type=float)
     s.add_argument("--k", type=float)
     s.add_argument("--seed", type=int, default=0)
+    s.add_argument("--palette", choices=list(_fw().PALETTES), help="colour B through an fw.py palette (default grey)")
+    s.add_argument("--video", metavar="OUT.mp4", help="write the run as a video: frames, mp4, recipe, flashcheck")
+    s.add_argument("--frames", type=int, default=48, help="video frames, evenly spaced over --steps")
+    s.add_argument("--fps", type=int, default=24)
     s.set_defaults(fn=cmd_rd)
     s = sub.add_parser("ca", help="cellular automaton: elementary rule 0-255 or Life-like B/S rule")
     s.add_argument("rule", help="e.g. 90, 30, B3/S23, B36/S23")

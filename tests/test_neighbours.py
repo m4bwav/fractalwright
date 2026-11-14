@@ -46,6 +46,40 @@ class ReactionDiffusion(unittest.TestCase):
             self.assertEqual(p1.read_bytes(), p2.read_bytes())
 
 
+class ReactionDiffusionVideo(unittest.TestCase):
+    """Palette and --video (0.2.1). 96 px, 1000 steps: B max 0.375 (64 px dies out: B max 2e-33 at 600 steps)."""
+
+    def test_palette_colours_and_grey_default_unchanged(self):
+        B = n.gray_scott(0.055, 0.062, 96, 96, 1000, seed=0)
+        grey = n.rd_rgb(B)
+        self.assertEqual(grey.ndim, 2)
+        self.assertTrue((grey == np.clip(255 - B / B.max() * 255, 0, 255).astype(np.uint8)).all())
+        fire = n.rd_rgb(B, "fire")
+        self.assertEqual(fire.shape, (96, 96, 3))
+        self.assertFalse((fire[..., 0] == fire[..., 2]).all())
+        self.assertFalse((n.rd_rgb(B, "ocean") == fire).all())
+
+    def test_video_frames_and_determinism(self):
+        if not fw.shutil.which("ffmpeg"):
+            self.skipTest("ffmpeg missing")
+        run = [sys.executable, str(ROOT / "scripts" / "fw.py"), "rd", "default", "--size", "96x96", "--steps", "1000",
+               "--palette", "fire", "--frames", "10", "--fps", "10", "--seed", "3"]
+        with tempfile.TemporaryDirectory() as d:
+            v1, v2 = Path(d, "a.mp4"), Path(d, "b.mp4")
+            for v in (v1, v2):
+                r = subprocess.run(run + ["--video", str(v)], capture_output=True, text=True)
+                self.assertEqual(r.returncode, 0, r.stderr)
+                self.assertIn("flashcheck", r.stdout)
+            self.assertEqual(fw.probe_video(v1)["frames"], 10)
+            rec = json.loads(v1.with_suffix(".json").read_text())
+            self.assertEqual(rec["params"]["palette"], "fire")
+            self.assertEqual(rec["animation"]["frames"], 10)
+            self.assertTrue(rec["animation"]["flash"]["pass"])
+            for i in range(10):
+                f = f"f_{i:05d}.png"
+                self.assertEqual(Path(d, "a_frames", f).read_bytes(), Path(d, "b_frames", f).read_bytes())
+
+
 class CellularAutomata(unittest.TestCase):
     def test_rule90_sierpinski(self):
         # 1023 steps: measured D - log3/log2 = -0.044 over 2.11 decades (bar 0.06)
