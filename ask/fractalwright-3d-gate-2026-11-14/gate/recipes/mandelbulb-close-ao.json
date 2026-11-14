@@ -1,0 +1,68 @@
+{
+  "kind": "3d",
+  "formula": "mandelbulb",
+  "params": {
+    "iter": 10,
+    "power": 8.0
+  },
+  "view": "close",
+  "camera": {
+    "eye": [
+      0.6082133884755961,
+      0.9873200827133941,
+      0.9768734298322931
+    ],
+    "target": [
+      0.25,
+      0.45,
+      0.35
+    ],
+    "fov_deg": 60.0,
+    "roll_deg": 0.0,
+    "focus": 0.9
+  },
+  "remedies": {
+    "ao": true,
+    "shadow": false,
+    "fog": false,
+    "trap": false,
+    "dof": false,
+    "aa": false,
+    "camera": false
+  },
+  "size": {
+    "w": 768,
+    "h": 512
+  },
+  "palette": {
+    "a": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "b": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "c": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "d": [
+      0.0,
+      0.33,
+      0.67
+    ]
+  },
+  "light": [
+    0.55,
+    0.75,
+    0.35
+  ],
+  "march": {
+    "steps": 256,
+    "fudge": 0.85
+  }
+}

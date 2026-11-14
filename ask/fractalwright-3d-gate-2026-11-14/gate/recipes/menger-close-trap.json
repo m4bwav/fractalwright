@@ -1,0 +1,67 @@
+{
+  "kind": "3d",
+  "formula": "menger",
+  "params": {
+    "iter": 5
+  },
+  "view": "close",
+  "camera": {
+    "eye": [
+      0.8493773340269082,
+      0.7995018672215266,
+      1.9476338693022512
+    ],
+    "target": [
+      0.6,
+      0.6,
+      1.0
+    ],
+    "fov_deg": 60.0,
+    "roll_deg": 0.0,
+    "focus": 1.0
+  },
+  "remedies": {
+    "ao": false,
+    "shadow": false,
+    "fog": false,
+    "trap": true,
+    "dof": false,
+    "aa": false,
+    "camera": false
+  },
+  "size": {
+    "w": 768,
+    "h": 512
+  },
+  "palette": {
+    "a": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "b": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "c": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "d": [
+      0.0,
+      0.33,
+      0.67
+    ]
+  },
+  "light": [
+    0.55,
+    0.75,
+    0.35
+  ],
+  "march": {
+    "steps": 256,
+    "fudge": 0.85
+  }
+}

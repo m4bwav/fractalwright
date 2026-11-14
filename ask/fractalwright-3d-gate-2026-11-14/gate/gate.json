@@ -1,0 +1,443 @@
+{
+  "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5060 Ti (0x00002D04) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "channel": "msedge",
+  "size": [
+    768,
+    512
+  ],
+  "renders": [
+    {
+      "formula": "mandelbulb",
+      "view": "whole",
+      "variant": "baseline",
+      "seconds": 0.065,
+      "mean": 119.69,
+      "file": "renders/mandelbulb-whole-baseline.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "whole",
+      "variant": "ao",
+      "seconds": 0.063,
+      "mean": 117.34,
+      "file": "renders/mandelbulb-whole-ao.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "whole",
+      "variant": "shadow",
+      "seconds": 0.056,
+      "mean": 118.21,
+      "file": "renders/mandelbulb-whole-shadow.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "whole",
+      "variant": "fog",
+      "seconds": 0.051,
+      "mean": 193.74,
+      "file": "renders/mandelbulb-whole-fog.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "whole",
+      "variant": "trap",
+      "seconds": 0.054,
+      "mean": 124.03,
+      "file": "renders/mandelbulb-whole-trap.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "whole",
+      "variant": "dof",
+      "seconds": 0.082,
+      "mean": 120.62,
+      "file": "renders/mandelbulb-whole-dof.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "whole",
+      "variant": "aa",
+      "seconds": 0.055,
+      "mean": 120.03,
+      "file": "renders/mandelbulb-whole-aa.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "whole",
+      "variant": "camera",
+      "seconds": 0.052,
+      "mean": 116.78,
+      "file": "renders/mandelbulb-whole-camera.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "whole",
+      "variant": "all",
+      "seconds": 0.106,
+      "mean": 183.44,
+      "file": "renders/mandelbulb-whole-all.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "close",
+      "variant": "baseline",
+      "seconds": 0.054,
+      "mean": 139.46,
+      "file": "renders/mandelbulb-close-baseline.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "close",
+      "variant": "ao",
+      "seconds": 0.048,
+      "mean": 127.64,
+      "file": "renders/mandelbulb-close-ao.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "close",
+      "variant": "shadow",
+      "seconds": 0.055,
+      "mean": 127.92,
+      "file": "renders/mandelbulb-close-shadow.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "close",
+      "variant": "fog",
+      "seconds": 0.054,
+      "mean": 159.17,
+      "file": "renders/mandelbulb-close-fog.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "close",
+      "variant": "trap",
+      "seconds": 0.057,
+      "mean": 155.18,
+      "file": "renders/mandelbulb-close-trap.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "close",
+      "variant": "dof",
+      "seconds": 0.103,
+      "mean": 143.01,
+      "file": "renders/mandelbulb-close-dof.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "close",
+      "variant": "aa",
+      "seconds": 0.06,
+      "mean": 140.6,
+      "file": "renders/mandelbulb-close-aa.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "close",
+      "variant": "camera",
+      "seconds": 0.052,
+      "mean": 125.74,
+      "file": "renders/mandelbulb-close-camera.jpg"
+    },
+    {
+      "formula": "mandelbulb",
+      "view": "close",
+      "variant": "all",
+      "seconds": 0.143,
+      "mean": 132.35,
+      "file": "renders/mandelbulb-close-all.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "whole",
+      "variant": "baseline",
+      "seconds": 0.056,
+      "mean": 118.72,
+      "file": "renders/quatjulia-whole-baseline.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "whole",
+      "variant": "ao",
+      "seconds": 0.046,
+      "mean": 117.27,
+      "file": "renders/quatjulia-whole-ao.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "whole",
+      "variant": "shadow",
+      "seconds": 0.052,
+      "mean": 119.51,
+      "file": "renders/quatjulia-whole-shadow.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "whole",
+      "variant": "fog",
+      "seconds": 0.046,
+      "mean": 195.66,
+      "file": "renders/quatjulia-whole-fog.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "whole",
+      "variant": "trap",
+      "seconds": 0.056,
+      "mean": 120.93,
+      "file": "renders/quatjulia-whole-trap.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "whole",
+      "variant": "dof",
+      "seconds": 0.078,
+      "mean": 119.01,
+      "file": "renders/quatjulia-whole-dof.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "whole",
+      "variant": "aa",
+      "seconds": 0.057,
+      "mean": 118.9,
+      "file": "renders/quatjulia-whole-aa.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "whole",
+      "variant": "camera",
+      "seconds": 0.062,
+      "mean": 115.32,
+      "file": "renders/quatjulia-whole-camera.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "whole",
+      "variant": "all",
+      "seconds": 0.105,
+      "mean": 195.65,
+      "file": "renders/quatjulia-whole-all.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "close",
+      "variant": "baseline",
+      "seconds": 0.057,
+      "mean": 137.54,
+      "file": "renders/quatjulia-close-baseline.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "close",
+      "variant": "ao",
+      "seconds": 0.051,
+      "mean": 134.17,
+      "file": "renders/quatjulia-close-ao.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "close",
+      "variant": "shadow",
+      "seconds": 0.047,
+      "mean": 140.44,
+      "file": "renders/quatjulia-close-shadow.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "close",
+      "variant": "fog",
+      "seconds": 0.055,
+      "mean": 176.19,
+      "file": "renders/quatjulia-close-fog.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "close",
+      "variant": "trap",
+      "seconds": 0.052,
+      "mean": 145.28,
+      "file": "renders/quatjulia-close-trap.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "close",
+      "variant": "dof",
+      "seconds": 0.099,
+      "mean": 138.74,
+      "file": "renders/quatjulia-close-dof.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "close",
+      "variant": "aa",
+      "seconds": 0.053,
+      "mean": 138.22,
+      "file": "renders/quatjulia-close-aa.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "close",
+      "variant": "camera",
+      "seconds": 0.059,
+      "mean": 130.15,
+      "file": "renders/quatjulia-close-camera.jpg"
+    },
+    {
+      "formula": "quatjulia",
+      "view": "close",
+      "variant": "all",
+      "seconds": 0.116,
+      "mean": 168.24,
+      "file": "renders/quatjulia-close-all.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "whole",
+      "variant": "baseline",
+      "seconds": 0.054,
+      "mean": 117.45,
+      "file": "renders/menger-whole-baseline.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "whole",
+      "variant": "ao",
+      "seconds": 0.049,
+      "mean": 117.08,
+      "file": "renders/menger-whole-ao.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "whole",
+      "variant": "shadow",
+      "seconds": 0.056,
+      "mean": 116.33,
+      "file": "renders/menger-whole-shadow.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "whole",
+      "variant": "fog",
+      "seconds": 0.05,
+      "mean": 193.16,
+      "file": "renders/menger-whole-fog.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "whole",
+      "variant": "trap",
+      "seconds": 0.058,
+      "mean": 121.95,
+      "file": "renders/menger-whole-trap.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "whole",
+      "variant": "dof",
+      "seconds": 0.067,
+      "mean": 117.7,
+      "file": "renders/menger-whole-dof.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "whole",
+      "variant": "aa",
+      "seconds": 0.054,
+      "mean": 117.58,
+      "file": "renders/menger-whole-aa.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "whole",
+      "variant": "camera",
+      "seconds": 0.052,
+      "mean": 116.22,
+      "file": "renders/menger-whole-camera.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "whole",
+      "variant": "all",
+      "seconds": 0.079,
+      "mean": 192.5,
+      "file": "renders/menger-whole-all.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "close",
+      "variant": "baseline",
+      "seconds": 0.052,
+      "mean": 124.11,
+      "file": "renders/menger-close-baseline.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "close",
+      "variant": "ao",
+      "seconds": 0.05,
+      "mean": 119.71,
+      "file": "renders/menger-close-ao.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "close",
+      "variant": "shadow",
+      "seconds": 0.05,
+      "mean": 109.8,
+      "file": "renders/menger-close-shadow.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "close",
+      "variant": "fog",
+      "seconds": 0.052,
+      "mean": 175.09,
+      "file": "renders/menger-close-fog.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "close",
+      "variant": "trap",
+      "seconds": 0.057,
+      "mean": 134.0,
+      "file": "renders/menger-close-trap.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "close",
+      "variant": "dof",
+      "seconds": 0.078,
+      "mean": 124.84,
+      "file": "renders/menger-close-dof.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "close",
+      "variant": "aa",
+      "seconds": 0.055,
+      "mean": 124.52,
+      "file": "renders/menger-close-aa.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "close",
+      "variant": "camera",
+      "seconds": 0.058,
+      "mean": 120.84,
+      "file": "renders/menger-close-camera.jpg"
+    },
+    {
+      "formula": "menger",
+      "view": "close",
+      "variant": "all",
+      "seconds": 0.114,
+      "mean": 170.21,
+      "file": "renders/menger-close-all.jpg"
+    }
+  ],
+  "total_seconds": 3.44
+}
