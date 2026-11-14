@@ -1068,7 +1068,7 @@ def cmd_palette(a):
 
 
 # ---------------------------------------------------------------- video (sheet, zoom, morph, loop, flashcheck)
-COMFY_HOSTS = ("127.0.0.1:8199", "192.168.86.100:8188")
+COMFY_HOSTS = tuple(h.strip() for h in __import__("os").environ.get("FW_COMFY_HOSTS", "127.0.0.1:8188,127.0.0.1:8199").split(",") if h.strip())
 FLASH_SWING = 0.10   # relative luminance swing that counts (WCAG 2.3.1 general flash, refs/09 5.1)
 FLASH_MAX_PER_S = 3
 

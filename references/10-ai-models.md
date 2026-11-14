@@ -15,7 +15,7 @@ exact path.** Any output that went through a model has to be labelled as interpr
 ## Routes
 
 The model column names models comfyui-gen already runs where possible. Host follows comfyui-gen: stills on the
-idle host (Mac 192.168.86.100:8188 or PC 127.0.0.1:8199), video on the PC only.
+idle host (set FW_COMFY_HOSTS, comma-separated host:port; default loopback 8188 and 8199), video on the PC only.
 
 | Route | What it adds | Failure modes on fractals | Candidate model | Licence class | Host |
 |---|---|---|---|---|---|
