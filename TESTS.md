@@ -22,6 +22,12 @@ Entry shape: `### T-20261114-10 · 2026-11-14 · unittest (tests/) · Windows, P
 
 ## Runs
 
+### T-20261114-14 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2, Playwright + Edge headless · 114/114 (3 new in tests/test_3d.py)
+- Quaternion Julia DE (c = -0.2+0.6i+0.2j, 12 it, as deQJulia): 400 rays marched to DE < 1e-4; true first hit from the 64-iteration inside test sampled every 0.0005. 394/400 rays have a true hit within 0.05 past the stop; overshoot max 0.0126, p99 0.0039 (bars 0.02 and 0.006). The refs/07 3.2 formula is now checked numerically for the quaternion form.
+- Default remedies are exactly shadow, ao, camera. Hybrid evaluated at p*2.5 fits inside radius 2 (unscaled it reaches 4.74).
+- Mandelbox: scale -1.5 read as a plain cube from outside at every view tried; scale 2.0 with whole (distance 15) and close ([4,4,4], 5) views shows the folds (looked at, not judged).
+- led to: C-20261114-14
+
 ### T-20261114-13 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2, Playwright + Edge headless · 111/111 after rebase on AI styling and neighbours
 - Julia deep zoom (fw_deep.py, c = -0.8+0.156i, 24x16, 3000 iterations): 1e-20 382/384 pixels equal direct Decimal counts, 1e-30 381/384 (bar 99%, largest wrong blob 1, bar 4). Direct Decimal at prec 45 and 120 agree; the misses are float64 rounding after rebasing. At 1e-5 (32x24) perturbation 5/768 wrong vs plain float64 19/768, so the old "mean diff vs plain" bar does not fit Julia boundaries.
 - flashcheck WCAG area rule: 16x20 px square blinking at 12 Hz in 192x144 frames covers 10.4% of a 10-degree field, passes (its cells flash 12/s); 40x40 square 52.1% fails; full-frame strobe 100% fails; red vs equal-luminance grey 0 general, 100% red, fails; one slow change passes.

@@ -123,7 +123,7 @@ float DE(vec3 p) {
   if (u_formula == 1) return deBox(p);
   if (u_formula == 2) return deQJulia(p);
   if (u_formula == 3) return deMenger(p);
-  return deBulb(p, true);
+  return deBulb(p * u_scale, true) / u_scale;      // hybrid: u_scale shrinks the set to bulb size
 }
 
 vec3 normalAt(vec3 p, float e) {
