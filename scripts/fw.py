@@ -18,7 +18,7 @@ import zlib
 from decimal import Decimal
 from pathlib import Path
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 ROOT = Path(__file__).resolve().parent.parent
 
 try:
@@ -1216,7 +1216,7 @@ def probe_video(path):
     return {"frames": int(s["nb_read_frames"]), "fps": int(num) / int(den), "w": s["width"], "h": s["height"]}
 
 
-def write_video(kind, recipes, anim, out, ai=True):
+def write_video(kind, recipes, anim, out, ai=True, ai_kw=None):
     """Render frames, encode, write the animation recipe. Exact frames and video always written."""
     out = Path(out)
     fdir = out.with_name(out.stem + "_frames")
@@ -1228,7 +1228,7 @@ def write_video(kind, recipes, anim, out, ai=True):
     rec["animation"] = dict(anim, kind=kind, frames=len(recipes), frame_dir=fdir.name)
     notes = []
     import fw_ai
-    fw_ai.apply(rec, notes, fdir, out, anim["fps"], ai=ai)
+    fw_ai.apply(rec, notes, fdir, out, anim["fps"], ai=ai, **(ai_kw or {}))
     rec["notes"] = notes
     rp = out.with_suffix(".json")
     rp.write_text(json.dumps(rec, indent=2) + "\n", encoding="utf-8")
@@ -1372,6 +1372,8 @@ def seam_ratio(frames):
 
 
 def _video_base(a):
+    import fw_ai
+    fw_ai.kw_from(a)  # fail on a bad --ai-denoise before any frame renders
     r = load_recipe(a.recipe)
     if a.size:
         w, h = a.size.lower().split("x")
@@ -1384,7 +1386,8 @@ def _video_base(a):
 
 
 def _finish_video(kind, recipes, anim, a):
-    rp, notes = write_video(kind, recipes, anim, a.out, ai=a.ai)
+    import fw_ai
+    rp, notes = write_video(kind, recipes, anim, a.out, ai=a.ai, ai_kw=fw_ai.kw_from(a))
     fc = flash_check(read_frames(Path(a.out).with_name(Path(a.out).stem + "_frames"))[0], anim["fps"])
     print(f"wrote {a.out}, {rp} and {len(recipes)} frames")
     for n in notes:
@@ -1476,6 +1479,8 @@ def _video_args(s, default_out):
     s.add_argument("--duration", type=float, default=4.0, help="seconds")
     s.add_argument("--ai", action=argparse.BooleanOptionalAction, default=True,
                    help="AI styling pass (default on): img2img via ComfyUI to <out>_ai.mp4; exact video always kept")
+    import fw_ai
+    fw_ai.add_args(s)
 
 
 def main(argv=None):

@@ -1,6 +1,6 @@
 {
   "name": "fractalwright",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Render, explain, measure and animate fractals as reproducible recipes: Mandelbrot, Julia, Burning Ship, Tricorn and Multibrot stills from a recipe JSON or preset with smooth colouring and palettes, box-counting dimension and Mandelbrot area measured against known values, plain explanations of each family. Use whenever the user wants a fractal image or wallpaper, asks 'render a Mandelbrot', 'make a Julia set', 'what is the Burning Ship', 'what is the fractal dimension of this picture', 'measure this coastline', 'fractal palette', or wants to redraw a fractal exactly. Also 'refresh fractalwright'. Not for general shaders (threewright) or pixel art (pixelwright).",
   "author": {
     "name": "Mark Rogers"

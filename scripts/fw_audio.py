@@ -388,6 +388,8 @@ def cmd_audio(a):
     song = Path(a.song)
     if not song.is_file():
         raise SystemExit(f"no such file: {song}")
+    import fw_ai
+    fw_ai.kw_from(a)  # fail on a bad --ai-denoise before any frame renders
     P = AUDIO_PRESETS[a.preset]
     base = fw.load_recipe(a.recipe) if a.recipe else fw._merge(fw.default_recipe(), json.loads(json.dumps(P["recipe"])))
     if a.size:
@@ -424,7 +426,7 @@ def cmd_audio(a):
                         "flash": {"damped_frames": lim.damped, "check": fc}, "streams_s": dur}
     notes = [f"envelopes: {src}", f"route: {route}"] + ([rnote] if rnote else [])
     import fw_ai
-    fw_ai.apply(rec, notes, fdir, out, a.fps, ai=a.ai)
+    fw_ai.apply(rec, notes, fdir, out, a.fps, ai=a.ai, **fw_ai.kw_from(a))
     rec["notes"] = notes
     rp = out.with_suffix(".json")
     rp.write_text(json.dumps(rec, indent=2) + "\n", encoding="utf-8")
@@ -464,5 +466,7 @@ def register(sub):
     s.add_argument("--route", choices=["auto", "browser", "numpy"], default="auto")
     s.add_argument("--allow-mp3", action="store_true")
     s.add_argument("--ai", action=__import__("argparse").BooleanOptionalAction, default=True,
-                   help="AI styling hook (default on; probes ComfyUI, pass not implemented yet)")
+                   help="AI styling pass (default on): img2img via ComfyUI to <out>_ai.mp4; exact video always kept")
+    import fw_ai
+    fw_ai.add_args(s)
     s.set_defaults(fn=cmd_audio)
