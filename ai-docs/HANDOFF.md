@@ -27,5 +27,5 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 1. Read the 3D gate answers; apply (default remedies, ship status in SKILL.md; fix Mandelbox framing and hybrid scale; numeric DE test for quaternion Julia).
 2. AI styling pass for video: done 2026-11-14 (fw_ai.py, img2img per frame). Next: --ai-prompt/--ai-denoise flags, Wan VACE v2v route, Mark's look verdict.
 3. Neighbours done 2026-11-14 (rd, ca, tiling, kleinian). Left: check Grandma's recipe against Indra's Pearls, DFS word enumeration, RD colour palettes and video.
-4. Gaps: GPU perturbation in the browser, Julia deep zoom, floatexp past 1e-290, series approximation; page rotation and stop palettes; JS flash limiter browser test; WCAG flash-area rule in flashcheck; symmetric-icon params checked against Field and Golubitsky; multi-scroll attractor from a primary paper; Lorenz D2 default range.
+4. Gaps: GPU perturbation in the browser, series approximation; page rotation and stop palettes; symmetric-icon params checked against Field and Golubitsky; multi-scroll attractor from a primary paper. Done 2026-11-14 (gaps PR): Julia deep zoom, WCAG flash-area rule, JS limiter browser test, Lorenz D2 range; floatexp past 1e-290 ruled out for now (log).
 5. Wiki update for 0.1.0 commands (wikiwright); evergreen-worth heavy run; next release.

@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-13 · 2026-11-14 · gaps: Julia deep zoom, WCAG flash area rule, JS limiter test, Lorenz D2 fit
+- because: T-20261114-13, HANDOFF Next item 4, W3C Understanding SC 2.3.1 (general flash and red flash thresholds, fetched 2026-11-14)
+- files: scripts/fw_deep.py (Julia reference orbit and rebase against Z[0]), scripts/fw.py (`flash_check` area and red rules, `swing_walk`; render routes quadratic Julia to perturbation), scripts/fw_gen.py (`LORENZ_D2_FIT`, printed D2), scripts/fw_audio.py (docstring), tests
+- flashcheck now fails only when cells flashing more than 3 times a second cover more than 25% of a 1/3 x 1/3 screen box (341x256 at 1024x768), so a small blinking region passes. Floatexp below 1e-290 left out (see ai-docs/log.md).
+
 ### C-20261114-12 · 2026-11-14 · neighbours: rd, ca, tiling, kleinian
 - because: T-20261114-12, user request (Mark's scope answers: all neighbours in), references/12-neighbours.md
 - files: scripts/fw_neighbours.py (new), scripts/fw.py (`main` registers it), tests/test_neighbours.py (new), references/12-neighbours.md (new), skills/fractalwright/SKILL.md (Step 2f), CODEMAP.md

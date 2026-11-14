@@ -189,5 +189,45 @@ class BrowserTests(unittest.TestCase):
                 srv.server_close()
 
 
+STROBE_JS = """() => {
+  const A = { formula: 0, cx: 10, cy: 0, w: 1, k: [0, 0], maxit: 50, phase: 0, density: 0.02 };   // escapes at once: bright
+  const B = { formula: 0, cx: 0, cy: 0, w: 0.01, k: [0, 0], maxit: 50, phase: 0, density: 0.02 };  // inside the set: black
+  const raw = [], lim = [];
+  for (let i = 0; i < 300; i++) { draw(i % 2 ? A : B); raw.push(meanLum()); }
+  for (let i = 0; i < 300; i++) { limitedDraw(i % 2 ? A : B, i * 1000 / 60); lim.push(meanLum()); }
+  return { raw, lim, damped: FL.damped };
+}"""
+
+
+@unittest.skipUnless(BROWSER, "Playwright with msedge or chrome not available")
+class TestAudioPageLimiter(unittest.TestCase):
+    def test_js_limiter_holds_strobe_to_three_per_second(self):
+        # Synthetic 30 Hz strobe (two parameter sets alternating every frame, 5 s at a simulated 60 fps) through
+        # the page's own limitedDraw. Bar: <= 3 swings in any 1 s window of what was shown. T-20261114-13.
+        from playwright.sync_api import sync_playwright
+        with tempfile.TemporaryDirectory() as d, sync_playwright() as pw:
+            p = Path(d) / "audio.html"
+            p.write_text(fw_serve.audio_page_html(), encoding="utf-8")
+            b = None
+            for ch in ("msedge", "chrome"):
+                try:
+                    b = pw.chromium.launch(channel=ch, headless=True, args=fw_serve.BROWSER_ARGS)
+                    break
+                except Exception:  # noqa: BLE001
+                    continue
+            page = b.new_page()
+            page.goto(p.as_uri())
+            page.wait_for_function("typeof limitedDraw === 'function'")
+            res = page.evaluate(STROBE_JS)
+            b.close()
+        raw, lim = np.array(res["raw"]), np.array(res["lim"])
+        self.assertGreater(raw.max() - raw.min(), 0.1)    # the input really strobes
+        per_s = lambda L: int(fw._per_second_max(fw.swing_walk(L)[:, None], 60)[0])
+        self.assertGreater(per_s(raw), 3)                  # measured 60 (every frame swings)
+        self.assertLessEqual(per_s(lim), 3)                # measured: see TESTS.md
+        self.assertGreater(res["damped"], 0)
+        print(f"js limiter: raw {per_s(raw)} swings/s, limited {per_s(lim)}, damped {res['damped']}")
+
+
 if __name__ == "__main__":
     unittest.main()

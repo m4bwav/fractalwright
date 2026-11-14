@@ -4,6 +4,7 @@ Measured on 2026-11-14 (numpy 2.5.2, Python 3.14.6); numbers in TESTS.md T-20261
 """
 import json
 import math
+import re
 import subprocess
 import sys
 import tempfile
@@ -105,6 +106,17 @@ class Attractors(unittest.TestCase):
         p = g.lorenz(60000)
         for s in (0, 1):
             self.assertAlmostEqual(fx.correlation_dimension(p, n=3000, seed=s, lo=0.01, hi=0.1), 2.05, delta=0.1)
+
+    def test_lorenz_cli_states_d2_and_fit(self):
+        # default fit g.LORENZ_D2_FIT (0.01-0.1) printed with the value; measured 2.045 at 60k points seed 0
+        self.assertEqual(g.LORENZ_D2_FIT, (0.01, 0.1))
+        with tempfile.TemporaryDirectory() as d:
+            res = subprocess.run([sys.executable, str(ROOT / "scripts" / "fw.py"), "attractor", "lorenz", "-o",
+                                  str(Path(d) / "l.png"), "--size", "64x48"], capture_output=True, text=True)
+            self.assertEqual(res.returncode, 0, res.stderr)
+            m = re.search(r"Lorenz D2 ([0-9.]+) .*fit range 0.01-0.1", res.stdout)
+            self.assertIsNotNone(m, res.stdout)
+            self.assertAlmostEqual(float(m.group(1)), 2.05, delta=0.1)
 
     def test_clifford_not_blank_deterministic(self):
         with tempfile.TemporaryDirectory() as d:

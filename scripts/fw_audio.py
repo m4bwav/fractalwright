@@ -243,7 +243,7 @@ def frame_recipes(base, preset, d, fps, intensity=0.6):
 
 # ---------------------------------------------------------------- flash limiter
 class FlashLimiter:
-    """Mirrors fw.flash_check's swing walk and blends a frame back toward the last output frame whenever
+    """Mirrors the whole-frame swing walk of fw.flash_check (stricter than its area rule) and blends a frame back toward the last output frame whenever
     keeping it would complete a swing while the last second already holds `allowed` swings."""
 
     def __init__(self, fps, allowed=None):
