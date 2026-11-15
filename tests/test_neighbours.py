@@ -159,5 +159,32 @@ class Kleinian(unittest.TestCase):
         self.assertTrue((p == n.limit_points(2, 2, 20000, seed=0)).all())
 
 
+class DfsLimitSetTests(unittest.TestCase):
+    """Indra's Pearls depth-first word search vs random inverse iteration (0.7.0)."""
+
+    @staticmethod
+    def _dilate(m, k=2):
+        out = m.copy()
+        for dy in range(-k, k + 1):
+            for dx in range(-k, k + 1):
+                out |= np.roll(np.roll(m, dy, 0), dx, 1)
+        return out
+
+    def test_dfs_contains_inverse_iteration_points(self):
+        for ta, tb in ((2, 2), (1.91 + 0.05j, 2), (1.87 + 0.1j, 2)):
+            c = n.limit_curve_dfs(complex(ta), complex(tb), eps=2.5 / 256)
+            self.assertTrue((c == n.limit_curve_dfs(complex(ta), complex(tb), eps=2.5 / 256)).all())
+            a = n.points_mask(c, 256)
+            b = n.points_mask(n.limit_points(complex(ta), complex(tb), 200000, seed=0), 256)
+            share = (b & self._dilate(a)).sum() / b.sum()
+            self.assertGreater(share, 0.99, (ta, tb, share))  # every random-walk point lies on the DFS curve
+
+    def test_fixed_point_is_attracting(self):
+        a, _ = n.grandma(1.87 + 0.1j, 2)
+        z = n._fix_attr(a)
+        self.assertLess(abs(a[1, 0] * z + a[1, 1]) ** -2, 1.0 + 1e-9)
+        self.assertAlmostEqual(abs((a[0, 0] * z + a[0, 1]) / (a[1, 0] * z + a[1, 1]) - z), 0, places=9)
+
+
 if __name__ == "__main__":
     unittest.main()

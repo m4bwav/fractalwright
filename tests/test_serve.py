@@ -304,5 +304,62 @@ class TestAudioPageLimiter(unittest.TestCase):
         print(f"js limiter: raw {per_s(raw)} swings/s, limited {per_s(lim)}, damped {res['damped']}")
 
 
+class StopPaletteHashTests(unittest.TestCase):
+    """0.7.0: stop palettes and rotation travel through the share hash."""
+
+    def test_stops_round_trip(self):
+        h = ("f=mandelbrot&cx=-0.75&cy=0&w=3.5&rot=30&it=300&bail=256&den=0.02&ph=0"
+             "&ps=0:000764,0.16:206bcb,0.42:edffff,1:000764&sz=320x240")
+        r = fw_serve.hash_to_recipe(h)
+        self.assertEqual(r["palette"]["type"], "stops")
+        self.assertEqual(r["palette"]["stops"][1], [0.16, "#206bcb"])
+        self.assertEqual(r["view"]["rotation_deg"], 30.0)
+        self.assertEqual(fw_serve.recipe_to_hash(r), h)
+        ultra = fw.normalise(fw.default_recipe())
+        ultra["palette"] = "ultra"
+        self.assertIn("&ps=0:000764,", fw_serve.recipe_to_hash(ultra))
+        with self.assertRaises(ValueError):
+            fw_serve.hash_to_recipe(h.replace("ps=0:000764,", "ps=0:07,"))
+
+    @unittest.skipUnless(BROWSER, "Playwright with msedge or chrome not available")
+    def test_page_draws_stop_palette_and_rotation_like_numpy(self):
+        from PIL import Image
+        from playwright.sync_api import sync_playwright
+        h = ("f=mandelbrot&cx=-0.6&cy=0.1&w=2.8&rot=30&it=300&bail=256&den=0.02&ph=0"
+             "&ps=0:000764,0.16:206bcb,0.42:edffff,0.64:ffaa00,0.86:000200,1:000764&sz=320x240")
+        with tempfile.TemporaryDirectory() as d:
+            srv = fw_serve.make_server("127.0.0.1", 0, d)
+            threading.Thread(target=srv.serve_forever, daemon=True).start()
+            pw = sync_playwright().start()
+            try:
+                br = None
+                for ch in ("msedge", "chrome"):
+                    try:
+                        br = pw.chromium.launch(channel=ch, headless=True, args=fw_serve.BROWSER_ARGS)
+                        break
+                    except Exception:  # noqa: BLE001
+                        pass
+                page = br.new_page()
+                page.goto(f"http://127.0.0.1:{srv.server_address[1]}/#" + h)
+                page.wait_for_function("window.fw !== undefined")
+                page.wait_for_timeout(300)
+                canvas = page.evaluate("document.getElementById('cv').toDataURL('image/png')")
+                shot = np.asarray(Image.open(io.BytesIO(base64.b64decode(canvas.split(",", 1)[1]))).convert("RGB"))
+                ref = fw.render_array(fw.normalise(fw_serve.hash_to_recipe(h)))
+                dd = diff(ref, shot)
+                print(f"  page stops+rot30 vs numpy: {dd:.3f}")
+                self.assertLess(dd, PAGE_BAR)
+                self.assertIn("ps=", page.evaluate("location.hash"))
+                page.keyboard.press("]")
+                page.wait_for_timeout(200)
+                self.assertIn("rot=45", page.evaluate("location.hash"))
+                self.assertEqual(page.evaluate("document.getElementById('rot').value"), "45")
+                br.close()
+            finally:
+                pw.stop()
+                srv.shutdown()
+                srv.server_close()
+
+
 if __name__ == "__main__":
     unittest.main()

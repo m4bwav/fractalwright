@@ -42,6 +42,7 @@
     <div id="juliabox"><label>Julia c (shift-click the view to pick)</label>
       <div class="row"><input id="kr" type="number" step="0.001"><input id="ki" type="number" step="0.001"></div></div>
     <div id="powbox"><label for="power">Power</label><input id="power" type="number" min="2" max="16" step="1"></div>
+    <label for="rot">Rotation (degrees; [ and ] turn 15)</label><input id="rot" type="number" step="1">
     <label for="iter">Iterations</label><input id="iter" type="number" min="1" max="100000" step="50">
     <label for="preset">Palette</label>
     <select id="preset"><option value="">custom</option><option>classic</option><option>fire</option><option>ocean</option></select>
@@ -50,6 +51,7 @@
     <div class="row"><input class="pa" data-i="3"><input class="pa" data-i="4"><input class="pa" data-i="5"></div>
     <div class="row"><input class="pa" data-i="6"><input class="pa" data-i="7"><input class="pa" data-i="8"></div>
     <div class="row"><input class="pa" data-i="9"><input class="pa" data-i="10"><input class="pa" data-i="11"></div>
+    <div id="stopnote"></div>
     <label>Density / phase</label>
     <div class="row"><input id="den" type="number" step="0.005"><input id="ph" type="number" step="0.05"></div>
     <div id="prec"></div>
@@ -64,7 +66,7 @@
 <script>
 "use strict";
 // Hash keys and their order. fw_serve.py HASH_KEYS must match.
-const KEYS = ["f", "cx", "cy", "w", "rot", "it", "bail", "pw", "kr", "ki", "den", "ph", "pa", "sz"];
+const KEYS = ["f", "cx", "cy", "w", "rot", "it", "bail", "pw", "kr", "ki", "den", "ph", "pa", "ps", "sz"];
 const PALS = {
   classic: [0.5,0.5,0.5, 0.5,0.5,0.5, 1,1,1, 0,0.33,0.67],
   fire: [0.5,0.3,0.1, 0.5,0.4,0.2, 1,1,1, 0,0.1,0.2],
@@ -78,7 +80,7 @@ const FORMULAS = ["mandelbrot", "julia", "burning-ship", "tricorn", "multibrot"]
 const F32_NEAR = 1e-5, F32_OVER = 1e-6, W32_NEAR = 1e-2, W32_OVER = 1e-3;
 
 const S = { f: "mandelbrot", cx: "-0.75", cy: "0", w: "3.5", rot: "0", it: "500", bail: "256", pw: "2",
-            kr: "-0.8", ki: "0.156", den: "0.02", ph: "0", pa: PALS.classic.join(","), sz: "" };
+            kr: "-0.8", ki: "0.156", den: "0.02", ph: "0", pa: PALS.classic.join(","), ps: "", sz: "" };
 
 const cv = document.getElementById("cv");
 const gl = cv.getContext("webgl2", { preserveDrawingBuffer: true, antialias: false });
@@ -126,12 +128,32 @@ function stateUniforms() {
            power: S.f === "multibrot" ? Math.max(2, +S.pw | 0) : 2, maxit: +S.it | 0, bail2: (+S.bail) ** 2,
            kr: +S.kr, ki: +S.ki, flip: S.f === "burning-ship" ? 1 : 0, paltype: 0,
            a: pa.slice(0, 3), b: pa.slice(3, 6), c: pa.slice(6, 9), d: pa.slice(9, 12),
-           nstops: 0, spos: new Array(8).fill(0), scol: new Array(24).fill(0),
+           ...stopsOf(),
            density: +S.den, phase: +S.ph, inside: [0, 0, 0] };
 }
 
+// Stop palette (hash ps=pos:rrggbb,...; fw.palette_rgb: np.interp over t mod 1, clamped at the ends).
+function parseStops() {
+  if (!S.ps) return [];
+  return S.ps.split(",").slice(0, 8).map(s => { const [p, c] = s.split(":"); const h = c.replace("#", "");
+    return [+p, [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255)]; });
+}
+function stopsOf() {
+  const st = parseStops(), spos = new Array(8).fill(0), scol = new Array(24).fill(0);
+  st.forEach(([p, c], i) => { spos[i] = p; scol.splice(3 * i, 3, ...c); });
+  return { paltype: st.length ? 1 : 0, nstops: st.length, spos, scol };
+}
+function stopColour(st, t) {
+  const f = t - Math.floor(t);
+  if (f <= st[0][0]) return st[0][1];
+  for (let i = 0; i + 1 < st.length; i++) if (f <= st[i + 1][0]) {
+    const w = st[i + 1][0] - st[i][0], u = w > 0 ? (f - st[i][0]) / w : 0;
+    return [0, 1, 2].map(k => st[i][1][k] + (st[i + 1][1][k] - st[i][1][k]) * u); }
+  return st[st.length - 1][1];
+}
 function hashOf() {
-  return KEYS.filter(k => !((k === "kr" || k === "ki") && S.f !== "julia") && !(k === "pw" && S.f !== "multibrot"))
+  return KEYS.filter(k => !((k === "kr" || k === "ki") && S.f !== "julia") && !(k === "pw" && S.f !== "multibrot")
+                         && !(k === "ps" && !S.ps) && !(k === "pa" && S.ps))
              .map(k => k + "=" + S[k]).join("&");
 }
 function readHash() {
@@ -159,7 +181,8 @@ function precision() {
 
 function syncInputs() {
   $("formula").value = S.f; $("kr").value = S.kr; $("ki").value = S.ki; $("power").value = S.pw; $("iter").value = S.it;
-  $("den").value = S.den; $("ph").value = S.ph;
+  $("den").value = S.den; $("ph").value = S.ph; $("rot").value = S.rot;
+  $("stopnote").textContent = S.ps ? `stop palette from the recipe (${parseStops().length} stops); pick a preset or edit a/b/c/d to switch to cosine` : "";
   const pa = S.pa.split(","); document.querySelectorAll(".pa").forEach(e => { e.value = pa[+e.dataset.i]; });
   $("preset").value = Object.keys(PALS).find(k => PALS[k].join(",") === S.pa) || "";
   $("juliabox").style.display = S.f === "julia" ? "" : "none";
@@ -223,12 +246,13 @@ function deepDraw(u) {
   }
   gl.disable(gl.SCISSOR_TEST);
   // colour like fw.colour and fractal.frag: cosine palette at t = nu * density + phase, inside black
-  const pa = S.pa.split(",").map(Number), den = +S.den, ph = +S.ph, f32 = new Float32Array(buf.buffer);
+  const pa = S.pa.split(",").map(Number), den = +S.den, ph = +S.ph, f32 = new Float32Array(buf.buffer), st = parseStops();
   const rgba = new Uint8Array(u.w * u.h * 4);
   for (let i = 0; i < u.w * u.h; i++) {
     const nu = f32[4 * i];
+    const sc = st.length && nu >= 0 ? stopColour(st, nu * den + ph) : null;
     for (let k = 0; k < 3; k++) {
-      const v = nu < 0 ? 0 : pa[k] + pa[3 + k] * Math.cos(2 * Math.PI * (pa[6 + k] * (nu * den + ph) + pa[9 + k]));
+      const v = nu < 0 ? 0 : sc ? sc[k] : pa[k] + pa[3 + k] * Math.cos(2 * Math.PI * (pa[6 + k] * (nu * den + ph) + pa[9 + k]));
       rgba[4 * i + k] = Math.round(Math.min(1, Math.max(0, v)) * 255);
     }
     rgba[4 * i + 3] = 255;
@@ -342,12 +366,14 @@ cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
 cv.addEventListener("wheel", e => { e.preventDefault(); const [px, py] = canvasXY(e); zoomAt(px, py, Math.pow(1.0015, e.deltaY)); render(); }, { passive: false });
 
 $("formula").onchange = () => { S.f = $("formula").value; [S.cx, S.cy, S.w] = HOME[S.f]; syncInputs(); render(); };
-$("reset").onclick = () => { [S.cx, S.cy, S.w] = HOME[S.f]; S.rot = "0"; render(); };
-for (const id of ["kr", "ki", "iter", "power", "den", "ph"]) $(id).oninput = () => {
+$("reset").onclick = () => { [S.cx, S.cy, S.w] = HOME[S.f]; S.rot = "0"; syncInputs(); render(); };
+document.addEventListener("keydown", e => { if (e.target.tagName === "INPUT") return;
+  const d = { "[": -15, "]": 15 }[e.key]; if (d) { S.rot = num(((+S.rot + d) % 360 + 360) % 360); syncInputs(); render(); } });
+for (const id of ["kr", "ki", "iter", "power", "den", "ph", "rot"]) $(id).oninput = () => {
   const key = { iter: "it", power: "pw" }[id] || id; if ($(id).value !== "") { S[key] = num($(id).value); render(); } };
 document.querySelectorAll(".pa").forEach(e => e.oninput = () => {
-  const pa = S.pa.split(","); if (e.value !== "") { pa[+e.dataset.i] = num(e.value); S.pa = pa.join(","); $("preset").value = ""; render(); } });
-$("preset").onchange = () => { const p = PALS[$("preset").value]; if (p) { S.pa = p.join(","); syncInputs(); render(); } };
+  const pa = S.pa.split(","); if (e.value !== "") { pa[+e.dataset.i] = num(e.value); S.pa = pa.join(","); S.ps = ""; $("preset").value = ""; syncInputs(); render(); } });
+$("preset").onchange = () => { const p = PALS[$("preset").value]; if (p) { S.pa = p.join(","); S.ps = ""; syncInputs(); render(); } };
 
 async function post(path, body) {
   const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });

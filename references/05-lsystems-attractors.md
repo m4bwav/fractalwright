@@ -108,6 +108,10 @@ Bourke also lists two long algae systems (angle 12) and a leaf with length facto
 | Thomas | x'=sin y - bx; y'=sin z - by; z'=sin x - bz | b~0.208186 (onset of chaos); below it the attractor grows through crises | https://en.wikipedia.org/wiki/Thomas%27_cyclically_symmetric_attractor (accessed 2026-11-14) |
 | Aizawa | x'=(z-b)x-dy; y'=dx+(z-b)y; z'=c+az-z^3/3-(x^2+y^2)(1+ez)+fzx^3 | a=.95 b=.7 c=.6 d=3.5 e=.25 f=.1 | https://jcponce.github.io/strange-attractors and https://mathworld.wolfram.com/LangfordSystem.html (search, accessed 2026-11-14; a 5-parameter variant without e exists) |
 
+| Chen (`chen`) | x'=a(y-x); y'=(c-a)x-xz+cy; z'=xy-bz | a=35, b=3, c=28 | Chen and Ueta 1999, Int. J. Bifurcation and Chaos 9(7) 1465, doi:10.1142/S0218127499001024; parameters confirmed in https://arxiv.org/pdf/1903.04758 (accessed 2026-11-14; Wikipedia "Multiscroll attractor" uses a=40) |
+| Lu (`lu`) | x'=a(y-x); y'=-xz+cy; z'=xy-bz | a=36, b=3, c=20 | Lu and Chen 2002, "A new chaotic attractor coined", Int. J. Bifurcation and Chaos 12(3) 659-661, doi:10.1142/S0218127402004620 (record https://research.buaa.edu.cn/zh/publications/a-new-chaotic-attractor-coined/, accessed 2026-11-14) |
+| Yalcin multi-scroll (`multiscroll`) | x'=y; y'=z; z'=-a(x+y+z)+a f1(x); f1 = sum_{i<=Mx} g_{-(2i-1)/2} + sum_{i<=Nx} g_{(2i-1)/2}; g_t(x) = 1 if x>=t>0, -1 if x<t<0, else 0 | a=0.4 with (Mx,Nx) = (1,1), (0,4), (4,5) gives 3, 5, 10 scrolls (Mx+Nx+1); double scroll at a=0.8, Mx=0, Nx=1 | Yalcin, Suykens, Vandewalle, Ozoguz 2002, "Families of scroll grid attractors", Int. J. Bifurcation and Chaos 12(1) 23-41, eq. (1)-(4) and Fig. 3, read from https://people.eecs.berkeley.edu/~chua/papers/Yalcin02.pdf (2026-11-14) |
+
 ### Discrete maps (iterate, plot points)
 
 | Name | Equations | Parameters | Source |
@@ -116,7 +120,24 @@ Bourke also lists two long algae systems (angle 12) and a leaf with length facto
 | Ikeda | t=0.4-6/(1+x^2+y^2); x'=1+u(x cos t - y sin t); y'=u(x sin t + y cos t) | u=0.9 (chaotic for u>=0.6) | https://en.wikipedia.org/wiki/Ikeda_map (accessed 2026-11-14) |
 | Clifford | x'=sin(a y)+c cos(a x); y'=sin(b x)+d cos(b y) | (-1.4,1.6,1.0,0.7), (1.6,-0.6,-1.2,1.6), (1.7,1.7,0.6,1.2), (1.5,-1.8,1.6,0.9), (-1.7,1.3,-0.1,-1.2), (-1.7,1.8,-1.9,-0.4), (-1.8,-2.0,-0.5,-0.9) | Bourke [S3] |
 | Peter de Jong | x'=sin(a y)-cos(b x); y'=sin(c x)-cos(d y) | (1.641,1.902,0.316,1.525), (0.970,-1.899,1.381,-1.506), (1.4,-2.3,2.4,-2.1), (2.01,-2.53,1.61,-0.33), (-2.7,-0.09,-0.86,-2.2), (-0.827,-1.637,1.659,-0.943), (-2.24,0.43,-0.65,-2.43), (-2,-2,-1.2,2), (-0.709,1.638,0.452,1.740) | Bourke [S4] |
-| Symmetric icon | z'=(l + a z zbar + b Re(z^n) + i w) z + g zbar^(n-1) | n sets the degree; dihedral D_n when w=0, cyclic Z_n when w!=0; parameter list in Field & Golubitsky, *Symmetry in Chaos* (1992) | https://russellcottrell.com/fractalsEtc/iconGenerator.htm (formula) and https://webbox.lafayette.edu/~reiterc/misc_frac/revisit3_pp.pdf (symmetry), accessed 2026-11-14 |
+| Symmetric icon | z'=(l + a z zbar + b Re(z^n) + i w) z + g zbar^(n-1) | n sets the degree; dihedral D_n when w=0, cyclic Z_n when w!=0; sets in section 4b | https://russellcottrell.com/fractalsEtc/iconGenerator.htm (formula) and https://webbox.lafayette.edu/~reiterc/misc_frac/revisit3_pp.pdf (symmetry), accessed 2026-11-14 |
+
+### 4b. Symmetric icon sets checked (0.7.0)
+
+Field and Golubitsky, *Symmetry in Chaos* 2nd ed. (SIAM 2009), Table A.1, order (lambda, alpha, beta, gamma, omega, n). The book itself was not on disk; the table was read from a transcription of Tables A.1-A.5 with figure numbers, https://github.com/Nicetouuuu/symmetry-in-chaos-matlab `appendixA_plot.m` (fetched 2026-11-14). Mike Field's own page (https://sites.me.ucsb.edu/~mjfield/ag/icons/icons_tech.html) returned 403. Both 0.6.0 presets matched; four more were added. Tests: tests/test_gen.py `PublishedParameterTests` (values, Z_n equivariance, the reflection only when omega = 0).
+
+| preset | figure, name | parameters |
+|---|---|---|
+| icon | 1.2 Mayan Bracelet (D7) | -2.08, 1.0, -0.1, 0.167, 0, 7 |
+| icon-3 | 1.15/1.16 The Trampoline (D3) | 1.56, -1.0, 0.1, -0.82, 0, 3 |
+| icon-halloween | 1.1 Halloween (D6) | -2.7, 5.0, 1.5, 1.0, 0, 6 |
+| icon-clam | 1.8 Clam Triple (Z3) | 1.56, -1.0, 0.1, -0.82, 0.12, 3 |
+| icon-streamers | 2.3 Swirling Streamers (Z4) | -1.86, 2.0, 0.0, 1.0, 0.1, 4 |
+| icon-flower | 3.7 Chaotic Flower (Z5) | -2.5, 5.0, -1.9, 1.0, 0.188, 5 |
+
+### 4c. Multi-scroll and Lorenz-family flows (0.7.0)
+
+`fw.py attractor chen|lu|multiscroll` integrate the rows above by RK4 (dt 0.002; multiscroll dt 0.05, x-y projection). The multiscroll preset is (a, Mx, Nx) = (0.4, 0, 4): five scrolls round the equilibria x = 0..4, the paper's Fig. 3 middle case. Tests: `test_flow_equations_and_parameters_match_papers`, `test_yalcin_multiscroll_has_mx_plus_nx_plus_one_scrolls` (each equilibrium visited).
 
 ## 5. Sprott's automatic search
 
@@ -182,7 +203,7 @@ From *Strange Attractors: Creating Patterns in Chaos* (1993, free online) [S5][S
 
 - Exact figure numbers and angle for ABOP context-sensitive and parametric examples
   (1.31, 1.33, 1.35+) were not read; pages 30-45 of [S1] need a pass.
-- Symmetric icon parameter table: need the book or a secondary source with the listed sets.
+- Symmetric icon table: answered from a transcription (section 4b); check against the printed book when it is on disk.
 - Dimension window for "pleasing": answered from the Pickover reprint (section 5), still a book
   rule until our own viewers agree.
 - Should the GPU path (WebGL explorer) share code with the CLI renderer?

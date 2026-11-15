@@ -138,5 +138,50 @@ class Attractors(unittest.TestCase):
         self.assertTrue(all(h["lyapunov_bits"] > 0 for h in hits))
 
 
+class PublishedParameterTests(unittest.TestCase):
+    """0.7.0 paper checks (references/05 sections 4b, 4c)."""
+
+    def test_icon_sets_match_symmetry_in_chaos_table_a1(self):
+        table = {  # Field and Golubitsky, Symmetry in Chaos 2nd ed., Table A.1: lambda, alpha, beta, gamma, omega, n
+            "icon": [-2.08, 1.0, -0.1, 0.167, 0.0, 7], "icon-3": [1.56, -1.0, 0.1, -0.82, 0.0, 3],
+            "icon-halloween": [-2.7, 5.0, 1.5, 1.0, 0.0, 6], "icon-clam": [1.56, -1.0, 0.1, -0.82, 0.12, 3],
+            "icon-streamers": [-1.86, 2.0, 0.0, 1.0, 0.1, 4], "icon-flower": [-2.5, 5.0, -1.9, 1.0, 0.188, 5]}
+        rng = np.random.default_rng(1)
+        x, y = rng.uniform(-0.5, 0.5, 200), rng.uniform(-0.5, 0.5, 200)
+        for k, p in table.items():
+            self.assertEqual(g.ATTRACTORS[k]["params"], p, k)
+            f, n = g.icon_step(p), int(p[5])
+            u, v = f(x, y)
+            w = np.exp(2j * np.pi / n)  # Z_n: f(wz) = w f(z)
+            ru, rv = f((w * (x + 1j * y)).real, (w * (x + 1j * y)).imag)
+            self.assertTrue(np.allclose(ru + 1j * rv, w * (u + 1j * v)), k)
+            cu, cv = f(x, -y)  # D_n (omega = 0) adds the reflection f(conj z) = conj f(z)
+            self.assertEqual(bool(np.allclose(cu + 1j * cv, u - 1j * v)), p[4] == 0.0, k)
+            self.assertEqual(len(g.map_points(f, 20000)), 20000, k)
+
+    def test_flow_equations_and_parameters_match_papers(self):
+        self.assertEqual(g.ATTRACTORS["chen"]["params"], [35.0, 3.0, 28.0])   # Chen and Ueta 1999
+        self.assertEqual(g.ATTRACTORS["lu"]["params"], [36.0, 3.0, 20.0])     # Lu and Chen 2002
+        x, y, z = 1.3, -0.7, 2.1
+        self.assertEqual(g.flow_rhs("chen", [35, 3, 28])(x, y, z),
+                         (35 * (y - x), (28 - 35) * x - x * z + 28 * y, x * y - 3 * z))
+        self.assertEqual(g.flow_rhs("lu", [36, 3, 20])(x, y, z), (36 * (y - x), -x * z + 20 * y, x * y - 3 * z))
+        for k in ("chen", "lu"):
+            p = g.flow(k, 20000, dt=0.002)
+            self.assertTrue(np.isfinite(p).all() and np.abs(p).max() < 100, k)
+            self.assertTrue((p[:, 0] > 5).any() and (p[:, 0] < -5).any(), k)  # both wings
+
+    def test_yalcin_multiscroll_has_mx_plus_nx_plus_one_scrolls(self):
+        # Yalcin et al. 2002 eq. (3)-(4): Mx = 0, Nx = 4, a = 0.4 gives equilibria x = 0..4 and five scrolls (Fig. 3)
+        th = [0.5, 1.5, 2.5, 3.5]
+        self.assertEqual([g.yalcin_f1(x, th) for x in (0.0, 1.0, 2.0, 3.0, 4.0)], [0, 1, 2, 3, 4])
+        self.assertEqual(g.yalcin_g(-0.7, -0.5), -1.0)
+        self.assertEqual(g.yalcin_g(-0.2, -0.5), 0.0)
+        p = g.flow("multiscroll", 40000, dt=0.05)
+        visits = [int((np.abs(p[:, 0] - e) < 0.25).sum()) for e in range(5)]
+        self.assertTrue(all(v > 200 for v in visits), visits)
+        self.assertTrue(np.abs(p).max() < 6)
+
+
 if __name__ == "__main__":
     unittest.main()

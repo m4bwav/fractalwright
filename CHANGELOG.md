@@ -2,7 +2,12 @@
 
 Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) and its companions, newest first, each with the reason. Reasons cite findings in [RESEARCH.md](RESEARCH.md) (`R-`), lessons in [LEARNINGS.md](LEARNINGS.md) (`L-`), and test runs in [TESTS.md](TESTS.md) (`T-`). State in `evergreen.json`. Protocol: MAINTENANCE.md.
 
-Entry shape: `### C-20261114-22 - 2026-11-14 - release 0.6.0: flashcheck verdict fix, `3d mesh` printable STL
+Entry shape: `### C-20261114-23 - 2026-11-14 - release 0.7.0: parameter checks against papers
+- because: user request (HANDOFF Next 6)
+- files: scripts/fw_gen.py (`ATTRACTORS`, `flow_rhs`, `flow`, `yalcin_f1`), scripts/fw_neighbours.py (`limit_curve_dfs`, `_fix_attr`, `kleinian --method`), scripts/fw_deep.py (`series_skip`, `escape_perturb`), scripts/fw.py (`render --series`, `VERSION`), scripts/fw_serve.py (hash `ps`), scripts/page/explorer.html (rotation input and keys, stop palettes), tests, references/03, 05, 12, SKILL.md, README.md, plugin.json files
+- Icon presets checked against Symmetry in Chaos Table A.1 (both matched; four added). New flows chen, lu (published a, b, c) and Yalcin multiscroll. Kleinian grandma draws by the Indra's Pearls depth-first word search by default. Series approximation added as opt-in `--series` (1.0-1.7x, counts within plain perturbation's own error). The explorer gains a rotation control and stop palettes in the share hash.
+
+### C-20261114-22 - 2026-11-14 - release 0.6.0: flashcheck verdict fix, `3d mesh` printable STL
 - because: user request (HANDOFF Next 1 and 5)
 - files: scripts/fw.py (`flash_check`, `_sync_area`, `flash_line`, `cmd_flashcheck`, `_finish_video`, `VERSION`), scripts/fw_audio.py, scripts/fw_neighbours.py, scripts/fw_mesh.py (new), scripts/fw_3d.py (`mesh` action, `--res --size-mm --iter --engine`), tests/test_fw.py, tests/test_3d.py, references/07-3d.md (Meshing), skills/fractalwright/SKILL.md (Step 2b, 2e, metadata), README.md, plugin.json, .claude-plugin/plugin.json
 - A default 320x240 3 s zoom printed "1 swings/s (limit 3) FAIL": the verdict came from the per-cell area rule (95% of cells flashed 6.5/s as bands drifted through 6 px cells, out of step), while the line printed the unrelated whole-frame count. The area rule now counts only cells whose swings coincide within a frame with a reference cell (WCAG: one flash over the area); the out-of-step figure stays as `async_flash_area`; `failed_rules` and a verdict line print the area that decided it. `fw.py 3d mesh` writes a watertight single-solid STL in mm from the NumPy DE (scikit-image marching cubes optional, NumPy marching tetrahedra otherwise).

@@ -25,7 +25,9 @@ PAGE = PAGE_DIR / "explorer.html"
 AUDIO_PAGE = PAGE_DIR / "audio.html"  # live audio page, served at /audio
 LOOPBACK = ("127.0.0.1", "localhost", "::1")
 # Hash keys in page order (explorer.html KEYS). kr, ki only for julia; pw only for multibrot.
-HASH_KEYS = ("f", "cx", "cy", "w", "rot", "it", "bail", "pw", "kr", "ki", "den", "ph", "pa", "sz")
+# ps (stop palette, "pos:rrggbb,...", up to 8 stops) replaces pa when present.
+HASH_KEYS = ("f", "cx", "cy", "w", "rot", "it", "bail", "pw", "kr", "ki", "den", "ph", "pa", "ps", "sz")
+MAX_PAGE_STOPS = 8
 PAGE_FORMULAS = ("mandelbrot", "julia", "burning-ship", "tricorn", "multibrot")
 # float32 plain iteration: pixel step relative to max(1, |centre|). Below this the
 # picture blocks up (bench: 3.5e4 zoom at 1920 px, rel 5e-8, diff 21). Page uses the same limit.
@@ -54,7 +56,7 @@ def parse_hash(h):
         if k not in out:
             raise ValueError(f"hash is missing {k}=")
     for k, v in out.items():
-        if k in ("f", "pa", "sz"):
+        if k in ("f", "pa", "ps", "sz"):
             continue
         try:
             Decimal(v)
@@ -82,6 +84,16 @@ def hash_to_recipe(h):
         if len(v) != 12:
             raise ValueError("pa= needs 12 numbers: a, b, c, d as r,g,b each")
         r["palette"] = {"type": "cosine", "a": v[0:3], "b": v[3:6], "c": v[6:9], "d": v[9:12]}
+    if d.get("ps"):
+        stops = []
+        for part in d["ps"].split(","):
+            pos, col = part.split(":")
+            if len(col.lstrip("#")) != 6:
+                raise ValueError(f"ps= stop {part!r} needs pos:rrggbb")
+            stops.append([float(pos), "#" + col.lstrip("#").lower()])
+        if not 2 <= len(stops) <= MAX_PAGE_STOPS:
+            raise ValueError(f"ps= needs 2 to {MAX_PAGE_STOPS} stops")
+        r["palette"] = {"type": "stops", "stops": stops}
     if "sz" in d:
         w, hh = d["sz"].lower().split("x")
         r["size"] = {"w": int(w), "h": int(hh), "supersample": 1}
@@ -119,8 +131,8 @@ def recipe_to_hash(r):
     pal = r.get("palette") or {}
     if isinstance(pal, str):
         pal = fw.PALETTES[pal]
-    if pal.get("type") != "cosine":
-        raise ValueError("the page uses cosine palettes; this recipe has stops")
+    if pal.get("type") == "stops" and not 2 <= len(pal["stops"]) <= MAX_PAGE_STOPS:
+        raise ValueError(f"the page draws stop palettes of 2 to {MAX_PAGE_STOPS} stops; this one has {len(pal['stops'])}")
     p, c = r["params"], r["colouring"]
     vals = {
         "f": f, "cx": str(r["view"]["centre"][0]), "cy": str(r["view"]["centre"][1]), "w": str(r["view"]["width"]),
@@ -129,10 +141,12 @@ def recipe_to_hash(r):
         "pw": _js(p.get("power", 2)),
         "kr": str(p.get("c", ["-0.8", "0.156"])[0]), "ki": str(p.get("c", ["-0.8", "0.156"])[1]),
         "den": _js(c.get("density", 0.02)), "ph": _js(c.get("phase", 0) or 0),
-        "pa": ",".join(_js(v) for k in "abcd" for v in pal[k]),
+        "pa": ",".join(_js(v) for k in "abcd" for v in pal[k]) if pal.get("type") == "cosine" else "",
+        "ps": ",".join(f"{_js(s[0])}:{s[1].lstrip('#').lower()}" for s in pal["stops"]) if pal.get("type") == "stops" else "",
         "sz": f"{r['size']['w']}x{r['size']['h']}",
     }
-    keys = [k for k in HASH_KEYS if not ((k in ("kr", "ki") and f != "julia") or (k == "pw" and f != "multibrot"))]
+    keys = [k for k in HASH_KEYS if not ((k in ("kr", "ki") and f != "julia") or (k == "pw" and f != "multibrot")
+                                         or (k in ("pa", "ps") and not vals[k]))]
     return "&".join(f"{k}={vals[k]}" for k in keys)
 
 

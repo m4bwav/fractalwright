@@ -1,6 +1,6 @@
 # HANDOFF: fractalwright
 
-Status: v0.3.0 (GPU deep zoom on the browser route to 1e-60, rd --size N fix) released and installed 2026-11-14 (session 6). Steps A-F done; 3D passed Mark's look gate and ships as a normal route. Not finished: items left under Next, Peitgen and Indra's Pearls books.
+Status: v0.7.0 (paper checks) released 2026-11-14; earlier: v0.3.0 (GPU deep zoom on the browser route to 1e-60, rd --size N fix) released and installed 2026-11-14 (session 6). Steps A-F done; 3D passed Mark's look gate and ships as a normal route. Not finished: items left under Next, Peitgen and Indra's Pearls books.
 
 Continue prompt: [plans/fractalwright-continue-prompt.md](plans/fractalwright-continue-prompt.md)
 
@@ -28,4 +28,4 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 3. Done in v0.5.0 (PR #23): double-float GPU deep deltas (default; 0.09-1.02% mismatches) and GPU deep in the serve explorer (POST /orbit). Left: install 0.5.0 locally, wiki pages for 0.4.0/0.5.0; the explorer redraws only after each orbit round trip (no progressive preview while panning deep).
 4. Path-traced 3D: done in 0.4.0 (`3d render --pt N`, references/07-3d.md "Path tracer"; sheet and judge in Ai/fractalwright-renders/pathtrace-2026-11-14).
 5. Done in v0.6.0: `fw.py 3d mesh` (scripts/fw_mesh.py), watertight single-solid STL in mm; Mandelbulb 422k tris 11 s, Menger L3 816k tris 3 s, both pass `pw.py check --target print-fdm` (bulb warns 2.7% under 0.9 mm). Left: a `--wall-mm` thickening option, orbit-trap colour to 3MF.
-6. Parameter checks against papers: symmetric icons vs Field and Golubitsky, multi-scroll attractor, Grandma's recipe vs Indra's Pearls (when book arrives), DFS word enumeration, series approximation, page rotation and stop palettes.
+6. Done 2026-11-14 (v0.7.0, PR papers): icons match Symmetry in Chaos Table A.1 (transcription; 4 sets added), chen/lu/multiscroll (Yalcin) added from the papers, kleinian grandma draws by DFS word search (default; --method random), series approximation opt-in `render --deep --series` (1.0-1.7x), explorer rotation control + stop palettes in the hash. Sources and measurements in references/03, 05 (4b, 4c), 12. Left: Grandma's recipe formulas and the DFS details vs Indra's Pearls when the book is on disk; icon table vs the printed book.
