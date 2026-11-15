@@ -43,6 +43,7 @@ VIEWS = {
     "menger": {"whole": ([0, 0, 0], [0.75, 0.55, 0.9], 4.0), "close": ([0.6, 0.6, 1.0], [0.25, 0.2, 0.95], 1.0)},
     "hybrid": {"whole": ([0, 0, 0], [0.55, 0.45, 0.7], 3.2), "close": ([0.4, 0.4, 0.4], [0.4, 0.6, 0.7], 1.0)},
 }
+DEFAULT_PT_SAMPLES = 256  # fw.py 3d render/recipe from a formula name; --pt 0 = shadow/ao look
 PT_DEFAULTS = {"samples": 64, "bounces": 2, "seed": 1, "spf": 4}
 SUN = [2.2, 2.0, 1.75]
 SKY_ZENITH, SKY_HORIZON = [0.16, 0.22, 0.38], [0.34, 0.36, 0.4]
@@ -410,7 +411,7 @@ def _load(spec):
     raise SystemExit(f"3d: {spec!r} is neither a recipe file nor one of {', '.join(FORMULAS3D)}")
 
 
-def _apply_args(r, a):
+def _apply_args(r, a, fresh=False):
     if getattr(a, "view", None):
         r["view"] = a.view
         r["camera"] = None
@@ -427,7 +428,11 @@ def _apply_args(r, a):
             raise SystemExit(f"3d: unknown remedy {k}; one of {', '.join(REMEDIES)}, all, none")
         else:
             rem[k] = True
-    if getattr(a, "pt", None):
+    if getattr(a, "pt", None) is None and fresh:
+        a.pt = DEFAULT_PT_SAMPLES  # Mark's pick 2026-11-14: path traced by default for new renders
+    if getattr(a, "pt", None) == 0:
+        r.pop("pt", None)
+    elif getattr(a, "pt", None):
         pt = dict(r.get("pt") or {})
         pt["samples"] = a.pt
         for k in ("bounces", "seed"):
@@ -439,7 +444,7 @@ def _apply_args(r, a):
 
 def cmd_3d(a):
     if a.action == "recipe":
-        r = normalise(_apply_args(_load(a.target or "mandelbulb"), a))
+        r = normalise(_apply_args(_load(a.target or "mandelbulb"), a, fresh=not Path(a.target or "").exists()))
         txt = json.dumps(r, indent=2) + "\n"
         if a.out:
             Path(a.out).write_text(txt, encoding="utf-8")
@@ -448,7 +453,7 @@ def cmd_3d(a):
             print(txt, end="")
         return 0
     if a.action == "render":
-        r = normalise(_apply_args(_load(a.target or "mandelbulb"), a))
+        r = normalise(_apply_args(_load(a.target or "mandelbulb"), a, fresh=not Path(a.target or "").exists()))
         out = Path(a.out or "fractal3d.png")
         try:
             b = Browser3D()
@@ -500,7 +505,8 @@ def register(sub, explain):
     s.add_argument("--remedy", action="append", help=f"repeatable, added to the default ({', '.join(DEFAULT_REMEDIES)}): "
                    f"{', '.join(REMEDIES)}, all; none clears them first")
     s.add_argument("--pt", type=int, metavar="N", help="path trace with N samples per pixel (diffuse, sky + sun, "
-                   "cosine-weighted bounces; replaces the shadow/ao look)")
+                   "cosine-weighted bounces). Default 256 for a formula name; 0 = the faster shadow/ao look; "
+                   "a recipe file keeps its own setting")
     s.add_argument("--bounces", type=int, help=f"path tracer indirect bounces (default {PT_DEFAULTS['bounces']})")
     s.add_argument("--seed", type=int, help=f"path tracer seed (default {PT_DEFAULTS['seed']}); same seed, same pixels")
     s.add_argument("--res", type=int, help="mesh: grid points per side (default 200)")

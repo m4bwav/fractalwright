@@ -135,6 +135,20 @@ class RecipeTests(unittest.TestCase):
             fw_3d.normalise({"formula": "menger", "remedies": {"bloom": True}})
 
 
+    def test_pt_default_for_formula_names_only(self):
+        import argparse
+        import tempfile
+        mk = lambda **k: argparse.Namespace(**{"view": None, "size": None, "remedy": None, "pt": None,
+                                                 "bounces": None, "seed": None, **k})
+        r = fw_3d.normalise(fw_3d._apply_args(fw_3d.default_recipe("menger"), mk(), fresh=True))
+        self.assertEqual(r["pt"]["samples"], fw_3d.DEFAULT_PT_SAMPLES)
+        r0 = fw_3d.normalise(fw_3d._apply_args(fw_3d.default_recipe("menger"), mk(pt=0), fresh=True))
+        self.assertNotIn("pt", r0)
+        # a recipe file keeps its own setting
+        kept = fw_3d.normalise(fw_3d._apply_args(json.loads(json.dumps(r0)), mk(), fresh=False))
+        self.assertNotIn("pt", kept)
+
+
 class DESanity(unittest.TestCase):
     def test_mandelbulb_de_is_lower_bound(self):
         rng = np.random.default_rng(1)
