@@ -2,6 +2,11 @@
 
 Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) and its companions, newest first, each with the reason. Reasons cite findings in [RESEARCH.md](RESEARCH.md) (`R-`), lessons in [LEARNINGS.md](LEARNINGS.md) (`L-`), and test runs in [TESTS.md](TESTS.md) (`T-`). State in `evergreen.json`. Protocol: MAINTENANCE.md.
 
+### C-20261115-25 - 2026-11-15 - release 0.9.0: `3d mesh --wall-mm`
+- because: user request (HANDOFF Next 5: Mandelbulb at 60 mm warned 2.7% of the surface under 0.9 mm)
+- files: scripts/fw_mesh.py (`wall_iso`, `build`, `cmd_mesh`), scripts/fw_3d.py (`--wall-mm`), scripts/fw.py (`VERSION`), tests/test_3d.py (`test_wall_mm_offsets_surface`), skills/fractalwright/SKILL.md (3D mesh), references/07-3d.md (Meshing), README.md, plugin.json files
+- `fw.py 3d mesh --wall-mm X` meshes the offset surface DE = X/2 at print scale (chosen over voxel dilation: smooth, same pipeline). Mandelbulb 60 mm, 0.9: print-fdm check pass, thin fraction 2.68% -> 0.11%, watertight, 1 shell.
+
 ### C-20261115-24 - 2026-11-15 - release 0.8.0: path traced 3D by default
 - because: user request (askwright set fractalwright-pathtrace-2026-11-14: Mark chose "Path traced by default" over the low-confidence guess "keep")
 - files: scripts/fw_3d.py (`DEFAULT_PT_SAMPLES`, `_apply_args`, `--pt` help), scripts/fw.py (`VERSION`), tests/test_3d.py, skills/fractalwright/SKILL.md (3D step), references/07-3d.md (Path tracer), README.md, plugin.json files
