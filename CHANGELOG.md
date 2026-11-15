@@ -2,7 +2,12 @@
 
 Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) and its companions, newest first, each with the reason. Reasons cite findings in [RESEARCH.md](RESEARCH.md) (`R-`), lessons in [LEARNINGS.md](LEARNINGS.md) (`L-`), and test runs in [TESTS.md](TESTS.md) (`T-`). State in `evergreen.json`. Protocol: MAINTENANCE.md.
 
-Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
+Entry shape: `### C-20261114-22 - 2026-11-14 - release 0.6.0: flashcheck verdict fix, `3d mesh` printable STL
+- because: user request (HANDOFF Next 1 and 5)
+- files: scripts/fw.py (`flash_check`, `_sync_area`, `flash_line`, `cmd_flashcheck`, `_finish_video`, `VERSION`), scripts/fw_audio.py, scripts/fw_neighbours.py, scripts/fw_mesh.py (new), scripts/fw_3d.py (`mesh` action, `--res --size-mm --iter --engine`), tests/test_fw.py, tests/test_3d.py, references/07-3d.md (Meshing), skills/fractalwright/SKILL.md (Step 2b, 2e, metadata), README.md, plugin.json, .claude-plugin/plugin.json
+- A default 320x240 3 s zoom printed "1 swings/s (limit 3) FAIL": the verdict came from the per-cell area rule (95% of cells flashed 6.5/s as bands drifted through 6 px cells, out of step), while the line printed the unrelated whole-frame count. The area rule now counts only cells whose swings coincide within a frame with a reference cell (WCAG: one flash over the area); the out-of-step figure stays as `async_flash_area`; `failed_rules` and a verdict line print the area that decided it. `fw.py 3d mesh` writes a watertight single-solid STL in mm from the NumPy DE (scikit-image marching cubes optional, NumPy marching tetrahedra otherwise).
+
+### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
 ### C-20261114-20 · 2026-11-14 · release 0.5.0: double-float GPU deep deltas, GPU deep in the explorer
 - because: user request (HANDOFF Next 3), T-20261114-17, L-20261114-11

@@ -18,7 +18,7 @@ import zlib
 from decimal import Decimal
 from pathlib import Path
 
-VERSION = "0.5.1"
+VERSION = "0.6.0"
 ROOT = Path(__file__).resolve().parent.parent
 
 try:
@@ -1376,17 +1376,54 @@ def flash_check(frames, fps):
         st = np.where(flip, red[i], st); ref = np.where(flip[..., None], uv[i], ref)
     redc = _per_second_max(rev, win) / 2.0  # a red flash is a pair of transitions
     gen_flash = gen / 2.0                   # a general flash is a pair of opposing changes (two swings)
-    gen_area = _box_max_fraction(gen_flash > FLASH_MAX_PER_S, bh, bw) if len(L) > 1 else 0.0
-    red_area = _box_max_fraction(redc > FLASH_MAX_PER_S, bh, bw) if len(L) > 1 else 0.0
+    gev = swing_walk(Lc, dark_max=0.80)
+    gen_any = _box_max_fraction(gen_flash > FLASH_MAX_PER_S, bh, bw) if len(L) > 1 else 0.0
+    gen_area = _sync_area(gev, gen_flash > FLASH_MAX_PER_S, bh, bw) if len(L) > 1 else 0.0
+    red_area = _sync_area(rev, redc > FLASH_MAX_PER_S, bh, bw) if len(L) > 1 else 0.0
     ok = gen_area <= FLASH_AREA and red_area <= FLASH_AREA
+    failed = [n for n, v in (("general-flash-area", gen_area), ("red-flash-area", red_area)) if v > FLASH_AREA]
     return {"frames": len(L), "fps": fps, "swings": int(whole.sum()), "max_swings_per_s": worst,
             "limit_per_s": FLASH_MAX_PER_S, "luminance_range": [float(L.min()), float(L.max())],
             "general_flash_area": round(gen_area, 4), "red_flash_area": round(red_area, 4),
             "area_limit": FLASH_AREA, "max_cell_flashes_per_s": float(gen_flash.max()) if len(L) > 1 else 0.0,
-            "pass": bool(ok),
+            "async_flash_area": round(gen_any, 4), "failed_rules": failed, "pass": bool(ok),
             "method": "WCAG 2.x general and red flash thresholds: per-cell swing walk on a 36x48 grid, "
-                      "flashing cells (> 3 flashes/s) must cover <= 25% of any 341x256-at-1024x768 box; "
-                      "max_swings_per_s is the older whole-frame mean count, kept for reference"}
+                      "flashing cells (> 3 flashes/s) that flash together (swings within 1 frame) must cover <= 25% of any 341x256-at-1024x768 box; "
+                      "async_flash_area counts cells flashing out of step (moving detail, not one flash); max_swings_per_s is the older whole-frame mean count, kept for reference"}
+
+
+def _sync_area(ev, flashing, bh, bw):
+    """Largest box fraction covered by flashing cells whose swings coincide (within one frame) with those of
+    one reference cell. WCAG's area rule is about one flash covering an area at once; bands drifting through
+    small cells flash out of step and do not add up (2026-11-14: default zooms read 95% before this)."""
+    idx = np.flatnonzero(flashing.ravel())
+    if not len(idx):
+        return 0.0
+    E = ev.reshape(len(ev), -1)[:, idx].astype(np.float32)          # (frames, k)
+    D = E.copy(); D[1:] += E[:-1]; D[:-1] += E[1:]; D = (D > 0).astype(np.float32)
+    co = E.T @ D                                                     # co[i, j]: events of i near events of j
+    n = np.maximum(E.sum(0), 1)
+    sync = (co >= 0.8 * n[:, None]) & (co.T >= 0.8 * n[None, :])
+    best = 0.0
+    for r in range(len(idx)):
+        m = np.zeros(flashing.size, bool); m[idx[sync[r]]] = True
+        best = max(best, _box_max_fraction(m.reshape(flashing.shape), bh, bw))
+        if best >= 1.0:
+            break
+    return best
+
+
+def flash_line(fc):
+    """One-line verdict whose numbers are the ones the verdict used, naming the failed rule."""
+    lim = fc["area_limit"]
+    if fc["pass"]:
+        return (f"flashcheck: pass (flashing together: {fc['general_flash_area']:.0%} general, "
+                f"{fc['red_flash_area']:.0%} red of a 10-degree field, limit {lim:.0%}; "
+                f"whole-frame {fc['max_swings_per_s']} swings/s)")
+    key = {"general-flash-area": "general_flash_area", "red-flash-area": "red_flash_area"}
+    why = ", ".join(f"{r} {fc[key[r]]:.0%} > {lim:.0%}" for r in fc["failed_rules"])
+    return (f"flashcheck: FAIL ({why} of a 10-degree field flashes more than {fc['limit_per_s']} times/s at once; "
+            f"whole-frame {fc['max_swings_per_s']} swings/s is for reference only)")
 
 
 def seam_ratio(frames):
@@ -1416,7 +1453,7 @@ def _finish_video(kind, recipes, anim, a, frame_fn=None):
     print(f"wrote {a.out}, {rp} and {len(recipes)} frames")
     for n in notes:
         print("note:", n)
-    print(f"flashcheck: {fc['max_swings_per_s']} swings/s (limit {FLASH_MAX_PER_S}) {'pass' if fc['pass'] else 'FAIL'}")
+    print(flash_line(fc))
     return 0 if fc["pass"] else 4
 
 
@@ -1505,6 +1542,8 @@ def cmd_flashcheck(a):
     fps = a.fps or fps or 24
     res = flash_check(frames, fps)
     _out(res, a.json)
+    if not a.json:
+        print(flash_line(res))
     return 0 if res["pass"] else 4
 
 

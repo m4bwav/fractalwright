@@ -23,9 +23,9 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 
 ## Next (Mark's rank: gpudeep, path tracing, mesh, paper checks)
 
-1. Done 2026-11-14 (v0.5.1, PR #22): worth trims + fixed evals, A/B 6/6 vs 0/6 at x1.23 (log). Left: flashcheck printed FAIL at 1-2 swings/s with limit 3 in A/B zoom runs, making agents retry; investigate.
+1. Done 2026-11-14 (v0.5.1, PR #22): worth trims + fixed evals, A/B 6/6 vs 0/6 at x1.23 (log). Flashcheck FAIL-at-1-swing/s fixed in v0.6.0: the area rule summed out-of-step cell swings (moving bands); now only cells flashing together count, and the verdict line names the failed rule and its area. Left: re-run the zoom A/B to confirm agents stop retrying.
 2. Done 2026-11-14: wiki updated to 0.5.1 (wiki commit ce162a2; GPU deep route, explorer POST /orbit, rd --size N, 3d --pt; outputs check 35/35, live 12/12).
 3. Done in v0.5.0 (PR #23): double-float GPU deep deltas (default; 0.09-1.02% mismatches) and GPU deep in the serve explorer (POST /orbit). Left: install 0.5.0 locally, wiki pages for 0.4.0/0.5.0; the explorer redraws only after each orbit round trip (no progressive preview while panning deep).
 4. Path-traced 3D: done in 0.4.0 (`3d render --pt N`, references/07-3d.md "Path tracer"; sheet and judge in Ai/fractalwright-renders/pathtrace-2026-11-14).
-5. 3D fractal to printable mesh (polywright-print).
+5. Done in v0.6.0: `fw.py 3d mesh` (scripts/fw_mesh.py), watertight single-solid STL in mm; Mandelbulb 422k tris 11 s, Menger L3 816k tris 3 s, both pass `pw.py check --target print-fdm` (bulb warns 2.7% under 0.9 mm). Left: a `--wall-mm` thickening option, orbit-trap colour to 3MF.
 6. Parameter checks against papers: symmetric icons vs Field and Golubitsky, multi-scroll attractor, Grandma's recipe vs Indra's Pearls (when book arrives), DFS word enumeration, series approximation, page rotation and stop palettes.

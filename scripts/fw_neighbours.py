@@ -141,7 +141,7 @@ def _rd_video(a, name, p, seed):
     rp = out.with_suffix(".json")
     rp.write_text(json.dumps(rec, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {out}, {rp} and {n} frames")
-    print(f"flashcheck: {fc['max_swings_per_s']} swings/s (limit {fw.FLASH_MAX_PER_S}) {'pass' if fc['pass'] else 'FAIL'}")
+    print(fw.flash_line(fc))
     return 0 if fc["pass"] else 4
 
 

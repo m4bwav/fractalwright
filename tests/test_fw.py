@@ -419,6 +419,22 @@ class Video(unittest.TestCase):
         slow = fw.flash_check([np.zeros((144, 192, 3))] * 12 + [np.ones((144, 192, 3))] * 12, 24)
         self.assertTrue(slow["pass"])
 
+    def test_flash_verdict_matches_numbers(self):
+        # 2026-11-14 regression: a default 320x240 3 s zoom printed "1 swings/s (limit 3) FAIL" because bands
+        # drifting through small cells were summed as one flash area (95%); agents retried for 25 turns.
+        out = self.dir / "zr.mp4"
+        txt = self.run_fw("zoom", "seahorse", "--to-width", "1e-6", "--size", "320x240", "--duration", "3", "-o", str(out))
+        line = [l for l in txt.splitlines() if l.startswith("flashcheck:")][0]
+        self.assertIn("pass", line, line)
+        res = json.loads(self.run_fw("flashcheck", str(out), "--json"))
+        self.assertTrue(res["pass"], res)
+        self.assertEqual(res["failed_rules"], [])
+        self.assertLessEqual(res["general_flash_area"], 0.25)
+        # a real strobe fails and the line names the rule and the number that failed
+        full = fw.flash_check([np.zeros((144, 192, 3)), np.ones((144, 192, 3))] * 24, 24)
+        self.assertEqual(full["failed_rules"], ["general-flash-area"])
+        self.assertIn("general-flash-area 100% > 25%", fw.flash_line(full))
+
     def test_sheet_tiles_and_sidecar(self):
         out = self.dir / "sheet.png"
         self.run_fw("sheet", "julia-rabbit", "--vary", "params.c", "--values", "-0.123:0.745,-0.8:0.156,0:1",
