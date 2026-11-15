@@ -1,10 +1,10 @@
 # Route details: browser and GPU, AI styling, audio mapping
 
-Read on demand from [skills/fractalwright/SKILL.md](../skills/fractalwright/SKILL.md): the browser section when a render uses `--route browser` or `--deep` on the GPU, the AI section when the user asks for `--ai`, the audio section when tuning or explaining `FW audio`. Moved out of SKILL.md in 0.3.1 so plain renders do not pay for it.
+Read on demand from [skills/fractalwright/SKILL.md](../skills/fractalwright/SKILL.md): the browser section when a render uses `--route browser` or `--deep` on the GPU, the AI section when the user asks for `--ai`, the audio section when tuning or explaining `FW audio`. Moved out of SKILL.md in 0.5.1 so plain renders do not pay for it.
 
 ## Browser route and GPU perturbation
 
-`FW render <recipe> --route browser` renders with headless Edge and the page's shader; views too deep for float32 (width under 1e-3 of the coordinate, or a pixel under 1e-6 of it) go to GPU perturbation when the formula is Mandelbrot or Julia (power 2), else to NumPy with a note. `--deep --route browser` (or any width under 1e-12) runs perturbation on the GPU: a Decimal reference orbit as a float texture, float32 scaled deltas, rebasing, down to width 1e-60; about 9% of escape counts in dense boundary areas differ from the float64 CPU route (float32 noise, no blobs), so use the CPU route when exact counts matter. `FW zoom ... --route browser` renders every frame that way. The burning ship is the least exact in float32 (mean diff 2.7 against NumPy).
+`FW render <recipe> --route browser` renders with headless Edge and the page's shader; views too deep for float32 (width under 1e-3 of the coordinate, or a pixel under 1e-6 of it) go to GPU perturbation when the formula is Mandelbrot or Julia (power 2), else to NumPy with a note. `--deep --route browser` (or any width under 1e-12) runs perturbation on the GPU: a Decimal reference orbit as a float texture, double-float scaled deltas, rebasing, down to width 1e-60; 0.1-1% of escape counts in dense boundary areas differ from the float64 CPU route (0.5.0; `--gpu-precision float32` is the faster 0.3.0 shader at 3.5-19%), so use the CPU route when exact counts matter. `FW zoom ... --route browser` renders every frame that way. The burning ship is the least exact in float32 (mean diff 2.7 against NumPy).
 
 ## AI styling pass (`--ai`)
 

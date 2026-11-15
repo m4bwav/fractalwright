@@ -11,6 +11,13 @@ Entry shape: `### T-20261114-10 Â· 2026-11-14 Â· unittest (tests/) Â· Windows, P
 - Gate: 54 renders at 768x512 in 3.44 s total GPU plus readback (0.01-0.11 s each).
 - led to: C-20261114-10
 
+### T-20261114-17 Â· 2026-11-14 Â· unittest (tests/) Â· Windows, Python 3.14.6, numpy 2.5.2, Playwright + Edge headless (ANGLE D3D11, RTX 5060 Ti) Â· 135/135 in 125 s (7 new); 140/140 in 132 s after rebase on 0.4.0 (path tracing)
+- GPU deep vs CPU fw_deep, 512x512, escape-count mismatch % (largest blob), float32 -> double-float: 1e-6 3.46 (24) -> 0.09 (2); 1e-10 8.27 (26) -> 0.24 (2); 1e-20 12.68 (24) -> 0.38 (2); 1e-30 8.67 (24) -> 0.24 (2); 1e-50 11.87 (30) -> 0.37 (2); 1e-60 0 -> 0 (DEEP50 centre at 1e-60, 5000 it: CPU and GPU agree everywhere); Julia 1e-30 18.70 (84) -> 1.02 (3). Per call (orbit, upload, draw, readback): float32 0.18-0.25 s (draw 6-16 ms), df 0.24-0.30 s (draw 30-89 ms); CPU 10-55 s.
+- Compiler traps on ANGLE D3D11: with only a `* u_one` guard, two-sum returned error 0 (the compiler rewrote (s - a) as b) and the product error terms were contracted, so df gave 8-19% like float32. A `fence()` (XOR of the float bits with a uniform 0u) on each rounded sum and product fixed it: probe errors exact (dmul rel err 7e-16).
+- Second cause: df deltas below about 1e-30 lose their lo half (denormal flush), so the scaled phase now converts at 1e-20 (`SWITCH_DF`), capped by `W_MAX` 1e33 pixel units. At 64 px this took 1e-30 from 3.52% to 0.27% and Julia from 9.55% to 1.03%.
+- Explorer: page with a 1e-30 hash draws via POST /orbit, canvas equals fw_gpudeep (mean diff 0.000); zoomAt keeps the centre to 1e-42 of the exact Decimal answer; /orbit refuses tricorn, width 1e-70 and 900000 iterations with 400.
+- led to: C-20261114-19
+
 ### T-20261114-16 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2, Playwright + Edge headless (ANGLE D3D11, RTX 5060 Ti) · 128/128 (9 new)
 - GPU perturbation vs CPU fw_deep (float64), 512x512, escape-count mismatches / RGB pixels off by > 8 / largest mismatch blob / mean RGB diff: 1e-6 9062 (3.5%) / 8026 / 24 / 2.5; 1e-10 29602 (11.3%) / 26312 / 21 / 8.1; 1e-20 32557 (12.4%) / 28776 / 28 / 8.9; 1e-30 22730 (8.7%) / 20123 / 24 / 6.2; 1e-50 31123 (11.9%) / 27576 / 30 / 8.4; 1e-60 31227 (11.9%) / 27583 / 31 / 8.5; Julia 1e-30 49018 (18.7%) / 44554 / 84 / 14.4. Every pixel escapes in these views (counts 1100-3900), the worst case for float32.
 - Cause check: a NumPy float32 copy of the algorithm at 1e-30 128 px differs from CPU float64 on 1493 pixels and from the GPU on 1513; GPU vs CPU 1413. So the drift is float32 rounding, not a shader error. Against direct Decimal at 24x16 1e-30: GPU 42/384 wrong, CPU 0.
