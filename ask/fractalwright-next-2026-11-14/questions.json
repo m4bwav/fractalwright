@@ -1,0 +1,139 @@
+{
+  "askwright": 1,
+  "id": "fractalwright-next-2026-11-14",
+  "title": "fractalwright: books, Mac host and what to build next",
+  "context": "",
+  "asked_by": "fractalwright builder",
+  "product": "Claude Code",
+  "session": "fractalwright session 6",
+  "working_dir": "D:\\m4bwa\\Claude\\Projects\\Ai",
+  "media_roots": [],
+  "questions": [
+    {
+      "id": "books",
+      "kind": "multi",
+      "title": "Books to get",
+      "question": "Which of these two books should I get for fractalwright?",
+      "background": "The build plan has a books step. Two titles are still missing from your disk: Peitgen, Juergens and Saupe, 'Chaos and Fractals: New Frontiers of Science' (the standard textbook, about 900 pages), and Mumford, Series and Wright, 'Indra's Pearls' (the source for Kleinian group limit sets; fw.py kleinian already draws them but the recipe has not been checked against the book). Neither is free online. Buying a book is your call.",
+      "why": "A book on disk gets read and turned into tested rules for the skill. Without it, the Kleinian check and the Peitgen distillation stay open.",
+      "options": [
+        {
+          "id": "indra",
+          "label": "Get Indra's Pearls (Kleinian check)"
+        },
+        {
+          "id": "peitgen",
+          "label": "Get Chaos and Fractals (Peitgen)"
+        },
+        {
+          "id": "none",
+          "label": "Neither, skip the books step"
+        }
+      ],
+      "guess": {
+        "options": [
+          "indra"
+        ],
+        "why": "It checks code that already ships; Peitgen mostly confirms things the research already covers.",
+        "confidence": "low"
+      },
+      "created": "2026-11-14T20:14:22-06:00",
+      "updated": "2026-11-14T20:14:22-06:00"
+    },
+    {
+      "id": "machost",
+      "kind": "choice",
+      "title": "Mac ComfyUI host",
+      "question": "Should fractalwright send AI passes to the Mac ComfyUI as well as the PC?",
+      "background": "fw.py reads its ComfyUI hosts from the FW_COMFY_HOSTS environment variable. The default is the PC only. Adding the Mac means setting FW_COMFY_HOSTS=127.0.0.1:8199,192.168.86.100:8188 permanently with setx, which the permission check blocked last session. AI styling is now off unless you pass --ai, so this only matters when you ask for AI.",
+      "why": "Yes: I set the variable (you may need to allow it). No: AI passes run on the PC only.",
+      "options": [
+        {
+          "id": "set",
+          "label": "Add the Mac (set FW_COMFY_HOSTS)"
+        },
+        {
+          "id": "pconly",
+          "label": "Keep it PC only"
+        }
+      ],
+      "guess": {
+        "option": "pconly",
+        "why": "AI is opt-in now and rarely used, so a second host saves little.",
+        "confidence": "low"
+      },
+      "created": "2026-11-14T20:14:22-06:00",
+      "updated": "2026-11-14T20:14:22-06:00"
+    },
+    {
+      "id": "next",
+      "kind": "rank",
+      "title": "What to build next",
+      "question": "Which of the remaining fractalwright items matter most to you, in order?",
+      "background": "v0.2.2 is out with every step done. What's left are improvements: (1) deep zoom on the GPU in the browser page (today deep zoom runs on the CPU, slowly); (2) path-traced 3D renders (more realistic light, minutes per frame); (3) turning 3D fractals into printable meshes through polywright-print; (4) small correctness checks (symmetric-icon and multi-scroll attractor parameters checked against primary papers).",
+      "why": "I work through the list in your order. Without an answer I follow the guess.",
+      "options": [
+        {
+          "id": "gpudeep",
+          "label": "GPU deep zoom in the browser"
+        },
+        {
+          "id": "path",
+          "label": "Path-traced 3D"
+        },
+        {
+          "id": "mesh",
+          "label": "3D fractal to printable mesh"
+        },
+        {
+          "id": "checks",
+          "label": "Parameter checks against papers"
+        }
+      ],
+      "guess": {
+        "order": [
+          "gpudeep",
+          "mesh",
+          "path",
+          "checks"
+        ],
+        "why": "Deep zooms are the most-watched fractal videos and the CPU path is the slowest part of the plugin.",
+        "confidence": "low"
+      },
+      "created": "2026-11-14T20:14:22-06:00",
+      "updated": "2026-11-14T20:14:22-06:00"
+    },
+    {
+      "id": "worth",
+      "kind": "choice",
+      "title": "Heavy worth test",
+      "question": "Should I run the heavy evergreen-worth test on fractalwright (with and without the skill, measured)?",
+      "background": "The quick worth check came back UNPROVEN, leaning KEEP. The heavy test runs paired sessions with and without the skill and measures the difference. It costs a fair amount of tokens (tens of subagent runs) but no GPU time.",
+      "why": "It decides KEEP, TRIM or CUT on evidence instead of a lean.",
+      "options": [
+        {
+          "id": "run",
+          "label": "Run it next session"
+        },
+        {
+          "id": "skip",
+          "label": "Skip it, keep the plugin"
+        }
+      ],
+      "guess": {
+        "option": "run",
+        "why": "Every other released plugin got a measured verdict.",
+        "confidence": "low"
+      },
+      "created": "2026-11-14T20:14:22-06:00",
+      "updated": "2026-11-14T20:14:22-06:00"
+    }
+  ],
+  "created": "2026-11-14T20:14:17-06:00",
+  "updated": "2026-11-14T20:14:22-06:00",
+  "project": {
+    "name": "fractalwright",
+    "path": "D:/m4bwa/Claude/Projects/Ai/fractalwright"
+  },
+  "continue_prompt": "D:/m4bwa/Claude/Projects/Ai/fractalwright/ai-docs/plans/fractalwright-continue-prompt.md"
+}
