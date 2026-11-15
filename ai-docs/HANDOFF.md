@@ -1,6 +1,6 @@
 # HANDOFF: fractalwright
 
-Status: v0.7.0 (paper checks) released 2026-11-14; earlier: v0.3.0 (GPU deep zoom on the browser route to 1e-60, rd --size N fix) released and installed 2026-11-14 (session 6). Steps A-F done; 3D passed Mark's look gate and ships as a normal route. Not finished: items left under Next, Peitgen and Indra's Pearls books.
+Status: v0.7.0 released and installed 2026-11-14 (session 7: 0.4.0 path tracing, 0.5.0 double-float GPU deep + explorer deep, 0.5.1 evals/trims, 0.6.0 3d mesh + flashcheck fix, 0.7.0 paper checks). Steps A-F done. Not finished: Next items below, the two books.
 
 Continue prompt: [plans/fractalwright-continue-prompt.md](plans/fractalwright-continue-prompt.md)
 
@@ -18,6 +18,8 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 
 ## Waits on Mark
 
+- Askwright set fractalwright-pathtrace-2026-11-14 (served on 127.0.0.1:47631): path-traced 3D as default? Guess: keep opt-in. Read with ask.py read, act, close.
+
 - Books: Mark chose both (set fractalwright-next-2026-11-14, closed): Indra's Pearls and Peitgen, Chaos and Fractals. He buys them; distill when on disk.
 - FW_COMFY_HOSTS set with setx to 127.0.0.1:8199,192.168.86.100:8188 (Mark's pick).
 
@@ -25,7 +27,8 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 
 1. Done 2026-11-14 (v0.5.1, PR #22): worth trims + fixed evals, A/B 6/6 vs 0/6 at x1.23 (log). Flashcheck FAIL-at-1-swing/s fixed in v0.6.0: the area rule summed out-of-step cell swings (moving bands); now only cells flashing together count, and the verdict line names the failed rule and its area. Left: re-run the zoom A/B to confirm agents stop retrying.
 2. Done 2026-11-14: wiki updated to 0.5.1 (wiki commit ce162a2; GPU deep route, explorer POST /orbit, rd --size N, 3d --pt; outputs check 35/35, live 12/12).
-3. Done in v0.5.0 (PR #23): double-float GPU deep deltas (default; 0.09-1.02% mismatches) and GPU deep in the serve explorer (POST /orbit). Left: install 0.5.0 locally, wiki pages for 0.4.0/0.5.0; the explorer redraws only after each orbit round trip (no progressive preview while panning deep).
+3. Wiki is at 0.5.1: add 0.6.0 (3d mesh, flashcheck) and 0.7.0 (icons, chen/lu/multiscroll, kleinian DFS, --series, explorer rotation).
+7. Done in v0.5.0 (PR #23): double-float GPU deep deltas (default; 0.09-1.02% mismatches) and GPU deep in the serve explorer (POST /orbit). Left: the explorer redraws only after each orbit round trip (no progressive preview while panning deep).
 4. Path-traced 3D: done in 0.4.0 (`3d render --pt N`, references/07-3d.md "Path tracer"; sheet and judge in Ai/fractalwright-renders/pathtrace-2026-11-14).
 5. Done in v0.6.0: `fw.py 3d mesh` (scripts/fw_mesh.py), watertight single-solid STL in mm; Mandelbulb 422k tris 11 s, Menger L3 816k tris 3 s, both pass `pw.py check --target print-fdm` (bulb warns 2.7% under 0.9 mm). Left: a `--wall-mm` thickening option, orbit-trap colour to 3MF.
 6. Done 2026-11-14 (v0.7.0, PR papers): icons match Symmetry in Chaos Table A.1 (transcription; 4 sets added), chen/lu/multiscroll (Yalcin) added from the papers, kleinian grandma draws by DFS word search (default; --method random), series approximation opt-in `render --deep --series` (1.0-1.7x), explorer rotation control + stop palettes in the hash. Sources and measurements in references/03, 05 (4b, 4c), 12. Left: Grandma's recipe formulas and the DFS details vs Indra's Pearls when the book is on disk; icon table vs the printed book.

@@ -1,0 +1,18 @@
+{
+  "askwright": 1,
+  "rev": 2,
+  "answers": {
+    "ptdefault": {
+      "choice": "pt",
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": true,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 2,
+      "updated": "2026-11-14T22:22:52-06:00",
+      "state": "answered"
+    }
+  }
+}

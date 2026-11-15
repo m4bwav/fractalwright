@@ -1,0 +1,7 @@
+{"t": "2026-11-14T22:06:36-06:00", "type": "added", "q": ["ptdefault"]}
+{"t": "2026-11-14T22:06:37-06:00", "type": "serve", "port": 47631, "pid": 48692}
+{"t": "2026-11-14T22:11:17-06:00", "type": "visit"}
+{"t": "2026-11-14T22:22:14-06:00", "type": "visit"}
+{"t": "2026-11-14T22:22:46-06:00", "type": "answer", "q": "ptdefault", "state": "answered", "rev": 1}
+{"t": "2026-11-14T22:22:52-06:00", "type": "answer", "q": "ptdefault", "state": "answered", "rev": 2}
+{"t": "2026-11-14T22:23:21-06:00", "type": "done"}

@@ -1,0 +1,57 @@
+{
+  "askwright": 1,
+  "id": "fractalwright-pathtrace-2026-11-14",
+  "title": "fractalwright: path-traced 3D look",
+  "context": "",
+  "asked_by": "fractalwright session 7",
+  "product": "Claude Code",
+  "session": "",
+  "working_dir": "D:\\m4bwa\\Claude\\Projects\\Ai\\fractalwright",
+  "media_roots": [
+    "D:/m4bwa/Claude/Projects/Ai/fractalwright-renders/pathtrace-2026-11-14"
+  ],
+  "questions": [
+    {
+      "id": "ptdefault",
+      "kind": "choice",
+      "title": "Default 3D lighting",
+      "question": "The sheet shows each 3D fractal twice: current default lighting (shadow + ambient occlusion) and path traced (256 samples, about 1-2 s each instead of 0.05 s). Which should `fw.py 3d render` use by default?",
+      "why": "Blind judge picked path traced for Mandelbulb and quaternion Julia, the default for Menger (sun washes out its faces).",
+      "media": [
+        {
+          "src": "sheet-pt-vs-default.jpg",
+          "alt": "Contact sheet: Mandelbulb, quaternion Julia, Menger, default lighting vs path traced"
+        }
+      ],
+      "options": [
+        {
+          "id": "pt",
+          "label": "Path traced by default"
+        },
+        {
+          "id": "keep",
+          "label": "Keep current default; path tracing opt-in with --pt"
+        },
+        {
+          "id": "perfamily",
+          "label": "Path traced for curved fractals (Mandelbulb, Julia), current for Menger and boxy ones"
+        }
+      ],
+      "guess": {
+        "option": "keep",
+        "why": "path tracing is 20-40x slower and lost on Menger",
+        "confidence": "low"
+      },
+      "background": "fractalwright 0.4.0 added a path tracer for 3D fractals (fw.py 3d render --pt N). Image: D:/m4bwa/Claude/Projects/Ai/fractalwright-renders/pathtrace-2026-11-14/sheet-pt-vs-default.jpg",
+      "look_for": [
+        "Surface shading and depth on the Mandelbulb and quaternion Julia",
+        "Whether the Menger sponge's front faces look washed out when path traced"
+      ],
+      "created": "2026-11-14T22:06:36-06:00",
+      "updated": "2026-11-14T22:06:36-06:00"
+    }
+  ],
+  "created": "2026-11-14T22:06:28-06:00",
+  "updated": "2026-11-14T22:06:36-06:00",
+  "project": "fractalwright"
+}
