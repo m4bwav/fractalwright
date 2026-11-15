@@ -18,7 +18,7 @@ import zlib
 from decimal import Decimal
 from pathlib import Path
 
-VERSION = "0.11.0"
+VERSION = "0.11.1"
 ROOT = Path(__file__).resolve().parent.parent
 
 try:
@@ -106,6 +106,8 @@ def _merge(base, over):
 def load_recipe(spec):
     """spec: a preset name or a path to a recipe JSON."""
     r = default_recipe()
+    if spec not in PRESETS and f"{spec}-full" in PRESETS:
+        spec = f"{spec}-full"  # bare family name -> its whole-set view
     if spec in PRESETS:
         return _merge(r, json.loads(json.dumps(PRESETS[spec])))
     p = Path(spec)

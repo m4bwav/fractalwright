@@ -2,6 +2,11 @@
 
 Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) and its companions, newest first, each with the reason. Reasons cite findings in [RESEARCH.md](RESEARCH.md) (`R-`), lessons in [LEARNINGS.md](LEARNINGS.md) (`L-`), and test runs in [TESTS.md](TESTS.md) (`T-`). State in `evergreen.json`. Protocol: MAINTENANCE.md.
 
+### C-20261115-28 - 2026-11-15 - release 0.11.1: palette validation, bare family presets
+- because: HANDOFF Next 0 (session 9 leftovers): `3d mesh --palette fire` was accepted silently as one colour; an eval run guessed preset `mandelbrot`
+- files: scripts/fw_mesh.py (`parse_palette`), scripts/fw.py (`load_recipe` alias, `VERSION`), tests/test_3d.py (`test_palette_validation`), tests/test_fw.py (`test_bare_family_alias`), plugin.json files
+- `--palette` now takes only comma-separated `#RRGGBB` (hash optional) and exits with a clear message otherwise. A bare family name (`mandelbrot`, `burning-ship`) loads its `<family>-full` preset.
+
 ### C-20261115-27 - 2026-11-15 - release 0.11.0: progressive preview in the deep explorer
 - because: user request (HANDOFF Next 7 left: the explorer redrew only after each /orbit round trip)
 - files: scripts/page/deep_df.frag (`u_km1`, `u_off`), scripts/page/explorer.html (`previewOffsets`, `deepRequest` with AbortController and a sequence number, `deepDraw` coarse draw), scripts/fw.py (`VERSION`), tests/test_serve.py (`test_page_progressive_preview`), references/03-deep-zoom.md (2.7), SKILL.md, README.md, plugin.json files
