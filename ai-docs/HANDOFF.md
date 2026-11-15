@@ -1,6 +1,6 @@
 # HANDOFF: fractalwright
 
-Status: v0.9.0 released and installed 2026-11-15 (session 8: 0.8.0 path traced 3D by default per Mark, 0.9.0 mesh --wall-mm; wiki at 0.8.0). Steps A-F done. Not finished: Next items below, the two books.
+Status: v0.11.0 released and installed 2026-11-15 (session 9: 0.10.0 orbit-trap colour 3MF, 0.11.0 explorer progressive preview; zoom A/B re-run 3/3; wiki at 0.11.0, commit d594569). Steps A-F done. Not finished: Next items below, the two books.
 
 Continue prompt: [plans/fractalwright-continue-prompt.md](plans/fractalwright-continue-prompt.md)
 
@@ -23,6 +23,8 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 - FW_COMFY_HOSTS set with setx to 127.0.0.1:8199,192.168.86.100:8188 (Mark's pick).
 
 ## Next (Mark's rank: gpudeep, path tracing, mesh, paper checks)
+
+0. Session 9 leftovers: `3d mesh --palette` accepts names like `fire` and unchecked hex (gives one colour) - validate it; open a 0.10.0 3MF in Bambu Studio to confirm filament mapping (Mark, by hand); add a `mandelbrot` preset alias (an eval run guessed it); preview block size/limits are fixed constants.
 
 1. Done 2026-11-14 (v0.5.1, PR #22): worth trims + fixed evals, A/B 6/6 vs 0/6 at x1.23 (log). Flashcheck FAIL-at-1-swing/s fixed in v0.6.0: the area rule summed out-of-step cell swings (moving bands); now only cells flashing together count, and the verdict line names the failed rule and its area. Re-run 2026-11-15: 3/3 pass, 4-5 turns, no retries (notes/2026-11-15-zoom-ab-rerun.md).
 2. Done 2026-11-14: wiki updated to 0.5.1 (wiki commit ce162a2; GPU deep route, explorer POST /orbit, rd --size N, 3d --pt; outputs check 35/35, live 12/12).
