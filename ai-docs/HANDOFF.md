@@ -24,7 +24,7 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 
 ## Next (Mark's rank: gpudeep, path tracing, mesh, paper checks)
 
-0. Palette validation and `mandelbrot` alias done in 0.11.1. Left: open a 3MF in Bambu Studio to confirm filament mapping (Mark, by hand). Otherwise only the two books remain; when they are on disk, distill them (Step G).
+0. Palette validation and `mandelbrot` alias done in 0.11.1. Bambu Studio check passed 2026-11-15 (colours map; "invalid config" warning is harmless, no slicer settings in our 3MF). Otherwise only the two books remain; when they are on disk, distill them (Step G).
 
 1. Done 2026-11-14 (v0.5.1, PR #22): worth trims + fixed evals, A/B 6/6 vs 0/6 at x1.23 (log). Flashcheck FAIL-at-1-swing/s fixed in v0.6.0: the area rule summed out-of-step cell swings (moving bands); now only cells flashing together count, and the verdict line names the failed rule and its area. Re-run 2026-11-15: 3/3 pass, 4-5 turns, no retries (notes/2026-11-15-zoom-ab-rerun.md).
 2. Done 2026-11-14: wiki updated to 0.5.1 (wiki commit ce162a2; GPU deep route, explorer POST /orbit, rd --size N, 3d --pt; outputs check 35/35, live 12/12).

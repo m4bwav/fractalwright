@@ -48,10 +48,11 @@
         "Whether the Menger sponge's front faces look washed out when path traced"
       ],
       "created": "2026-11-14T22:06:36-06:00",
-      "updated": "2026-11-14T22:06:36-06:00"
+      "updated": "2026-11-15T08:31:20-06:00",
+      "status": "closed"
     }
   ],
   "created": "2026-11-14T22:06:28-06:00",
-  "updated": "2026-11-14T22:06:36-06:00",
+  "updated": "2026-11-15T08:31:20-06:00",
   "project": "fractalwright"
 }

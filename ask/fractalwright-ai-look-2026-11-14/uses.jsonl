@@ -1,1 +1,2 @@
 {"t": "2026-11-14T20:04:35-06:00", "kind": "read", "by": "agent"}
+{"t": "2026-11-15T09:15:25-06:00", "kind": "consumed", "by": "sweep", "note": "sweep: every answered question is closed (2); D:\\m4bwa\\Claude\\Projects\\Ai\\fractalwright\\ai-docs\\HANDOFF.md names fractalwright-ai-look-2026-11-14 and changed after the answer; D:\\m4bwa\\Claude\\Projects\\Ai\\fractalwright\\ai-docs\\log.md names fractalwright-ai-look-2026-11-14 and changed after the answer; newer answered set beside it: fractalwright-next-2026-11-14, fractalwright-pathtrace-2026-11-14"}
