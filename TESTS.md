@@ -43,6 +43,10 @@ Entry shape: `### T-20261114-10 Â· 2026-11-14 Â· unittest (tests/) Â· Windows, P
 
 ## Runs
 
+### T-20261115-16 · 2026-11-15 · unittest (tests/) · Windows, Playwright + Edge headless · 156/156 (157/157 after rebase on 0.10.0)
+- Explorer progressive preview (320x240, it 3000, widths 1e-10 and 1e-30, pan 24x16 px and zoom x0.5): first pixel 24-42 ms (exact draw after /orbit) -> 3-6 ms (coarse preview); coarse vs exact 1.03-1.04x the block-sampling floor (bar 1.25); full-res preview vs exact mean 0.188-0.232 levels (bar 0.5), 0.23-0.28% of pixels off by > 8 levels. Two back-to-back moves abort one request and draw once.
+- led to: C-20261115-27
+
 ### T-20261114-14 Â· 2026-11-14 Â· unittest (tests/) Â· Windows, Python 3.14.6, numpy 2.5.2, Playwright + Edge headless Â· 114/114 (3 new in tests/test_3d.py)
 - Quaternion Julia DE (c = -0.2+0.6i+0.2j, 12 it, as deQJulia): 400 rays marched to DE < 1e-4; true first hit from the 64-iteration inside test sampled every 0.0005. 394/400 rays have a true hit within 0.05 past the stop; overshoot max 0.0126, p99 0.0039 (bars 0.02 and 0.006). The refs/07 3.2 formula is now checked numerically for the quaternion form.
 - Default remedies are exactly shadow, ao, camera. Hybrid evaluated at p*2.5 fits inside radius 2 (unscaled it reaches 4.74).

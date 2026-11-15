@@ -2,6 +2,11 @@
 
 Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) and its companions, newest first, each with the reason. Reasons cite findings in [RESEARCH.md](RESEARCH.md) (`R-`), lessons in [LEARNINGS.md](LEARNINGS.md) (`L-`), and test runs in [TESTS.md](TESTS.md) (`T-`). State in `evergreen.json`. Protocol: MAINTENANCE.md.
 
+### C-20261115-27 - 2026-11-15 - release 0.11.0: progressive preview in the deep explorer
+- because: user request (HANDOFF Next 7 left: the explorer redrew only after each /orbit round trip)
+- files: scripts/page/deep_df.frag (`u_km1`, `u_off`), scripts/page/explorer.html (`previewOffsets`, `deepRequest` with AbortController and a sequence number, `deepDraw` coarse draw), scripts/fw.py (`VERSION`), tests/test_serve.py (`test_page_progressive_preview`), references/03-deep-zoom.md (2.7), SKILL.md, README.md, plugin.json files
+- While a new orbit is pending, the page redraws at once from the last exact orbit (pixel map o * k + D in old pixel units), one pixel per 4x4 block, then swaps in the exact frame; a newer move aborts the stale request. First pixel 24-42 ms -> 3-6 ms; full-res preview mismatch 0.19-0.23 levels mean (T-20261115-16). Chose orbit reuse over a scaled copy of the last frame: it shows new detail at the edges and after zooms, and the shader change is two uniforms.
+
 ### C-20261115-26 - 2026-11-15 - release 0.10.0: orbit-trap colour 3MF from `3d mesh`
 - because: user request (HANDOFF Next 5: "Left: orbit-trap colour to 3MF")
 - files: scripts/fw_mesh.py (`de_trap`, `face_colours`, `write_3mf`, `read_3mf`, `_paint`, `cmd_mesh`), scripts/fw_3d.py (`--colors`, `--palette`), scripts/fw.py (`VERSION`), tests/test_3d.py (`test_colour_3mf`), skills/fractalwright/SKILL.md, references/07-3d.md (Meshing), plugin.json files

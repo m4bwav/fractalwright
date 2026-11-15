@@ -109,6 +109,15 @@ KF 2.15+, Fraktaler 3, Imagina and FractalShark (ported from FractalZoomer) use 
   periodic, so it never escapes and only one period need be stored. Imagina syncs approximation
   steps with minibrot periods [V via Wikibooks summary].
 - Glitch-blob centres: extra references for the old (non-rebasing) method.
+- Reusing an old reference for a moved view (explorer progressive preview, 0.11.0): the new pixel
+  delta is (new centre - old reference) + pixel * new spacing, written in the old orbit's pixel units
+  as o * k + D (k = spacing ratio, D = centre offset / old spacing, both double-float). Rebasing
+  absorbs the offset. Measured at 320x240, widths 1e-10 and 1e-30, pan 24x16 px or zoom x0.5:
+  full-resolution preview vs the exact frame mean 0.19-0.23 levels, 0.23-0.28% of pixels off by
+  more than 8 levels. The explorer draws the preview at one pixel per 4x4 block: first pixel after a
+  move 3-6 ms instead of 24-42 ms (Edge, loopback orbit), error equal to the block downsampling alone
+  (1.03-1.04x the exact frame block-sampled). Limits: same formula, size, rotation, iterations and
+  Julia c; spacing ratio within 1e3 and offset within 64 view widths, else no preview.
 
 ### 2.8 Floatexp / extended range
 Store (mantissa float, int exponent) and renormalise after each op. 3-10x slower than native

@@ -42,6 +42,14 @@ PAGE_BAR = 1.5
 DEEP_HASH = ("f=mandelbrot&cx=-0.74365672019314946715627157509078125&cy=0.13182842578661420159801990936546875"
              "&w=1e-30&rot=0&it=3000&bail=256&den=0.02&ph=0&pa=0.5,0.5,0.5,0.5,0.5,0.5,1,1,1,0,0.33,0.67&sz=64x48")
 
+# 0.11.0 progressive preview: the 1e-30 view at 320x240 (bars set from measurement below)
+PREVIEW_HASH = DEEP_HASH.replace("sz=64x48", "sz=320x240")
+# Measured 2026-11-15 (Edge, 1e-10 and 1e-30, pan 24x16 px and zoom x0.5): coarse preview vs exact over
+# the exact frame block-sampled 1.03-1.04 (so the coarse error is the downsampling alone); full-res
+# preview (old orbit, offset) vs exact mean 0.188-0.232 levels, 0.23-0.28% pixels off by > 8 levels.
+PREVIEW_COARSE_BAR = 1.25
+PREVIEW_FULL_BAR = 0.5
+
 
 def _browser_ok():
     try:
@@ -263,6 +271,77 @@ class BrowserTests(unittest.TestCase):
         self.assertEqual(Decimal(st["w"]), Decimal("5e-31"))
         getcontext().prec = 28
 
+
+    def test_page_progressive_preview(self):
+        # 0.11.0: a deep pan or zoom redraws at once from the previous reference orbit (coarse, one pixel
+        # per 4x4 block), then the exact orbit swaps in; a second move while one is pending aborts it.
+        from playwright.sync_api import sync_playwright
+        hashes = {"1e-10": PREVIEW_HASH.replace("w=1e-30", "w=1e-10"), "1e-30": PREVIEW_HASH}
+        moves = {"pan": "fw.pan(24, -16)", "zoom": "fw.zoomAt(200, 150, 0.5)"}
+        res = {}
+        with tempfile.TemporaryDirectory() as d:
+            srv = fw_serve.make_server("127.0.0.1", 0, d)
+            threading.Thread(target=srv.serve_forever, daemon=True).start()
+            pw = sync_playwright().start()
+            try:
+                br = None
+                for ch in ("msedge", "chrome"):
+                    try:
+                        br = pw.chromium.launch(channel=ch, headless=True, args=fw_serve.BROWSER_ARGS)
+                        break
+                    except Exception:  # noqa: BLE001
+                        pass
+                page = br.new_page()
+                exact = "fw.deep.draws >= %d && !fw.deep.busy && fw.deep.hash === fw.hashOf()"
+
+                def move(h, js, div):
+                    """From the exact view h, apply js; return (preview pixels, preview ms, exact pixels, exact ms)."""
+                    page.evaluate("fw.deep.noPreview = %s; fw.deep.previewDiv = %d; fw.setHash('#%s')"
+                                  % ("true" if div == 0 else "false", max(div, 1), h))
+                    page.wait_for_function(exact % (page.evaluate("fw.deep.draws") + 0) + " && fw.hashOf() === '%s'" % h,
+                                           timeout=60000)
+                    n = page.evaluate("fw.deep.draws")
+                    pv = page.evaluate("() => { %s; fw.setHash('#' + fw.hashOf());"
+                                       " return { px: fw.pixels(), t: fw.deep.tPreview }; }" % js)
+                    page.wait_for_function(exact % (n + 1), timeout=60000)
+                    ex = page.evaluate("({ px: fw.pixels(), t: fw.deep.tExact })")
+                    a, b = (np.frombuffer(base64.b64decode(x["px"]), np.uint8).reshape(-1, 4)[:, :3] for x in (pv, ex))
+                    return a, pv["t"], b, ex["t"]
+
+                for depth, h in hashes.items():
+                    page.goto(f"http://127.0.0.1:{srv.server_address[1]}/#" + h)
+                    page.wait_for_function("window.fw !== undefined && " + exact % 1, timeout=60000)
+                    for name, js in moves.items():
+                        _, _, _, before = move(h, js, 0)        # preview off: first pixel = exact draw
+                        a4, after, b, _ = move(h, js, 4)        # default coarse preview
+                        a1, after1, b1, _ = move(h, js, 1)      # full resolution preview
+                        self.assertGreater(after, 0, f"no preview drawn at {depth} {name}")
+                        # floor for a 4x4-block preview: the exact frame sampled at block centres, upscaled
+                        e = b.reshape(240, 320, 3)
+                        blk = np.repeat(np.repeat(e[1::4, 1::4], 4, 0), 4, 1).reshape(-1, 3)
+                        res[(depth, name)] = (before, after, after1, diff(a4, b) / diff(blk, b), diff(a1, b1),
+                                              float((np.abs(a1.astype(int) - b1.astype(int)).max(1) > 8).mean()))
+                    # cancel: two moves back to back; the first request is aborted and the view ends exact
+                    page.evaluate("fw.setHash('#%s')" % h)
+                    page.wait_for_function(exact % 1 + " && fw.hashOf() === '%s'" % h, timeout=60000)
+                    n, ab = page.evaluate("[fw.deep.draws, fw.deep.aborted]")
+                    page.evaluate("() => { fw.pan(3, 0); fw.setHash('#' + fw.hashOf());"
+                                  " fw.pan(3, 0); fw.setHash('#' + fw.hashOf()); }")
+                    page.wait_for_function(exact % (n + 1), timeout=60000)
+                    self.assertEqual(page.evaluate("fw.deep.aborted"), ab + 1)
+                    self.assertEqual(page.evaluate("fw.deep.draws"), n + 1)
+                br.close()
+            finally:
+                pw.stop()
+                srv.shutdown()
+                srv.server_close()
+        for (depth, name), (before, after, after1, d4, d1, far) in res.items():
+            print(f" | {depth} {name}: first pixel {before:.0f} -> {after:.0f} ms (full-res preview {after1:.0f}),"
+                  f" coarse diff / block floor {d4:.2f} full {d1:.3f}, full >8 levels {far:.2%}", end="")
+        for (depth, name), (before, after, after1, d4, d1, far) in res.items():
+            self.assertLess(after, before)
+            self.assertLess(d4, PREVIEW_COARSE_BAR)
+            self.assertLess(d1, PREVIEW_FULL_BAR)
 
 STROBE_JS = """() => {
   const A = { formula: 0, cx: 10, cy: 0, w: 1, k: [0, 0], maxit: 50, phase: 0, density: 0.02 };   // escapes at once: bright
