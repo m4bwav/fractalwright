@@ -38,7 +38,8 @@
         "confidence": "low"
       },
       "created": "2026-11-14T20:14:22-06:00",
-      "updated": "2026-11-14T20:14:22-06:00"
+      "updated": "2026-11-14T20:24:17-06:00",
+      "status": "closed"
     },
     {
       "id": "machost",
@@ -63,7 +64,8 @@
         "confidence": "low"
       },
       "created": "2026-11-14T20:14:22-06:00",
-      "updated": "2026-11-14T20:14:22-06:00"
+      "updated": "2026-11-14T20:24:17-06:00",
+      "status": "closed"
     },
     {
       "id": "next",
@@ -101,7 +103,8 @@
         "confidence": "low"
       },
       "created": "2026-11-14T20:14:22-06:00",
-      "updated": "2026-11-14T20:14:22-06:00"
+      "updated": "2026-11-14T20:24:17-06:00",
+      "status": "closed"
     },
     {
       "id": "worth",
@@ -126,11 +129,12 @@
         "confidence": "low"
       },
       "created": "2026-11-14T20:14:22-06:00",
-      "updated": "2026-11-14T20:14:22-06:00"
+      "updated": "2026-11-14T20:24:17-06:00",
+      "status": "closed"
     }
   ],
   "created": "2026-11-14T20:14:17-06:00",
-  "updated": "2026-11-14T20:14:22-06:00",
+  "updated": "2026-11-14T20:24:17-06:00",
   "project": {
     "name": "fractalwright",
     "path": "D:/m4bwa/Claude/Projects/Ai/fractalwright"

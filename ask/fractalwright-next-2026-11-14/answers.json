@@ -1,0 +1,62 @@
+{
+  "askwright": 1,
+  "rev": 5,
+  "answers": {
+    "books": {
+      "choices": [
+        "indra",
+        "peitgen"
+      ],
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": false,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 2,
+      "updated": "2026-11-14T20:22:02-06:00",
+      "state": "answered"
+    },
+    "machost": {
+      "choice": "set",
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": false,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 3,
+      "updated": "2026-11-14T20:22:09-06:00",
+      "state": "answered"
+    },
+    "worth": {
+      "choice": "run",
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": false,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 4,
+      "updated": "2026-11-14T20:22:38-06:00",
+      "state": "answered"
+    },
+    "next": {
+      "order": [
+        "gpudeep",
+        "path",
+        "mesh",
+        "checks"
+      ],
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": false,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 5,
+      "updated": "2026-11-14T20:23:16-06:00",
+      "state": "answered"
+    }
+  }
+}
