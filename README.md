@@ -52,7 +52,7 @@ python scripts/fw.py render view.json --route browser -o view.png
 
 ## Status
 
-Version 0.7.0. Stills, deep zoom (Mandelbrot and Julia), measuring, video with an optional AI styling pass, audio visuals, flames, L-systems, attractors, reaction-diffusion, cellular automata, tilings, Kleinian limit sets and 3D work and have tests (153 passing). See [CHANGELOG.md](CHANGELOG.md).
+Version 0.8.0. Stills, deep zoom (Mandelbrot and Julia), measuring, video with an optional AI styling pass, audio visuals, flames, L-systems, attractors, reaction-diffusion, cellular automata, tilings, Kleinian limit sets and 3D work and have tests (154 passing). See [CHANGELOG.md](CHANGELOG.md).
 
 ## Works with
 

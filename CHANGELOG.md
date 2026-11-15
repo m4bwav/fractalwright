@@ -2,7 +2,12 @@
 
 Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) and its companions, newest first, each with the reason. Reasons cite findings in [RESEARCH.md](RESEARCH.md) (`R-`), lessons in [LEARNINGS.md](LEARNINGS.md) (`L-`), and test runs in [TESTS.md](TESTS.md) (`T-`). State in `evergreen.json`. Protocol: MAINTENANCE.md.
 
-Entry shape: `### C-20261114-23 - 2026-11-14 - release 0.7.0: parameter checks against papers
+### C-20261115-24 - 2026-11-15 - release 0.8.0: path traced 3D by default
+- because: user request (askwright set fractalwright-pathtrace-2026-11-14: Mark chose "Path traced by default" over the low-confidence guess "keep")
+- files: scripts/fw_3d.py (`DEFAULT_PT_SAMPLES`, `_apply_args`, `--pt` help), scripts/fw.py (`VERSION`), tests/test_3d.py, skills/fractalwright/SKILL.md (3D step), references/07-3d.md (Path tracer), README.md, plugin.json files
+- `fw.py 3d render|recipe <formula>` now path traces at 256 samples unless `--pt 0`; recipe files keep their own setting, so old recipes redraw the same pixels. `3d gate` is unchanged (the remedy matrix stays on the shadow/ao look).
+
+### C-20261114-23 - 2026-11-14 - release 0.7.0: parameter checks against papers
 - because: user request (HANDOFF Next 6)
 - files: scripts/fw_gen.py (`ATTRACTORS`, `flow_rhs`, `flow`, `yalcin_f1`), scripts/fw_neighbours.py (`limit_curve_dfs`, `_fix_attr`, `kleinian --method`), scripts/fw_deep.py (`series_skip`, `escape_perturb`), scripts/fw.py (`render --series`, `VERSION`), scripts/fw_serve.py (hash `ps`), scripts/page/explorer.html (rotation input and keys, stop palettes), tests, references/03, 05, 12, SKILL.md, README.md, plugin.json files
 - Icon presets checked against Symmetry in Chaos Table A.1 (both matched; four added). New flows chen, lu (published a, b, c) and Yalcin multiscroll. Kleinian grandma draws by the Indra's Pearls depth-first word search by default. Series approximation added as opt-in `--series` (1.0-1.7x, counts within plain perturbation's own error). The explorer gains a rotation control and stop palettes in the share hash.
@@ -12,7 +17,7 @@ Entry shape: `### C-20261114-23 - 2026-11-14 - release 0.7.0: parameter checks a
 - files: scripts/fw.py (`flash_check`, `_sync_area`, `flash_line`, `cmd_flashcheck`, `_finish_video`, `VERSION`), scripts/fw_audio.py, scripts/fw_neighbours.py, scripts/fw_mesh.py (new), scripts/fw_3d.py (`mesh` action, `--res --size-mm --iter --engine`), tests/test_fw.py, tests/test_3d.py, references/07-3d.md (Meshing), skills/fractalwright/SKILL.md (Step 2b, 2e, metadata), README.md, plugin.json, .claude-plugin/plugin.json
 - A default 320x240 3 s zoom printed "1 swings/s (limit 3) FAIL": the verdict came from the per-cell area rule (95% of cells flashed 6.5/s as bands drifted through 6 px cells, out of step), while the line printed the unrelated whole-frame count. The area rule now counts only cells whose swings coincide within a frame with a reference cell (WCAG: one flash over the area); the out-of-step figure stays as `async_flash_area`; `failed_rules` and a verdict line print the area that decided it. `fw.py 3d mesh` writes a watertight single-solid STL in mm from the NumPy DE (scikit-image marching cubes optional, NumPy marching tetrahedra otherwise).
 
-### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
+Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
 ### C-20261114-20 · 2026-11-14 · release 0.5.0: double-float GPU deep deltas, GPU deep in the explorer
 - because: user request (HANDOFF Next 3), T-20261114-17, L-20261114-11
@@ -29,7 +34,7 @@ Entry shape: `### C-20261114-23 - 2026-11-14 - release 0.7.0: parameter checks a
 - files: scripts/page/fractal3d.frag (`pathTrace`, `march`, `occluded`, `skyCol`, `cosineDir`, PCG RNG, `main`), scripts/fw_3d.py (`PT_DEFAULTS`, `normalise`, `uniforms`, page `drawPT`, `Browser3D.render_linear`, `to_srgb8`, `--pt/--bounces/--seed`), tests/test_3d.py, evals/pt_bench.py (new), references/07-3d.md (Path tracer), skills/fractalwright/SKILL.md (3D paragraph, metadata), plugin.json, .claude-plugin/plugin.json, scripts/fw.py (`VERSION`)
 - `fw.py 3d render --pt N` path traces: diffuse, sky + sun, cosine-weighted bounces, seeded PCG RNG recorded in the recipe, N samples summed in a float framebuffer. Same seed gives identical pixels; noise falls as 1/sqrt(N) (RMSE*sqrt(N) 0.112-0.125); 512 px at 64/256 spp in 0.3-0.6 / 0.5-1.8 s.
 
-### C-20261114-18 � 2026-11-14 � release 0.3.0: GPU perturbation deep zoom, rd --size N
+### C-20261114-18 · 2026-11-14 · release 0.3.0: GPU perturbation deep zoom, rd --size N
 - because: user request, T-20261114-16
 - files: scripts/fw_gpudeep.py (new), scripts/page/deep.frag (new), scripts/fw.py (`cmd_render`, `cmd_zoom`, `write_video`, `_finish_video`, render/zoom `--route` help, `VERSION`), scripts/fw_neighbours.py (`_size`), tests/test_gpudeep.py (new), tests/test_neighbours.py, tests/test_serve.py, README.md, skills/fractalwright/SKILL.md (explorer paragraph, metadata), plugin.json, .claude-plugin/plugin.json
 - `render --route browser` with `--deep`, a width under 1e-12, or a Mandelbrot/Julia view too deep for plain float32 now runs perturbation in a WebGL2 shader: Decimal reference orbit as an RG32F texture, float32 deltas held in pixel units until about 1e-30 (so dc never underflows), Zhuoran rebasing. Reaches width 1e-60; below that the CPU route runs. `zoom --route browser` renders every frame that way. About 250x faster than the CPU route at 512x512; escape counts differ on 3-19% of dense boundary pixels (float32 noise, a NumPy float32 copy differs from float64 by the same amount). `rd --size 64` now means 64x64; bad sizes give a usage message.
