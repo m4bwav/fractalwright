@@ -152,5 +152,35 @@ class TestDeep(unittest.TestCase):
             self.assertEqual(rec["render"]["route"], "numpy-perturbation")
 
 
+class SeriesApproximationTests(unittest.TestCase):
+    """0.7.0: series approximation (Martin 2013) skips iterations without moving counts past plain perturbation."""
+
+    def test_series_skips_and_matches(self):
+        import copy
+        C = ["-0.743643887037158704752191506114774", "0.131825904205311970493132056385139"]
+        r = recipe(C, "1e-12", 48, 48, 4000)
+        plain, sa = copy.deepcopy(r), copy.deepcopy(r)
+        sa["params"]["series"] = True
+        s0, s1 = {}, {}
+        n0 = fw_deep.escape_perturb(plain, s0)[2]
+        n1 = fw_deep.escape_perturb(sa, s1)[2]
+        self.assertGreater(s1["series_skip"], 100)
+        self.assertEqual(s0["series_skip"], 0)
+        self.assertLess((n0 != n1).mean(), 0.005)
+        d = fw_deep.direct_counts(r)
+        self.assertLess((n1 != d).mean(), (n0 != d).mean() + 0.002)
+
+    def test_series_coefficients_follow_recurrence(self):
+        Z = np.array([0, 0.1 + 0.2j, -0.3 + 0.05j, 0.2 - 0.1j, 0.05j])
+        n, A, B, C = fw_deep.series_skip(Z.real, Z.imag, 1e-9, [1e-9 + 0j], tol=1.0, check=1.0)
+        a = b = c = 0j
+        for k in range(n):
+            a, b, c = 2 * Z[k] * a + 1, 2 * Z[k] * b + a * a, 2 * Z[k] * c + 2 * a * b
+        self.assertEqual(n, 4)
+        self.assertAlmostEqual(A, a)
+        self.assertAlmostEqual(B, b)
+        self.assertAlmostEqual(C, c)
+
+
 if __name__ == "__main__":
     unittest.main()

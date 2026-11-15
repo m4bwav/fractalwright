@@ -403,6 +403,44 @@ def limit_points(ta, tb, points=300_000, seed=0, walkers=2000):
     return np.concatenate(out)
 
 
+def _fix_attr(m):
+    """Attracting fixed point of a Mobius map (the parabolic double root when there is one)."""
+    a, b, c, d = m[0, 0], m[0, 1], m[1, 0], m[1, 1]
+    if abs(c) < 1e-14:
+        return complex("inf") if abs(a) > abs(d) else b / (d - a)
+    r = cmath.sqrt((a - d) ** 2 + 4 * b * c)
+    z1, z2 = (a - d + r) / (2 * c), (a - d - r) / (2 * c)
+    return z1 if abs(c * z1 + d) >= abs(c * z2 + d) else z2
+
+
+def limit_curve_dfs(ta, tb, eps=0.002, max_depth=40, max_points=2_000_000):
+    """Indra's Pearls depth-first word search (Mumford, Series, Wright 2002, ch. 7 'explore'): walk reduced
+    words in cyclic order (turn right, straight, left; never a letter after its inverse); for a word ending in
+    letter k, map the fixed points of k's two cyclic commutators and of k itself; stop when consecutive images
+    are within eps and draw them. Returns the limit set as an ordered polyline (complex points)."""
+    a, b = grandma(complex(ta), complex(tb))
+    gens = [a, b, _inv(a), _inv(b)]  # a, b, A, B: inverse of k is (k + 2) % 4
+    fix = []
+    for k in range(4):
+        right = gens[k] @ gens[(k + 1) % 4] @ gens[(k + 2) % 4] @ gens[(k + 3) % 4]
+        left = gens[k] @ gens[(k - 1) % 4] @ gens[(k - 2) % 4] @ gens[(k - 3) % 4]
+        fix.append([_fix_attr(right), _fix_attr(gens[k]), _fix_attr(left)])
+    out = []
+
+    def mob(m, z):
+        return (m[0, 0] * z + m[0, 1]) / (m[1, 0] * z + m[1, 1])
+    stack = [(gens[k], k, 1) for k in (3, 2, 1, 0)]
+    while stack and len(out) < max_points:
+        m, k, depth = stack.pop()
+        z = [mob(m, f) for f in fix[k]]
+        if depth >= max_depth or (abs(z[1] - z[0]) < eps and abs(z[2] - z[1]) < eps):
+            out.extend(z)
+            continue
+        for j in ((k - 1) % 4, k, (k + 1) % 4):  # pushed reversed so right turn pops first
+            stack.append((m @ gens[j], j, depth + 1))
+    return np.array(out)
+
+
 def points_mask(pts, size, centre=0j, width=2.5):
     pts = pts[np.isfinite(pts)]
     sc = (size - 1) / width
@@ -420,9 +458,14 @@ def cmd_kleinian(a):
         m = circles_mask(circ, a.size)
         p = {"kind": "apollonian", "size": a.size, "min_r": a.min_r or 0.5 / a.size, "circles": len(circ)}
     else:
-        pts = limit_points(complex(a.ta), complex(a.tb), a.points, a.seed)
+        if a.method == "dfs":
+            pts = limit_curve_dfs(complex(a.ta), complex(a.tb), eps=a.width / a.size)
+        else:
+            pts = limit_points(complex(a.ta), complex(a.tb), a.points, a.seed)
         m = points_mask(pts, a.size, width=a.width)
-        p = {"kind": "grandma", "ta": a.ta, "tb": a.tb, "points": a.points, "size": a.size, "width": a.width}
+        p = {"kind": "grandma", "method": a.method, "ta": a.ta, "tb": a.tb, "size": a.size, "width": a.width}
+        if a.method == "random":
+            p["points"] = a.points
     _fw().write_png(a.out, arr=np.where(m, 27, 255).astype(np.uint8))
     rec = _recipe("kleinian", a.kind, p, a.seed)
     print(f"wrote {a.out} and {_write_recipe(a.out, rec)}")
@@ -442,7 +485,7 @@ EXPLAIN_NB = {
                "slope 1 (edges) to 2 (plane). `fw.py tiling penrose`.", REF + "#tilings"),
     "kleinian": ("k' = 2(k1+k2+k3) - k4 (Descartes); z -> (az+b)/(cz+d) words in a, b, A, B",
                  "Apollonian gasket by Descartes reflection (D ~ 1.3057) or a two-generator group from "
-                 "Grandma's recipe by inverse iteration. `fw.py kleinian apollonian|grandma`.", REF + "#kleinian"),
+                 "Grandma's recipe drawn by the book's depth-first word search (--method random: inverse iteration). `fw.py kleinian apollonian|grandma`.", REF + "#kleinian"),
 }
 
 
@@ -484,7 +527,9 @@ def register(sub, explain):
     s.add_argument("--min-r", type=float, help="apollonian: smallest radius (default half a pixel)")
     s.add_argument("--ta", default="2", help="grandma: trace of a (complex, e.g. 1.87+0.1j)")
     s.add_argument("--tb", default="2")
-    s.add_argument("--points", type=int, default=400_000)
+    s.add_argument("--method", choices=["dfs", "random"], default="dfs",
+                   help="grandma: Indra's Pearls depth-first word search (default) or random inverse iteration")
+    s.add_argument("--points", type=int, default=400_000, help="grandma --method random only")
     s.add_argument("--width", type=float, default=2.5)
     s.add_argument("--seed", type=int, default=0)
     s.set_defaults(fn=cmd_kleinian)

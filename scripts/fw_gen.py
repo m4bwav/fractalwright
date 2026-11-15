@@ -463,12 +463,68 @@ ATTRACTORS = {
     # Bourke [S3], [S4] in references/05 section 4
     "clifford": {"step": clifford_step, "params": [-1.4, 1.6, 1.0, 0.7]},
     "dejong": {"step": dejong_step, "params": [1.641, 1.902, 0.316, 1.525]},
-    # icon sets recalled from common icon galleries citing Field and Golubitsky (1992); checked bounded and
-    # symmetric by tests, not checked against the book (references/05 open question)
+    # icons: Field and Golubitsky, Symmetry in Chaos (2nd ed.), Table A.1, order lambda, alpha, beta, gamma,
+    # omega, n (references/05 section 4b). icon = Fig 1.2 Mayan Bracelet, icon-3 = Fig 1.15/1.16 Trampoline.
     "icon": {"step": icon_step, "params": [-2.08, 1.0, -0.1, 0.167, 0.0, 7]},
     "icon-3": {"step": icon_step, "params": [1.56, -1.0, 0.1, -0.82, 0.0, 3]},
+    "icon-halloween": {"step": icon_step, "params": [-2.7, 5.0, 1.5, 1.0, 0.0, 6]},        # Fig 1.1, D6
+    "icon-clam": {"step": icon_step, "params": [1.56, -1.0, 0.1, -0.82, 0.12, 3]},         # Fig 1.8, Z3
+    "icon-streamers": {"step": icon_step, "params": [-1.86, 2.0, 0.0, 1.0, 0.1, 4]},       # Fig 2.3, Z4
+    "icon-flower": {"step": icon_step, "params": [-2.5, 5.0, -1.9, 1.0, 0.188, 5]},        # Fig 3.7, Z5
     "lorenz": {"params": [10.0, 28.0, 8.0 / 3.0]},
+    # flows (RK4, x-z projection except yalcin x-y): Chen and Ueta 1999, Lu and Chen 2002, Yalcin et al. 2002
+    "chen": {"params": [35.0, 3.0, 28.0]},
+    "lu": {"params": [36.0, 3.0, 20.0]},
+    "multiscroll": {"params": [0.4, 0.0, 4.0]},   # Yalcin a, Mx, Nx: Mx + Nx + 1 scrolls (Fig 3: 5 scrolls)
 }
+FLOWS = ("lorenz", "chen", "lu", "multiscroll")
+
+
+def flow_rhs(kind, p):
+    """Right-hand sides from the primary papers (references/05 section 4c)."""
+    if kind == "lorenz":
+        s, r, b = p
+        return lambda x, y, z: (s * (y - x), x * (r - z) - y, x * y - b * z)
+    if kind == "chen":   # Chen and Ueta 1999: x' = a(y-x), y' = (c-a)x - xz + cy, z' = xy - bz
+        a, b, c = p
+        return lambda x, y, z: (a * (y - x), (c - a) * x - x * z + c * y, x * y - b * z)
+    if kind == "lu":     # Lu and Chen 2002: x' = a(y-x), y' = -xz + cy, z' = xy - bz
+        a, b, c = p
+        return lambda x, y, z: (a * (y - x), -x * z + c * y, x * y - b * z)
+    if kind == "multiscroll":  # Yalcin et al. 2002 eq. (1)-(4): x' = y, y' = z, z' = -a(x+y+z) + a f1(x)
+        a, mx, nx = p[0], int(p[1]), int(p[2])
+        th = [-(2 * i - 1) / 2 for i in range(1, mx + 1)] + [(2 * i - 1) / 2 for i in range(1, nx + 1)]
+        return lambda x, y, z: (y, z, -a * (x + y + z) + a * yalcin_f1(x, th))
+    raise ValueError(kind)
+
+
+def yalcin_g(x, theta):
+    """Core function g_theta, Yalcin et al. 2002 eq. (4)."""
+    if theta > 0:
+        return 1.0 if x >= theta else 0.0
+    return -1.0 if x < theta else 0.0
+
+
+def yalcin_f1(x, thetas):
+    return sum(yalcin_g(x, t) for t in thetas)
+
+
+def flow(kind, n=100000, dt=0.01, p=None, warm=2000, start=None):
+    """RK4 for any of FLOWS; returns (n, 3) points after `warm` steps."""
+    p = list(ATTRACTORS[kind]["params"]) if p is None else p
+    f0 = flow_rhs(kind, p)
+    f = lambda v: np.array(f0(*v))
+    v = np.array(start or ((0.1, 0.0, 0.0) if kind == "multiscroll" else (1.0, 1.0, 1.0)), float)
+    out = np.empty((n, 3))
+    for i in range(n + warm):
+        k1 = f(v)
+        k2 = f(v + dt / 2 * k1)
+        k3 = f(v + dt / 2 * k2)
+        k4 = f(v + dt * k3)
+        v = v + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+        if i >= warm:
+            out[i - warm] = v
+    return out
 
 
 def map_points(step, n=1_000_000, seed=0, walkers=1024, warm=200):
@@ -491,22 +547,7 @@ LORENZ_D2_FIT = (0.01, 0.1)  # fraction of the cloud's size; gives 2.045 (litera
 
 def lorenz(n=100000, dt=0.01, p=(10.0, 28.0, 8.0 / 3.0), warm=2000, start=(1.0, 1.0, 1.0)):
     """RK4 integration; returns (n, 3) points after `warm` transient steps."""
-    s, r, b = p
-
-    def f(v):
-        x, y, z = v
-        return np.array([s * (y - x), x * (r - z) - y, x * y - b * z])
-    v = np.array(start, float)
-    out = np.empty((n, 3))
-    for i in range(n + warm):
-        k1 = f(v)
-        k2 = f(v + dt / 2 * k1)
-        k3 = f(v + dt / 2 * k2)
-        k4 = f(v + dt * k3)
-        v = v + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
-        if i >= warm:
-            out[i - warm] = v
-    return out
+    return flow("lorenz", n, dt, list(p), warm, start)
 
 
 def density_png(pts, path, w=600, h=600, palette="fire", gamma=2.2):
@@ -566,12 +607,16 @@ def cmd_attractor(a):
         d2 = fx.correlation_dimension(pts3, n=3000, seed=a.seed, lo=lo, hi=hi)
         print(f"Lorenz D2 {d2:.3f} (Grassberger-Procaccia on 3000 3D points, fit range {lo}-{hi} of the cloud size; "
               f"literature 2.05)")
+    elif kind in FLOWS:
+        dt = 0.05 if kind == "multiscroll" else 0.002
+        pts3 = flow(kind, a.points // 4, dt=dt, p=params)
+        pts = pts3[:, [0, 1]] if kind == "multiscroll" else pts3[:, [0, 2]]
     else:
         pts = map_points(ATTRACTORS[kind]["step"](params), a.points, a.seed)
     _, cnt = density_png(pts, a.out, w, h, a.palette)
     rec = {"fractalwright": _fw().VERSION, "family": "attractor", "formula": kind,
            "params": {"coefficients": params, "points": a.points, "size": f"{w}x{h}", "palette": a.palette,
-                      "projection": "x,z" if kind == "lorenz" else "x,y"},
+                      "projection": "x,z" if kind in FLOWS and kind != "multiscroll" else "x,y"},
            "seed": a.seed, "render": {"route": "numpy"}, "ai_pass": None}
     print(f"wrote {a.out} and {_write_recipe(a.out, rec)} (coverage {float((cnt > 0).mean()):.3f})")
     return 0
@@ -585,8 +630,8 @@ EXPLAIN_GEN = {
              "flame kept only if its coverage score passes.",
     "lsystem": "L-system: parallel string rewriting (bracketed, stochastic with a seed) drawn by a 2D turtle. "
                "Presets: Koch, snowflake, dragon, Hilbert, Sierpinski arrowhead, ABOP plants. PNG + SVG.",
-    "attractor": "Strange attractors: Clifford, de Jong, symmetric icons (Field and Golubitsky), Lorenz (RK4, x-z "
-                 "projection), log-density shading. `--search` ranks random Clifford/de Jong sets by Sprott's rule.",
+    "attractor": "Strange attractors: Clifford, de Jong, symmetric icons (Field and Golubitsky, Table A.1 sets), Lorenz, Chen, Lu and "
+                 "Yalcin multi-scroll (RK4, x-z projection; multiscroll x-y), log-density shading. `--search` ranks random Clifford/de Jong sets by Sprott's rule.",
 }
 
 

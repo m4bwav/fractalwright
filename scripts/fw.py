@@ -18,7 +18,7 @@ import zlib
 from decimal import Decimal
 from pathlib import Path
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 ROOT = Path(__file__).resolve().parent.parent
 
 try:
@@ -919,8 +919,11 @@ def cmd_render(a):
         import fw_deep  # perturbation (Mandelbrot, Julia): Decimal reference orbit, float64 deltas, rebasing
         st = {}
         r["render"] = {"route": "numpy-perturbation", "precision": "decimal+float64"}
+        if getattr(a, "series", False):
+            r["params"]["series"] = True
         write_png(out, arr=fw_deep.render_array(r, st))
-        print(f"deep: rebased {st['rebased_pixels']} pixels")
+        sk = f"; series approximation skipped {st['series_skip']} of {st['ref_len']} iterations" if r["params"].get("series") else ""
+        print(f"deep: rebased {st['rebased_pixels']} pixels{sk}")
     elif np is not None:
         r["render"] = {"route": "numpy", "precision": "float64"}
         write_png(out, arr=render_array(r))
@@ -1581,6 +1584,7 @@ def main(argv=None):
     s.add_argument("--mask", help=f"kronecker mask: {', '.join(KRONECKER)} or rows like 111,101,111")
     s.add_argument("--power", type=int, help="kronecker power (side = k^power)")
     s.add_argument("--deep", action="store_true", help="perturbation route (automatic below width 1e-12); with --route browser it runs on the GPU")
+    s.add_argument("--series", action="store_true", help="numpy perturbation, Mandelbrot: series approximation skips the first iterations (probe-checked; same counts as plain perturbation within its own error)")
     s.add_argument("--route", choices=["auto", "numpy", "browser"], default="auto",
                    help="browser: headless Edge WebGL2 (float32 plain; --deep, width < 1e-12 or views too deep for plain float32 use GPU perturbation; numpy when no browser)")
     s.add_argument("--gpu-precision", choices=["df", "float32"], default="df",

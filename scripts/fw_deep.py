@@ -67,6 +67,39 @@ def _offsets(r):
     return DX, DY, ss
 
 
+def series_skip(Zr, Zi, dcmax, probes, tol=1e-9, check=1e-6, R2=65536.0):
+    """Series approximation (Martin 2013; references/03 section 2.5): dz_n ~= A dc + B dc^2 + C dc^3 with
+    A' = 2ZA + 1, B' = 2ZB + A^2, C' = 2ZC + 2AB from 0. Picks the last n where the cubic term stays under
+    tol of the linear one at the corner |dc|, then verifies against plain perturbation at the probe offsets
+    (complex dc) and halves n until every probe agrees within `check` (relative) and none has escaped.
+    Returns (n, A, B, C) at n; n = 0 means no skip."""
+    Z = Zr + 1j * Zi
+    A = B = C = 0j
+    coef = [(0j, 0j, 0j)]
+    for k in range(len(Z) - 1):
+        A, B, C = 2 * Z[k] * A + 1, 2 * Z[k] * B + A * A, 2 * Z[k] * C + 2 * A * B
+        if not (abs(C) * dcmax ** 3 < tol * abs(A) * dcmax) or not np.isfinite(abs(C)):
+            break
+        coef.append((A, B, C))
+    n = len(coef) - 1
+    probes = np.asarray(probes, complex)
+    while n > 0:
+        dz = np.zeros_like(probes)
+        ok = True
+        for k in range(n):
+            dz = 2 * Z[k] * dz + dz * dz + probes
+            if (np.abs(Z[k + 1] + dz) ** 2 > R2).any():
+                ok = False
+                break
+        if ok:
+            a, b, c = coef[n]
+            sa = a * probes + b * probes ** 2 + c * probes ** 3
+            if (np.abs(sa - dz) <= check * np.maximum(np.abs(dz), 1e-300)).all():
+                return (n,) + coef[n]
+        n //= 2
+    return 0, 0j, 0j, 0j
+
+
 def escape_perturb(r, stats=None):
     """(nu, inside) like fw.escape_numpy, by perturbation. Mandelbrot and quadratic Julia."""
     if r["formula"] not in FORMULAS:
@@ -94,12 +127,22 @@ def escape_perturb(r, stats=None):
         dcr, dci = DX.ravel().copy(), DY.ravel().copy()
         dzr, dzi = np.zeros(N), np.zeros(N)
     m = np.zeros(N, np.int64)
+    skip = 0
+    if p.get("series") and not julia:
+        corners = np.array([complex(DX.flat[i], DY.flat[i]) for i in (0, shape[1] - 1, N - shape[1], N - 1)])
+        probes = np.concatenate([corners, corners / 2, [complex(DX.flat[N // 2], DY.flat[N // 2])]])
+        skip, sA, sB, sC = series_skip(Zr, Zi, float(np.abs(corners).max()), probes, R2=R2)
+        if skip:
+            dc = dcr + 1j * dci
+            dz = sA * dc + sB * dc * dc + sC * dc ** 3
+            dzr, dzi = dz.real.copy(), dz.imag.copy()
+            m[:] = skip
     idx = np.arange(N)
     n_out = np.full(N, -1, np.int64)
     m_out = np.zeros(N)
     rebased = np.zeros(N, bool)
     rebases = 0
-    for n in range(maxit):
+    for n in range(skip, maxit):
         Zmr, Zmi = Zr[m], Zi[m]
         dzr, dzi = (2 * (Zmr * dzr - Zmi * dzi) + dzr * dzr - dzi * dzi + dcr,
                     2 * (Zmr * dzi + Zmi * dzr) + 2 * dzr * dzi + dci)
@@ -125,7 +168,7 @@ def escape_perturb(r, stats=None):
     nu[e] = n_out[e] + 1 - np.log(np.log(m_out[e]) / 2) / math.log(2)
     if stats is not None:
         stats.update(rebased_pixels=int(rebased.sum()), rebases=rebases,
-                     ref_len=last, prec_digits=_prec(width))
+                     ref_len=last, prec_digits=_prec(width), series_skip=skip)
     return nu.reshape(shape), inside.reshape(shape), n_out.reshape(shape)
 
 

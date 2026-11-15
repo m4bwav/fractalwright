@@ -88,6 +88,8 @@ Cost: O(N x terms^2) once per frame. Can skip millions of iterations near minibr
 mode: skipping too far gives wrong images without blob signs; the stop test is heuristic.
 Largely superseded by BLA.
 
+**fractalwright (0.7.0, measured)**: `fw.py render --deep --series` (numpy perturbation, Mandelbrot only) computes A, B, C along the reference orbit, stops where |C| d^3 >= 1e-9 |A| d at the corner |dc| = d, then checks 9 probe pixels (corners, half-corners, centre) against plain perturbation and halves the skip until each agrees to 1e-6 and none has escaped. Seahorse centre at 256 px: 1e-6 skip 20 of 2000 (2.02 -> 1.99 s), 1e-9 39 of 3000, 1e-12 858 of 4000 (1.86 -> 1.10 s), 1e-15 998 of 5000 (4.04 -> 3.08 s); escape counts differ from plain perturbation on 0.00-0.17% of pixels, and against per-pixel Decimal iteration (64 px) SA and plain perturbation both miss 0.15-0.17%. A looser 1e-6 stop skipped more (1.7x) but moved 0.5-0.9% of counts, so the strict stop is used. Opt-in: the gain is 1.0-1.7x and BLA would be the larger win. Test: tests/test_deep.py `SeriesApproximationTests`.
+
 ### 2.6 Bilinear approximation (BLA, Zhuoran 2021; Heiland-Allen's write-up)
 Per-iteration linear maps dz -> A dz + B dc, valid while |dz| is under a radius r_n. Merge
 adjacent steps into a binary tree so a pixel can jump 2^k iterations at once:
