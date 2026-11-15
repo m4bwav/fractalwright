@@ -514,6 +514,9 @@ def register(sub, explain):
     s.add_argument("--iter", type=int, help="mesh: formula iterations (Menger defaults to level 3 for printing)")
     s.add_argument("--wall-mm", type=float, help="mesh: thicken thin parts so printed walls reach this many mm "
                    "(meshes the offset surface DE = wall/2, e.g. 0.9 for FDM)")
+    s.add_argument("--colors", type=int, metavar="N", help="mesh: also write a multi-colour 3MF (orbit-trap colour, "
+                   "N filaments, default 4 when -o ends in .3mf; max 8); the STL is written beside it")
+    s.add_argument("--palette", help="mesh: comma-separated hex colours for the 3MF (default white,black,red,blue,...)")
     s.add_argument("--engine", choices=["auto", "skimage", "numpy"], default="auto",
                    help="mesh: marching cubes from scikit-image if installed (auto), or NumPy marching tetrahedra")
     s.set_defaults(fn=cmd_3d)

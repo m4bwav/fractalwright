@@ -256,6 +256,39 @@ class MeshTests(unittest.TestCase):
         self.assertGreater(info["iso"], base["iso"])
         self.assertGreater(info["volume_mm3"], base["volume_mm3"])
 
+    def test_colour_3mf(self):
+        """Orbit-trap 3MF: XML parses, triangle count matches the STL, N colours all used, still one watertight solid."""
+        import subprocess
+        import tempfile
+        import zipfile
+        import xml.etree.ElementTree as ET
+        import fw_mesh
+        prm = dict(fw_3d.FORMULA_DEFAULTS["mandelbulb"])
+        verts, faces, info = self._check("mandelbulb", "numpy", 40)
+        cidx, _ = fw_mesh.face_colours("mandelbulb", prm, verts, faces, info, 3)
+        self.assertEqual(len(np.unique(cidx)), 3)
+        self.assertEqual([fw_mesh._paint(k) for k in range(4)], ["4", "8", "0C", "1C"])
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "m.3mf"
+            fw_mesh.write_3mf(p, verts, faces, cidx, fw_mesh.PALETTE[:3])
+            with zipfile.ZipFile(p) as z:
+                self.assertIsNone(z.testzip())
+                root = ET.fromstring(z.read("3D/3dmodel.model"))
+                self.assertIn("3dmodel.model", z.read("_rels/.rels").decode())
+            self.assertEqual(root.get("unit"), "millimeter")
+            ntri, cols, used = fw_mesh.read_3mf(p)
+            self.assertEqual(ntri, len(faces))
+            self.assertEqual(len(cols), 3)
+            self.assertEqual(used, [0, 1, 2])
+            ns = "{http://schemas.microsoft.com/3dmanufacturing/core/2015/02}"
+            vs = np.array([[float(v.get(k)) for k in "xyz"] for v in root.iter(ns + "vertex")])
+            self.assertEqual(len(np.unique(vs.round(6), axis=0)), len(vs))   # no vertices merged by rounding
+            pw = next(Path(__file__).resolve().parents[2].glob("polywright/skills/polywright/scripts/pw.py"), None)
+            if pw:
+                r = subprocess.run([sys.executable, str(pw), "check", str(p), "--target", "print-fdm"], capture_output=True, text=True)
+                if '"backend": "trimesh"' in r.stdout:
+                    self.assertTrue(json.loads(r.stdout)["ok"], r.stdout)
+
     def test_stl_roundtrip(self):
         import tempfile
         import fw_mesh
