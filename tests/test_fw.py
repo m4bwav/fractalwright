@@ -382,7 +382,7 @@ class Video(unittest.TestCase):
             rec = json.loads(out.with_suffix(".json").read_text(encoding="utf-8"))
             self.assertEqual(rec["animation"]["fps"], 12)
             self.assertEqual(rec["animation"]["duration_s"], 1.0)
-            self.assertIn("no ComfyUI host", rec["notes"][0])
+            self.assertIn("AI styling off", rec["notes"][0])
             for src in (out, out.with_name(f"{kind}_frames")):
                 res = json.loads(self.run_fw("flashcheck", str(src), "--fps", "12", "--json"))
                 self.assertTrue(res["pass"], (kind, src, res))

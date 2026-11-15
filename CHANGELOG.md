@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-17 · 2026-11-14 · release 0.2.2: AI styling off by default
+- because: user request (askwright set fractalwright-ai-look-2026-11-14: exact zoom preferred, AI off by default)
+- files: scripts/fw.py (`_video_args`, `VERSION`), scripts/fw_audio.py (`register`), scripts/fw_ai.py (`apply`), skills/fractalwright/SKILL.md (video paragraph, metadata), ai-docs/plans/design.md (section 6), plugin.json, .claude-plugin/plugin.json
+- zoom, morph, loop and audio now render exact video only unless `--ai` is passed; `--no-ai` still works.
+
 ### C-20261114-16 · 2026-11-14 · release 0.2.1: AI pass flags, RD palettes and video
 - because: user request, T-20261114-15
 - files: scripts/fw_ai.py (`add_args`, `kw_from`), scripts/fw.py (`_video_args`, `_video_base`, `write_video`, `VERSION`), scripts/fw_audio.py (`register`, `cmd_audio`), scripts/fw_neighbours.py (`gray_scott` snaps, `Snaps`, `rd_rgb`, `_rd_video`, rd flags), tests/test_ai.py, tests/test_neighbours.py, plugin.json, .claude-plugin/plugin.json, skills/fractalwright/SKILL.md (metadata)

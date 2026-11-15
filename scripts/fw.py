@@ -18,7 +18,7 @@ import zlib
 from decimal import Decimal
 from pathlib import Path
 
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 ROOT = Path(__file__).resolve().parent.parent
 
 try:
@@ -1477,8 +1477,8 @@ def _video_args(s, default_out):
     s.add_argument("--palette", choices=list(PALETTES))
     s.add_argument("--fps", type=int, default=24)
     s.add_argument("--duration", type=float, default=4.0, help="seconds")
-    s.add_argument("--ai", action=argparse.BooleanOptionalAction, default=True,
-                   help="AI styling pass (default on): img2img via ComfyUI to <out>_ai.mp4; exact video always kept")
+    s.add_argument("--ai", action=argparse.BooleanOptionalAction, default=False,
+                   help="AI styling pass (default off, Mark 2026-11-14): img2img via ComfyUI to <out>_ai.mp4; exact video always kept")
     import fw_ai
     fw_ai.add_args(s)
 
