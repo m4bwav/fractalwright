@@ -19,6 +19,11 @@ uniform vec2 u_s1d;     // s1 as a df pair; s2 is a power of two
 uniform float u_s2, u_T;
 uniform vec2 u_Sd;      // pixel spacing as a df pair (0 when it underflows float32)
 uniform vec4 u_z0d;
+// progressive preview (explorer): reuse an older reference orbit. Pixel o maps to o * (1 + u_km1) + u_off
+// in the orbit's pixel units (u_km1 = new spacing / old - 1, u_off = (new centre - ref centre) / old spacing,
+// both df). Zero (the default) is the exact view.
+uniform vec2 u_km1;
+uniform vec4 u_off;
 uniform float u_one, u_split;
 uniform uint u_zero;
 out uvec4 frag;
@@ -55,6 +60,7 @@ void main() {
   float cr = cos(u_rot), sr = sin(u_rot);
   if (u_rot != 0.0) o = vec2(o.x * cr - o.y * sr, o.x * sr + o.y * cr);
   vec4 O = vec4(o.x, 0.0, o.y, 0.0);
+  if (u_km1 != vec2(0.0) || u_off != vec4(0.0)) O = cadd(cadd(O, cscale(O, u_km1)), u_off);
   vec4 dz = u_julia == 1 ? O : vec4(0.0);
   vec4 dc = u_julia == 1 ? vec4(0.0) : O;
   bool scaled = true;

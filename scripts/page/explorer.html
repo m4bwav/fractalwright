@@ -198,7 +198,9 @@ function renderNow() { if (deepWanted()) deepRequest(); else drawUniforms(stateU
 
 // --- GPU deep: past float32 the server sends the Decimal reference orbit (POST /orbit, uniforms from
 // fw_gpudeep.uniforms) and deep_df.frag iterates double-float deltas. Same limits as fw_gpudeep.supported().
-const DEEP = { prog: null, L: null, busy: false, again: false, ok: null, err: "", ms: 0, draws: 0, hash: "" };
+const DEEP = { prog: null, L: null, busy: false, ok: null, err: "", ms: 0, draws: 0, hash: "",
+  // progressive preview: ref = the last exact orbit and its view; seq/ctl cancel stale /orbit requests
+  ref: null, previewDiv: 4, seq: 0, ctl: null, previews: 0, previewHash: "", t0: 0, tPreview: 0, tExact: 0, aborted: 0 };
 function deepWanted() {
   if (!(S.f === "mandelbrot" || S.f === "julia") || !(+S.w >= 1e-60) || location.protocol === "file:") return false;
   const big = Math.max(1, Math.abs(+S.cx), Math.abs(+S.cy));
@@ -214,41 +216,47 @@ function deepCompile() {
   if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
   DEEP.prog = p; DEEP.L = n => gl.getUniformLocation(p, n);
 }
-function deepDraw(u) {
+function deepDraw(u, pv) {
   const t0 = performance.now();
   if (!DEEP.prog) deepCompile();
   const L = DEEP.L;
   gl.useProgram(DEEP.prog);
-  const b = atob(u.orbit), u8 = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u8[i] = b.charCodeAt(i);
-  const orb = new Float32Array(u8.buffer), th = Math.ceil(orb.length / 4 / u.tw);
-  const pad = new Float32Array(u.tw * th * 4); pad.set(orb);
+  if (!u.pad) {  // decode once; a preview redraws the same orbit
+    const b = atob(u.orbit), u8 = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u8[i] = b.charCodeAt(i);
+    const orb = new Float32Array(u8.buffer); u.th = Math.ceil(orb.length / 4 / u.tw);
+    u.pad = new Float32Array(u.tw * u.th * 4); u.pad.set(orb);
+  }
+  const pad = u.pad, th = u.th;
+  const dv = pv && pv.div || 1, Wd = Math.ceil(u.w / dv), Hd = Math.ceil(u.h / dv);  // preview may draw coarse
   const tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, u.tw, th, 0, gl.RGBA, gl.FLOAT, pad);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  const out = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, out); gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA32UI, u.w, u.h);
+  const out = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, out); gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA32UI, Wd, Hd);
   const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, out, 0);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.uniform1i(L("u_orbit"), 0); gl.uniform2f(L("u_size"), u.w, u.h); gl.uniform1f(L("u_rot"), u.rot);
+  gl.uniform1i(L("u_orbit"), 0); gl.uniform2f(L("u_size"), Wd, Hd); gl.uniform1f(L("u_rot"), u.rot);
   gl.uniform1i(L("u_tw"), u.tw); gl.uniform1i(L("u_last"), u.last); gl.uniform1i(L("u_julia"), u.julia);
   gl.uniform1i(L("u_maxit"), u.maxit); gl.uniform1f(L("u_bail2"), u.bail2);
   gl.uniform1f(L("u_s2"), u.s2); gl.uniform1f(L("u_T"), u.T);
   gl.uniform2f(L("u_s1d"), u.s1d[0], u.s1d[1]); gl.uniform2f(L("u_Sd"), u.Sd[0], u.Sd[1]);
   gl.uniform4f(L("u_z0d"), u.z0d[0], u.z0d[1], u.z0d[2], u.z0d[3]);
+  const km1 = pv ? pv.km1 : [0, 0], off = pv ? pv.off : [0, 0, 0, 0];
+  gl.uniform2f(L("u_km1"), km1[0], km1[1]); gl.uniform4f(L("u_off"), off[0], off[1], off[2], off[3]);
   gl.uniform1f(L("u_one"), 1.0); gl.uniform1f(L("u_split"), 4097.0); gl.uniform1ui(L("u_zero"), 0);
-  gl.viewport(0, 0, u.w, u.h); gl.enable(gl.SCISSOR_TEST);
-  const buf = new Uint32Array(u.w * u.h * 4);
-  for (let y = 0; y < u.h; y += u.tile) {
-    const n = Math.min(u.tile, u.h - y);
-    gl.scissor(0, y, u.w, n); gl.drawArrays(gl.TRIANGLES, 0, 3);
-    gl.readPixels(0, y, u.w, n, gl.RGBA_INTEGER, gl.UNSIGNED_INT, new Uint32Array(buf.buffer, y * u.w * 16, n * u.w * 4));
+  gl.viewport(0, 0, Wd, Hd); gl.enable(gl.SCISSOR_TEST);
+  const buf = new Uint32Array(Wd * Hd * 4);
+  for (let y = 0; y < Hd; y += u.tile) {
+    const n = Math.min(u.tile, Hd - y);
+    gl.scissor(0, y, Wd, n); gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.readPixels(0, y, Wd, n, gl.RGBA_INTEGER, gl.UNSIGNED_INT, new Uint32Array(buf.buffer, y * Wd * 16, n * Wd * 4));
   }
   gl.disable(gl.SCISSOR_TEST);
   // colour like fw.colour and fractal.frag: cosine palette at t = nu * density + phase, inside black
   const pa = S.pa.split(",").map(Number), den = +S.den, ph = +S.ph, f32 = new Float32Array(buf.buffer), st = parseStops();
-  const rgba = new Uint8Array(u.w * u.h * 4);
-  for (let i = 0; i < u.w * u.h; i++) {
+  const rgba = new Uint8Array(Wd * Hd * 4);
+  for (let i = 0; i < Wd * Hd; i++) {
     const nu = f32[4 * i];
     const sc = st.length && nu >= 0 ? stopColour(st, nu * den + ph) : null;
     for (let k = 0; k < 3; k++) {
@@ -258,31 +266,59 @@ function deepDraw(u) {
     rgba[4 * i + 3] = 255;
   }
   const img = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, img);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, u.w, u.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, Wd, Hd, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, img, 0);
   if (cv.width !== u.w || cv.height !== u.h) { cv.width = u.w; cv.height = u.h; }
   gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fb); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
-  gl.blitFramebuffer(0, 0, u.w, u.h, 0, 0, u.w, u.h, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+  gl.blitFramebuffer(0, 0, Wd, Hd, 0, 0, u.w, u.h, gl.COLOR_BUFFER_BIT, gl.NEAREST);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.deleteFramebuffer(fb); gl.deleteTexture(out); gl.deleteTexture(tex); gl.deleteTexture(img);
   gl.useProgram(prog);
   return performance.now() - t0;
 }
+// Progressive preview: while a new orbit is pending, redraw at once with the last exact reference
+// orbit (perturbation tolerates an offset reference; Zhuoran rebasing absorbs it while the offset is
+// small), then swap in the exact draw. Returns the shader offsets, or null when the old orbit cannot serve.
+const PREVIEW_MAX_ZOOM = 1e3, PREVIEW_MAX_OFF = 64;  // spacing ratio and centre offset in view widths
+// The preview draws one pixel per PREVIEW_DIV x PREVIEW_DIV block (16x less GPU and colour work), upscaled.
+function df32(x) { const hi = Math.fround(x); return [hi, Math.fround(x - hi)]; }
+function dnum(a) { return Number(`${a.m}e${a.e}`); }
+function previewOffsets(ref) {
+  if (!ref || ref.f !== S.f || ref.sz !== S.sz || ref.rot !== S.rot || ref.it !== S.it
+      || (S.f === "julia" && (ref.kr !== S.kr || ref.ki !== S.ki))) return null;
+  const W = ref.u.w, sOld = +ref.w / W, k = +S.w / +ref.w;
+  if (!(k > 1 / PREVIEW_MAX_ZOOM && k < PREVIEW_MAX_ZOOM)) return null;
+  const neg = a => ({ m: -a.m, e: a.e });
+  const dx = dnum(dsum(dparse(S.cx), neg(dparse(ref.cx)))) / sOld, dy = dnum(dsum(dparse(S.cy), neg(dparse(ref.cy)))) / sOld;
+  if (!(Math.hypot(dx, dy) < PREVIEW_MAX_OFF * W * Math.max(1, k))) return null;
+  const div = DEEP.previewDiv;
+  return { km1: df32(k * div - 1), off: [...df32(dx), ...df32(dy)], div };
+}
 async function deepRequest() {
-  if (DEEP.busy) { DEEP.again = true; return; }
+  const seq = ++DEEP.seq, h = hashOf();
+  DEEP.t0 = performance.now(); DEEP.tPreview = 0; DEEP.tExact = 0;
+  if (DEEP.ctl) { DEEP.ctl.abort(); DEEP.aborted++; }  // the view moved: drop the stale request
+  const ctl = DEEP.ctl = new AbortController();
   DEEP.busy = true;
+  const pv = DEEP.ok !== false && !DEEP.noPreview ? previewOffsets(DEEP.ref) : null;
+  if (pv && h !== DEEP.hash) {
+    try { deepDraw(DEEP.ref.u, pv); DEEP.previews++; DEEP.previewHash = h; DEEP.tPreview = performance.now() - DEEP.t0; }
+    catch (e) { /* the exact draw follows */ }
+  }
   try {
-    do {
-      DEEP.again = false;
-      const h = hashOf();
-      const u = await (await post("/orbit", { hash: h })).json();
-      if (DEEP.again) continue;  // the view moved while the orbit was computed
-      DEEP.ms = deepDraw(u); DEEP.ok = true; DEEP.draws++; DEEP.hash = h;
-    } while (DEEP.again);
+    const r = await fetch("/orbit", { method: "POST", headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ hash: h }), signal: ctl.signal });
+    if (!r.ok) throw new Error(await r.text());
+    const u = await r.json();
+    if (seq !== DEEP.seq) return;  // a newer view owns the canvas
+    DEEP.ms = deepDraw(u); DEEP.ok = true; DEEP.draws++; DEEP.hash = h;
+    DEEP.ref = { u, f: S.f, sz: S.sz, rot: S.rot, it: S.it, kr: S.kr, ki: S.ki, cx: S.cx, cy: S.cy, w: S.w };
+    DEEP.tExact = performance.now() - DEEP.t0;
   } catch (e) {
+    if (seq !== DEEP.seq || e.name === "AbortError") return;
     DEEP.ok = false; DEEP.err = String(e.message || e).slice(0, 120);
     drawUniforms(stateUniforms());
-  } finally { DEEP.busy = false; precision(); }
+  } finally { if (seq === DEEP.seq) { DEEP.busy = false; DEEP.ctl = null; precision(); } }
 }
 
 // --- view maths (float64 in JS; strings in the hash) ---
