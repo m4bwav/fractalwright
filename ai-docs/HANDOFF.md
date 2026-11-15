@@ -24,7 +24,7 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 ## Next (Mark's rank: gpudeep, path tracing, mesh, paper checks)
 
 1. Done 2026-11-14 (v0.5.1, PR #22): worth trims + fixed evals, A/B 6/6 vs 0/6 at x1.23 (log). Left: flashcheck printed FAIL at 1-2 swings/s with limit 3 in A/B zoom runs, making agents retry; investigate.
-2. Wiki to 0.3.0 (GPU deep route, rd --size N).
+2. Done 2026-11-14: wiki updated to 0.5.1 (wiki commit ce162a2; GPU deep route, explorer POST /orbit, rd --size N, 3d --pt; outputs check 35/35, live 12/12).
 3. Done in v0.5.0 (PR #23): double-float GPU deep deltas (default; 0.09-1.02% mismatches) and GPU deep in the serve explorer (POST /orbit). Left: install 0.5.0 locally, wiki pages for 0.4.0/0.5.0; the explorer redraws only after each orbit round trip (no progressive preview while panning deep).
 4. Path-traced 3D: done in 0.4.0 (`3d render --pt N`, references/07-3d.md "Path tracer"; sheet and judge in Ai/fractalwright-renders/pathtrace-2026-11-14).
 5. 3D fractal to printable mesh (polywright-print).
