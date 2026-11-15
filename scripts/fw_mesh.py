@@ -328,6 +328,17 @@ def build(formula, prm, res=200, size_mm=60.0, iso=None, engine="auto", wall_mm=
     return verts, faces, info
 
 
+def parse_palette(text):
+    """Comma-separated hex colours (#RRGGBB or RRGGBB) -> ['#RRGGBB', ...]; anything else exits."""
+    import re
+    out = []
+    for c in (x.strip() for x in text.split(",")):
+        if not re.fullmatch(r"#?[0-9A-Fa-f]{6}", c):
+            raise SystemExit(f"--palette takes comma-separated hex colours like #FFFFFF,#D62828; got {c!r}")
+        out.append("#" + c.lstrip("#").upper())
+    return out
+
+
 # filament-friendly defaults (white, black, red, blue, yellow, green, orange, purple); --palette overrides
 PALETTE = ["#F2F2F2", "#1A1A1A", "#C8102E", "#0057B8", "#FFC72C", "#00843D", "#FF6A13", "#6D2077"]
 
@@ -409,7 +420,7 @@ def cmd_mesh(a, recipe):
     write_stl(out, verts, faces)
     if want3mf:
         n = max(1, min(int(getattr(a, "colors", None) or 4), len(PALETTE)))
-        cols = [c.strip() for c in a.palette.split(",")][:n] if getattr(a, "palette", None) else PALETTE[:n]
+        cols = parse_palette(a.palette)[:n] if getattr(a, "palette", None) else PALETTE[:n]
         n = len(cols)
         cidx, _ = face_colours(formula, prm, verts, faces, info, n)
         p3 = out.with_suffix(".3mf")

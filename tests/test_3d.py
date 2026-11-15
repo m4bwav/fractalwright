@@ -256,6 +256,13 @@ class MeshTests(unittest.TestCase):
         self.assertGreater(info["iso"], base["iso"])
         self.assertGreater(info["volume_mm3"], base["volume_mm3"])
 
+    def test_palette_validation(self):
+        import fw_mesh
+        self.assertEqual(fw_mesh.parse_palette("ffffff, #d62828"), ["#FFFFFF", "#D62828"])
+        for bad in ("fire", "#fff", "#FFFFFF,red"):
+            with self.assertRaises(SystemExit):
+                fw_mesh.parse_palette(bad)
+
     def test_colour_3mf(self):
         """Orbit-trap 3MF: XML parses, triangle count matches the STL, N colours all used, still one watertight solid."""
         import subprocess

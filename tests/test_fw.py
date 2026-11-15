@@ -64,6 +64,10 @@ def koch(n=2048, level=7):
 
 
 class Determinism(unittest.TestCase):
+    def test_bare_family_alias(self):
+        self.assertEqual(fw.load_recipe("mandelbrot"), fw.load_recipe("mandelbrot-full"))
+        self.assertEqual(fw.load_recipe("burning-ship")["formula"], "burning-ship")
+
     def test_same_recipe_same_pixels(self):
         for preset in ("mandelbrot-full", "julia-rabbit", "burning-ship-full", "tricorn-full", "multibrot-3"):
             r = fw.load_recipe(preset)
