@@ -29,7 +29,19 @@ def _write_recipe(png, rec):
 
 
 def _size(s):
-    w, h = (int(v) for v in str(s).split("x"))
+    """'WxH' or a bare 'N' (square). Bad input exits with a usage message, not a traceback."""
+    parts = str(s).lower().split("x")
+    try:
+        if len(parts) == 1:
+            w = h = int(parts[0])
+        elif len(parts) == 2:
+            w, h = int(parts[0]), int(parts[1])
+        else:
+            raise ValueError
+    except ValueError:
+        raise SystemExit(f"--size wants WxH or N (square), got {s!r}")
+    if w < 1 or h < 1:
+        raise SystemExit(f"--size must be positive, got {s!r}")
     return w, h
 
 

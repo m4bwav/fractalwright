@@ -34,6 +34,20 @@ class ReactionDiffusion(unittest.TestCase):
             self.assertTrue(np.isfinite(B).all(), name)
             self.assertGreater(B.std(), 0.05, name)
 
+    def test_size_accepts_bare_int(self):
+        # `fw.py rd --size 64` crashed with ValueError before 0.3.0
+        self.assertEqual(n._size("64"), (64, 64))
+        self.assertEqual(n._size("48x32"), (48, 32))
+        for bad in ("abc", "0", "4x4x4", "-3"):
+            with self.assertRaises(SystemExit):
+                n._size(bad)
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d, "s.png")
+            res = subprocess.run([sys.executable, str(ROOT / "scripts" / "fw.py"), "rd", "mitosis", "-o", str(p),
+                                  "--size", "40", "--steps", "50"], capture_output=True, text=True)
+            self.assertEqual(res.returncode, 0, res.stderr)
+            self.assertEqual(int.from_bytes(p.read_bytes()[16:24], "big"), (40 << 32) | 40)  # PNG IHDR w, h
+
     def test_cli_recipe_redraws(self):
         with tempfile.TemporaryDirectory() as d:
             p1, p2 = Path(d, "a.png"), Path(d, "b.png")

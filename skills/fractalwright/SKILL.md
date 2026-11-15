@@ -3,7 +3,7 @@ name: fractalwright
 description: "Render, animate, measure and identify fractals as reproducible recipes (PNG or mp4 plus a recipe JSON that redraws it): Mandelbrot, Julia, Burning Ship and Multibrot stills, deep zooms, zoom, morph and loop videos with a flash check, audio-reactive music videos and visualizers from a song, fractal flames, IFS, L-systems, strange attractors, fBm terrain, box-counting dimension. Use whenever the user wants a fractal image, wallpaper or video, asks 'render a Mandelbrot zoom', 'make a fractal flame', 'winamp-style visualizer for this song', 'what fractal is this picture', 'measure the fractal dimension of this coastline', or wants to redraw a fractal exactly. Also 'refresh fractalwright'. Not for general shaders (threewright), mastering music (musicwright) or pixel art (pixelwright)."
 license: MIT
 metadata:
-  version: 0.2.2
+  version: 0.3.0
 ---
 
 # fractalwright
@@ -26,7 +26,7 @@ Read `evergreen.json` at the repository root. If `contradiction` is set or today
 
 ## Step 2a: explore
 
-`FW serve [--port 8765] [--out-dir DIR] [--open]` runs the WebGL2 explorer on 127.0.0.1 only (any other host is refused). Drag pans, wheel or pinch zooms, shift-click picks Julia `c`; formula, iterations and cosine palette sit in the side panel. The URL hash is the whole view, so the address is a share link. A precision box warns when float32 nears its limit; Render exact asks the server for a NumPy (or perturbation) PNG of the same view, Export writes a recipe JSON to the out dir. `FW export "<share url or #hash>" -o recipe.json` does the same from the command line. `FW render <recipe> --route browser` renders with headless Edge and the page's shader; views too deep for float32 (width under 1e-3 of the coordinate, or a pixel under 1e-6 of it) go to NumPy with a note. The burning ship is the least exact in float32 (mean diff 2.7 against NumPy).
+`FW serve [--port 8765] [--out-dir DIR] [--open]` runs the WebGL2 explorer on 127.0.0.1 only (any other host is refused). Drag pans, wheel or pinch zooms, shift-click picks Julia `c`; formula, iterations and cosine palette sit in the side panel. The URL hash is the whole view, so the address is a share link. A precision box warns when float32 nears its limit; Render exact asks the server for a NumPy (or perturbation) PNG of the same view, Export writes a recipe JSON to the out dir. `FW export "<share url or #hash>" -o recipe.json` does the same from the command line. `FW render <recipe> --route browser` renders with headless Edge and the page's shader; views too deep for float32 (width under 1e-3 of the coordinate, or a pixel under 1e-6 of it) go to GPU perturbation when the formula is Mandelbrot or Julia (power 2), else to NumPy with a note. `--deep --route browser` (or any width under 1e-12) runs perturbation on the GPU: a Decimal reference orbit as a float texture, float32 scaled deltas, rebasing, down to width 1e-60; about 9% of escape counts in dense boundary areas differ from the float64 CPU route (float32 noise, no blobs), so use the CPU route when exact counts matter. `FW zoom ... --route browser` renders every frame that way. The burning ship is the least exact in float32 (mean diff 2.7 against NumPy).
 
 ## Step 2b: sheets and video
 

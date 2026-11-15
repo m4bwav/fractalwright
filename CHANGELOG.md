@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-18 � 2026-11-14 � release 0.3.0: GPU perturbation deep zoom, rd --size N
+- because: user request, T-20261114-16
+- files: scripts/fw_gpudeep.py (new), scripts/page/deep.frag (new), scripts/fw.py (`cmd_render`, `cmd_zoom`, `write_video`, `_finish_video`, render/zoom `--route` help, `VERSION`), scripts/fw_neighbours.py (`_size`), tests/test_gpudeep.py (new), tests/test_neighbours.py, tests/test_serve.py, README.md, skills/fractalwright/SKILL.md (explorer paragraph, metadata), plugin.json, .claude-plugin/plugin.json
+- `render --route browser` with `--deep`, a width under 1e-12, or a Mandelbrot/Julia view too deep for plain float32 now runs perturbation in a WebGL2 shader: Decimal reference orbit as an RG32F texture, float32 deltas held in pixel units until about 1e-30 (so dc never underflows), Zhuoran rebasing. Reaches width 1e-60; below that the CPU route runs. `zoom --route browser` renders every frame that way. About 250x faster than the CPU route at 512x512; escape counts differ on 3-19% of dense boundary pixels (float32 noise, a NumPy float32 copy differs from float64 by the same amount). `rd --size 64` now means 64x64; bad sizes give a usage message.
+
 ### C-20261114-17 · 2026-11-14 · release 0.2.2: AI styling off by default
 - because: user request (askwright set fractalwright-ai-look-2026-11-14: exact zoom preferred, AI off by default)
 - files: scripts/fw.py (`_video_args`, `VERSION`), scripts/fw_audio.py (`register`), scripts/fw_ai.py (`apply`), skills/fractalwright/SKILL.md (video paragraph, metadata), ai-docs/plans/design.md (section 6), plugin.json, .claude-plugin/plugin.json
