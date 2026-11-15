@@ -16,5 +16,10 @@ Write an entry the moment a real signal happens: a user correction, the same err
 - Status: active · helpful 1 · harmful 0 · last_confirmed 2026-11-14
 -->
 
+### L-20261114-11 · 2026-11-14 · df-shader-needs-bit-fence
+Trigger: double-float GPU deltas measured no better than float32. Hypothesis: ANGLE/D3D11 rewrites (s - a) to b and contracts products into fma unless each rounded value passes through uintBitsToFloat(floatBitsToUint(x) ^ u_zero); a `* u_one` uniform is not enough. Probe each df op against NumPy before measuring the fractal. Also: deltas under ~1e-30 lose the lo half to denormal flush.
+- Scope: repo:fractalwright
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-11-14
+
 ### L-20261114-10 · 2026-11-14 · description-lagged-features
 Trigger: trigger-visualizer routed to no skill; zoom and flame matched only by luck. Hypothesis: each new command (zoom, audio, flame) must add its user phrase to the description in the same change, or routing never sees it.

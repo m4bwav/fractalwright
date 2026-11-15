@@ -22,7 +22,7 @@ uniform float u_s1, u_s2, u_S, u_T;
 uniform vec2 u_z0;
 out uvec4 frag;
 
-vec2 orbit(int m) { return texelFetch(u_orbit, ivec2(m % u_tw, m / u_tw), 0).rg; }
+vec2 orbit(int m) { return texelFetch(u_orbit, ivec2(m % u_tw, m / u_tw), 0).rg; }  // RGBA texture, hi parts in rg
 vec2 cmul(vec2 a, vec2 b) { return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x); }
 
 void main() {

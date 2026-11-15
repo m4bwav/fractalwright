@@ -19,6 +19,8 @@ import fw
 
 PAGE_DIR = Path(__file__).resolve().parent / "page"
 FRAG = PAGE_DIR / "fractal.frag"
+DEEP_FRAG = PAGE_DIR / "deep_df.frag"  # GPU deep (double-float perturbation), drawn past float32
+MAX_ORBIT_ITER = 200_000  # /orbit refuses more: the Decimal orbit would take minutes
 PAGE = PAGE_DIR / "explorer.html"
 AUDIO_PAGE = PAGE_DIR / "audio.html"  # live audio page, served at /audio
 LOOPBACK = ("127.0.0.1", "localhost", "::1")
@@ -179,8 +181,22 @@ def uniforms(r, w=None, h=None):
 
 
 def page_html():
-    """The self-contained page: explorer.html with fractal.frag inlined."""
-    return PAGE.read_text(encoding="utf-8").replace("/*FRAG*/", FRAG.read_text(encoding="utf-8"))
+    """The self-contained page: explorer.html with fractal.frag and deep_df.frag inlined."""
+    return (PAGE.read_text(encoding="utf-8").replace("/*FRAG*/", FRAG.read_text(encoding="utf-8"))
+            .replace("/*DEEPFRAG*/", DEEP_FRAG.read_text(encoding="utf-8")))
+
+
+def orbit_uniforms(h):
+    """Share hash -> the GPU deep uniform dict (Decimal reference orbit included) for POST /orbit."""
+    import fw_gpudeep
+    r = fw.normalise(hash_to_recipe(h))
+    if not fw_gpudeep.supported(r):
+        raise ValueError(f"GPU deep draws mandelbrot/julia power 2 at width >= {fw_gpudeep.GPU_MIN_WIDTH}")
+    if int(r["params"]["max_iter"]) > MAX_ORBIT_ITER:
+        raise ValueError(f"over {MAX_ORBIT_ITER} iterations")
+    if r["size"]["w"] * r["size"]["h"] > MAX_EXACT_PIXELS:
+        raise ValueError(f"over {MAX_EXACT_PIXELS} pixels")
+    return fw_gpudeep.uniforms(r, "df")
 
 
 def audio_page_html():
@@ -324,6 +340,8 @@ def make_handler(out_dir):
                 if path == "/export":
                     p = write_recipe(h, out_dir)
                     return self._send(200, json.dumps({"path": str(p)}).encode(), "application/json")
+                if path == "/orbit":
+                    return self._send(200, json.dumps(orbit_uniforms(h)).encode(), "application/json")
                 if path == "/render":
                     r = fw.normalise(hash_to_recipe(h))
                     arr, route = exact_render(r)

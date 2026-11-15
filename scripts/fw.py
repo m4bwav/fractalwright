@@ -18,7 +18,7 @@ import zlib
 from decimal import Decimal
 from pathlib import Path
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 ROOT = Path(__file__).resolve().parent.parent
 
 try:
@@ -888,8 +888,9 @@ def cmd_render(a):
         else:
             try:
                 st = {}
-                arr = fw_gpudeep.render_array(r, st)
-                r["render"] = {"route": "browser-perturbation", "precision": "decimal+float32"}
+                gp = getattr(a, "gpu_precision", fw_gpudeep.DEFAULT_PRECISION)
+                arr = fw_gpudeep.render_array(r, st, gp)
+                r["render"] = {"route": "browser-perturbation", "precision": "decimal+" + ("double-float" if gp == "df" else "float32")}
                 write_png(out, arr=arr)
                 rec = out.with_suffix(".json")
                 rec.write_text(json.dumps(r, indent=2) + "\n", encoding="utf-8")
@@ -1463,7 +1464,7 @@ def cmd_zoom(a):
             print(f"browser deep route: mandelbrot/julia power 2, width >= {fw_gpudeep.GPU_MIN_WIDTH}; using numpy")
         else:
             try:
-                g = fw_gpudeep.GpuDeep()
+                g = fw_gpudeep.GpuDeep(getattr(a, "gpu_precision", fw_gpudeep.DEFAULT_PRECISION))
             except Exception as e:  # noqa: BLE001
                 print(f"browser deep route unavailable ({str(e).splitlines()[0][:120]}); using numpy")
             else:
@@ -1543,6 +1544,8 @@ def main(argv=None):
     s.add_argument("--deep", action="store_true", help="perturbation route (automatic below width 1e-12); with --route browser it runs on the GPU")
     s.add_argument("--route", choices=["auto", "numpy", "browser"], default="auto",
                    help="browser: headless Edge WebGL2 (float32 plain; --deep, width < 1e-12 or views too deep for plain float32 use GPU perturbation; numpy when no browser)")
+    s.add_argument("--gpu-precision", choices=["df", "float32"], default="df",
+                   help="GPU deep deltas: df (double-float, default since 0.5.0, 10-40x fewer escape-count mismatches) or float32 (faster)")
     s.set_defaults(fn=cmd_render)
     s = sub.add_parser("serve", help="interactive WebGL2 explorer on 127.0.0.1 (pan, zoom, share hash, export, exact render)")
     s.add_argument("--host", default="127.0.0.1", help="loopback only; any other host is refused")
@@ -1592,7 +1595,9 @@ def main(argv=None):
     s.add_argument("--from-width")
     s.add_argument("--to-centre", help="re,im: eased centre move")
     s.add_argument("--route", choices=["auto", "numpy", "browser"], default="auto",
-                   help="browser: every frame by GPU perturbation (mandelbrot/julia, any depth to 1e-60; float32 deltas)")
+                   help="browser: every frame by GPU perturbation (mandelbrot/julia, any depth to 1e-60; double-float deltas, see --gpu-precision)")
+    s.add_argument("--gpu-precision", choices=["df", "float32"], default="df",
+                   help="GPU deep deltas: df (double-float, default since 0.5.0, 10-40x fewer escape-count mismatches) or float32 (faster)")
     s.set_defaults(fn=cmd_zoom)
     s = sub.add_parser("morph", help="interpolate a param along keyframes (default julia c)")
     _video_args(s, "morph.mp4")

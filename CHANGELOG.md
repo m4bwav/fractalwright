@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-20 · 2026-11-14 · release 0.5.0: double-float GPU deep deltas, GPU deep in the explorer
+- because: user request (HANDOFF Next 3), T-20261114-17, L-20261114-11
+- files: scripts/page/deep_df.frag (new), scripts/page/deep.frag (RGBA orbit texture), scripts/fw_gpudeep.py (`frag_source`, `_df`, `uniforms` precision, `SWITCH_DF`, `GpuDeep(precision)`), scripts/fw_serve.py (`orbit_uniforms`, POST `/orbit`, `page_html`), scripts/page/explorer.html (GPU deep draw, exact decimal centre maths), scripts/fw.py (`--gpu-precision`, `VERSION`), tests/test_gpudeep.py, tests/test_serve.py, README.md, skills/fractalwright/SKILL.md (explorer paragraph, metadata), plugin.json, .claude-plugin/plugin.json
+- Version 0.5.0 because 0.4.0 (path tracing) was released while this was built. The GPU perturbation shader now keeps the orbit and every delta as float-float pairs (two-sum, Veltkamp two-product, no fma), converting from pixel units at 1e-20 instead of 1e-30 because the GPU flushes the denormal lo halves. At 512 px escape-count mismatches against the CPU route drop from 3.5-18.7% to 0.09-1.02% for 0.24-0.30 s per call (float32 0.18-0.25 s); float32 stays behind `--gpu-precision float32`. `fw.py serve`: past float32 the page posts the view to the loopback `/orbit` endpoint and draws the server's Decimal orbit with the same shader; pan and zoom keep the centre as exact decimal strings.
+
 ### C-20261114-19 · 2026-11-14 · release 0.4.0: path-traced 3D (`3d render --pt N`)
 - because: user request (HANDOFF Next item 4)
 - files: scripts/page/fractal3d.frag (`pathTrace`, `march`, `occluded`, `skyCol`, `cosineDir`, PCG RNG, `main`), scripts/fw_3d.py (`PT_DEFAULTS`, `normalise`, `uniforms`, page `drawPT`, `Browser3D.render_linear`, `to_srgb8`, `--pt/--bounces/--seed`), tests/test_3d.py, evals/pt_bench.py (new), references/07-3d.md (Path tracer), skills/fractalwright/SKILL.md (3D paragraph, metadata), plugin.json, .claude-plugin/plugin.json, scripts/fw.py (`VERSION`)
