@@ -5,6 +5,10 @@ tracing after Hart 1996). Rendering needs Playwright and system Edge or Chrome; 
 NumPy fallback for 3D (a CPU raymarch at 768x512 with AO and shadows would take minutes per
 frame), and doctor says so. Every remedy is a switch in the recipe so the look gate can test
 each alone: ao, shadow, fog, trap, dof, aa, camera (composed).
+
+Path tracing (`--pt N`, recipe key "pt"): diffuse surfaces, sky dome plus sun, cosine-weighted
+bounces, N samples accumulated over frames in a float framebuffer by additive blending. The random
+numbers come from a PCG hash of (pixel, sample index, seed), so the same recipe gives the same pixels.
 """
 import base64
 import copy
@@ -39,6 +43,9 @@ VIEWS = {
     "menger": {"whole": ([0, 0, 0], [0.75, 0.55, 0.9], 4.0), "close": ([0.6, 0.6, 1.0], [0.25, 0.2, 0.95], 1.0)},
     "hybrid": {"whole": ([0, 0, 0], [0.55, 0.45, 0.7], 3.2), "close": ([0.4, 0.4, 0.4], [0.4, 0.6, 0.7], 1.0)},
 }
+PT_DEFAULTS = {"samples": 64, "bounces": 2, "seed": 1, "spf": 4}
+SUN = [2.2, 2.0, 1.75]
+SKY_ZENITH, SKY_HORIZON = [0.16, 0.22, 0.38], [0.34, 0.36, 0.4]
 LAZY_FOV = 60.0          # vertical degrees: the "default" camera
 COMPOSED_MM = 40.0       # full-frame focal length for the composed camera (35-50 mm band)
 
@@ -107,6 +114,16 @@ def normalise(r):
     bad = set(out["remedies"]) - set(REMEDIES)
     if bad:
         raise ValueError(f"unknown remedies: {', '.join(sorted(bad))}")
+    if out.get("pt"):
+        pt = dict(PT_DEFAULTS)
+        pt.update(out["pt"] if isinstance(out["pt"], dict) else {"samples": int(out["pt"])})
+        pt = {k: int(v) for k, v in pt.items()}
+        if pt["samples"] < 1 or not 0 <= pt["bounces"] <= 7 or not 1 <= pt["spf"] <= 64:
+            raise ValueError("pt: samples >= 1, bounces 0-7, spf 1-64")
+        pt["seed"] &= 0xFFFFFFFF
+        out["pt"] = pt
+    else:
+        out.pop("pt", None)
     out["camera"] = camera_for(out)
     return out
 
@@ -135,6 +152,9 @@ def uniforms(r):
         "ao": int(bool(rem.get("ao"))), "shadow": int(bool(rem.get("shadow"))), "fog": int(bool(rem.get("fog"))),
         "trap": int(bool(rem.get("trap"))), "dof": int(bool(rem.get("dof"))), "aa": int(bool(rem.get("aa") or rem.get("dof"))),
         "aperture": 0.012 * dist, "focus": dist, "fogdens": 0.12 / (dist * dist), "spp": spp,
+        "pt": 1 if r.get("pt") else 0, "sun": SUN, "skyz": SKY_ZENITH, "skyh": SKY_HORIZON,
+        **({"samples": r["pt"]["samples"], "bounces": r["pt"]["bounces"], "seed": r["pt"]["seed"],
+            "spf": r["pt"]["spf"]} if r.get("pt") else {}),
     }
 
 
@@ -168,24 +188,58 @@ let U = {};
 const F = {u_fov:"fov",u_roll:"roll",u_power:"power",u_scale:"scale",u_fudge:"fudge",u_maxdist:"maxdist",u_eps:"eps",
   u_aperture:"aperture",u_focus:"focus",u_fogdens:"fogdens"};
 const I = {u_formula:"formula",u_iter:"iter",u_steps:"steps",u_ao:"ao",u_shadow:"shadow",u_fog:"fog",u_trap:"trap",
-  u_dof:"dof",u_aa:"aa",u_spp:"spp"};
-const V3 = {u_eye:"eye",u_target:"target",u_light:"light",u_bg:"bg",u_fogcol:"fogcol",u_a:"a",u_b:"b",u_cc:"c",u_d:"d"};
+  u_dof:"dof",u_aa:"aa",u_spp:"spp",u_pt:"pt",u_bounces:"bounces"};
+const V3 = {u_eye:"eye",u_target:"target",u_light:"light",u_bg:"bg",u_fogcol:"fogcol",u_a:"a",u_b:"b",u_cc:"c",u_d:"d",
+  u_sun:"sun",u_skyz:"skyz",u_skyh:"skyh"};
+function setAll(u) {
+  const s = (k, f, ...v) => { if (U[k]) gl[f](U[k], ...v); };
+  s("u_size", "uniform2f", u.w, u.h); s("u_jc", "uniform4fv", u.jc);
+  for (const k in F) s(k, "uniform1f", u[F[k]]);
+  for (const k in I) if (u[I[k]] !== undefined) s(k, "uniform1i", u[I[k]]);
+  for (const k in V3) s(k, "uniform3fv", u[V3[k]]);
+  return s;
+}
 window.fw3 = {
   renderer() { const e = gl.getExtension("WEBGL_debug_renderer_info");
     return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); },
   draw(u, strip) {
     cv.width = u.w; cv.height = u.h; gl.viewport(0, 0, u.w, u.h);
-    const s = (k, f, ...v) => { if (U[k]) gl[f](U[k], ...v); };
-    s("u_size", "uniform2f", u.w, u.h); s("u_jc", "uniform4fv", u.jc);
-    for (const k in F) s(k, "uniform1f", u[F[k]]);
-    for (const k in I) s(k, "uniform1i", u[I[k]]);
-    for (const k in V3) s(k, "uniform3fv", u[V3[k]]);
+    setAll(u);
     gl.enable(gl.SCISSOR_TEST);
     for (let y = 0; y < u.h; y += strip) {   // strips keep each GPU submit short (no driver timeout)
       gl.scissor(0, y, u.w, Math.min(strip, u.h - y)); gl.drawArrays(gl.TRIANGLES, 0, 3);
       const px = new Uint8Array(4); gl.readPixels(0, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
     }
     gl.disable(gl.SCISSOR_TEST);
+  },
+  // Path tracer: sum samples/N into an RGBA32F target with additive blending, frame by frame.
+  drawPT(u, strip) {
+    if (!gl.getExtension("EXT_color_buffer_float")) throw new Error("no EXT_color_buffer_float");
+    if (!gl.getExtension("EXT_float_blend")) throw new Error("no EXT_float_blend");
+    cv.width = 1; cv.height = 1;
+    const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA32F, u.w, u.h);
+    const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    gl.viewport(0, 0, u.w, u.h); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+    const s = setAll(u);
+    s("u_seed", "uniform1ui", u.seed >>> 0); s("u_invn", "uniform1f", 1.0 / u.samples);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.enable(gl.SCISSOR_TEST);
+    const px = new Float32Array(4);
+    for (let done = 0; done < u.samples; done += u.spf) {
+      s("u_frame0", "uniform1i", done); s("u_spf", "uniform1i", Math.min(u.spf, u.samples - done));
+      for (let y = 0; y < u.h; y += strip) {
+        gl.scissor(0, y, u.w, Math.min(strip, u.h - y)); gl.drawArrays(gl.TRIANGLES, 0, 3);
+        gl.readPixels(0, y, 1, 1, gl.RGBA, gl.FLOAT, px);
+      }
+    }
+    gl.disable(gl.SCISSOR_TEST); gl.disable(gl.BLEND);
+    const buf = new Float32Array(u.w * u.h * 4);
+    gl.readPixels(0, 0, u.w, u.h, gl.RGBA, gl.FLOAT, buf);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.deleteFramebuffer(fb); gl.deleteTexture(tex);
+    const b8 = new Uint8Array(buf.buffer);
+    let str = ""; for (let i = 0; i < b8.length; i += 32768) str += String.fromCharCode.apply(null, b8.subarray(i, i + 32768));
+    return btoa(str);
   },
   pixels() { const w = cv.width, h = cv.height, buf = new Uint8Array(w * h * 4);
     gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, buf);
@@ -231,10 +285,25 @@ class Browser3D:
             raise RuntimeError("3D shader failed: " + "; ".join(errors)[:400])
         self.renderer = self.page.evaluate("fw3.renderer()")
 
+    def render_linear(self, r):
+        """Path-traced recipe -> (float32 HxWx3 linear radiance, seconds)."""
+        import numpy as np
+        u = uniforms(r)
+        if not u["pt"]:
+            raise ValueError("render_linear needs a recipe with pt")
+        t0 = time.perf_counter()
+        raw = base64.b64decode(self.page.evaluate("([u, s]) => fw3.drawPT(u, s)", [u, 64]))
+        dt = time.perf_counter() - t0
+        a = np.frombuffer(raw, np.float32).reshape(u["h"], u["w"], 4)[::-1, :, :3].copy()
+        return a, dt
+
     def render(self, r):
         """Recipe -> (uint8 HxWx3, seconds)."""
         import numpy as np
         u = uniforms(r)
+        if u["pt"]:
+            lin, dt = self.render_linear(r)
+            return to_srgb8(lin), dt
         strip = 16 if u["spp"] > 4 else 64
         t0 = time.perf_counter()
         self.page.evaluate("([u, s]) => fw3.draw(u, s)", [u, strip])
@@ -249,6 +318,12 @@ class Browser3D:
         finally:
             self.pw.stop()
             self.tmp.cleanup()
+
+
+def to_srgb8(lin):
+    """Linear radiance -> 8-bit with the same 1/2.2 curve the shader's direct route uses."""
+    import numpy as np
+    return (np.clip(lin, 0.0, 1.0) ** (1 / 2.2) * 255.0 + 0.5).astype(np.uint8)
 
 
 def probe():
@@ -352,6 +427,13 @@ def _apply_args(r, a):
             raise SystemExit(f"3d: unknown remedy {k}; one of {', '.join(REMEDIES)}, all, none")
         else:
             rem[k] = True
+    if getattr(a, "pt", None):
+        pt = dict(r.get("pt") or {})
+        pt["samples"] = a.pt
+        for k in ("bounces", "seed"):
+            if getattr(a, k, None) is not None:
+                pt[k] = getattr(a, k)
+        r["pt"] = pt
     return r
 
 
@@ -399,7 +481,8 @@ EXPLAIN_3D = {
           "bound on the distance to the set. Mandelbulb power 8 and quaternion Julia use 0.5 r log r / dr with a "
           "running derivative; Mandelbox |z|/|dr| after box and sphere folds; Menger is the cube minus crosses; "
           "hybrid box-folds before each bulb step (evaluated at p*2.5 so it fits the bulb's frame). Default look: shadow, ao and a composed camera. Remedies as switches: ao, shadow, fog, trap, dof, aa, camera. "
-          "Browser route only (no NumPy fallback). Shipped as a normal route after Mark's 3D gate (2026-11-14).",
+          "--pt N path traces (diffuse, sky + sun, cosine-weighted bounces, seeded PCG RNG, N samples "
+          "accumulated over frames). Browser route only (no NumPy fallback). Shipped as a normal route after Mark's 3D gate (2026-11-14).",
 }
 
 
@@ -413,4 +496,8 @@ def register(sub, explain):
     s.add_argument("--size", help="WxH, default 768x512")
     s.add_argument("--remedy", action="append", help=f"repeatable, added to the default ({', '.join(DEFAULT_REMEDIES)}): "
                    f"{', '.join(REMEDIES)}, all; none clears them first")
+    s.add_argument("--pt", type=int, metavar="N", help="path trace with N samples per pixel (diffuse, sky + sun, "
+                   "cosine-weighted bounces; replaces the shadow/ao look)")
+    s.add_argument("--bounces", type=int, help=f"path tracer indirect bounces (default {PT_DEFAULTS['bounces']})")
+    s.add_argument("--seed", type=int, help=f"path tracer seed (default {PT_DEFAULTS['seed']}); same seed, same pixels")
     s.set_defaults(fn=cmd_3d)

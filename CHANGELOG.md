@@ -4,10 +4,15 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
-### C-20261114-19 - 2026-11-14 - release 0.3.1: worth trims, fixed value evals
+### C-20261114-20 - 2026-11-14 - release 0.4.1: worth trims, fixed value evals
 - because: user request, ai-docs/notes/2026-11-14-worth-heavy.md
 - files: skills/fractalwright/SKILL.md (Step 0, explorer, audio and video paragraphs, metadata), references/13-route-details.md (new), evals/evals.json, evals/check_zoom.py (new), evals/fixtures/coastline-small.png (new), plugin.json, .claude-plugin/plugin.json, scripts/fw.py (`VERSION`)
 - SKILL.md no longer reads evergreen.json or runs doctor on every use (doctor only on a failure, freshness on refresh), says "render the preset as given; tune the look only when asked", and moves browser/GPU perturbation, AI styling and audio mapping detail to references/13-route-details.md (body ~2,385 to ~2,195 tokens). Evals: the zoom case writes to out/ (no unfilled {out}), both value cases get tools and max_turns 30, evals/check_zoom.py grades the mp4 plus animation JSON, and outcome-coastline-small (96x96 Koch, 1.08 decades, verdict "descriptor only") replaces the coastline case the baseline passed. A/B sonnet, 3 runs per arm: with 6/6, without 0/6 (zoom hand-graded from transcripts), cost x1.23.
+
+### C-20261114-19 · 2026-11-14 · release 0.4.0: path-traced 3D (`3d render --pt N`)
+- because: user request (HANDOFF Next item 4)
+- files: scripts/page/fractal3d.frag (`pathTrace`, `march`, `occluded`, `skyCol`, `cosineDir`, PCG RNG, `main`), scripts/fw_3d.py (`PT_DEFAULTS`, `normalise`, `uniforms`, page `drawPT`, `Browser3D.render_linear`, `to_srgb8`, `--pt/--bounces/--seed`), tests/test_3d.py, evals/pt_bench.py (new), references/07-3d.md (Path tracer), skills/fractalwright/SKILL.md (3D paragraph, metadata), plugin.json, .claude-plugin/plugin.json, scripts/fw.py (`VERSION`)
+- `fw.py 3d render --pt N` path traces: diffuse, sky + sun, cosine-weighted bounces, seeded PCG RNG recorded in the recipe, N samples summed in a float framebuffer. Same seed gives identical pixels; noise falls as 1/sqrt(N) (RMSE*sqrt(N) 0.112-0.125); 512 px at 64/256 spp in 0.3-0.6 / 0.5-1.8 s.
 
 ### C-20261114-18 � 2026-11-14 � release 0.3.0: GPU perturbation deep zoom, rd --size N
 - because: user request, T-20261114-16
