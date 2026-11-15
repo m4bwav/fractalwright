@@ -6,8 +6,8 @@ Continue prompt: [plans/fractalwright-continue-prompt.md](plans/fractalwright-co
 
 ## What exists
 
-- Public repo https://github.com/m4bwav/fractalwright, release https://github.com/m4bwav/fractalwright/releases/tag/v0.2.0, installed fractalwright@mark-local (entry in Ai/.claude-plugin/marketplace.json). Wiki 7 pages (written before 0.1.0: does not yet cover the new commands).
-- fw.py commands: doctor, explain (incl. logistic cobweb/bifurcation, coastline), identify, measure, render (+ --deep perturbation to 1e-30 in fw_deep.py; --route browser via Playwright+Edge), palette, sheet, zoom, morph, loop, flashcheck, serve (explorer + /audio, loopback only), export, audio (fw_audio.py, uses musicwright mw.py envelopes >= 0.1.34, NumPy fallback), flame, lsystem, attractor (fw_gen.py), ifs, attractor-search, fif (fw_extra.py), 3d recipe|render|gate (fw_3d.py, browser only; default shadow+ao+camera), rd/ca/tiling/kleinian (fw_neighbours.py). Tests 114/114 (~95 s).
+- Public repo https://github.com/m4bwav/fractalwright, release https://github.com/m4bwav/fractalwright/releases/tag/v0.2.2, installed fractalwright@mark-local (entry in Ai/.claude-plugin/marketplace.json). Wiki 7 pages (written before 0.1.0: does not yet cover the new commands).
+- fw.py commands: doctor, explain (incl. logistic cobweb/bifurcation, coastline), identify, measure, render (+ --deep perturbation to 1e-30 in fw_deep.py; --route browser via Playwright+Edge), palette, sheet, zoom, morph, loop, flashcheck, serve (explorer + /audio, loopback only), export, audio (fw_audio.py, uses musicwright mw.py envelopes >= 0.1.34, NumPy fallback), flame, lsystem, attractor (fw_gen.py), ifs, attractor-search, fif (fw_extra.py), 3d recipe|render|gate (fw_3d.py, browser only; default shadow+ao+camera), rd/ca/tiling/kleinian (fw_neighbours.py). Tests 119/119 (~110 s).
 - ComfyUI hosts come from FW_COMFY_HOSTS (default loopback 8188,8199); add the Mac with FW_COMFY_HOSTS=127.0.0.1:8199,192.168.86.100:8188 (setx was refused by the permission classifier; Mark may set it).
 - Evals: evals/evals.json, T-20261114-10: 13/13 after description fix; baseline 2/2 vs 0/2. Worth lite UNPROVEN (needs heavy A/B), leaning KEEP.
 - Beat everscout `fractal-art`; harvest.json listed by `evergreen.py harvest targets`.
@@ -18,7 +18,7 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 
 ## Waits on Mark
 
-- askwright set ask/fractalwright-ai-look-2026-11-14 (served 2026-11-14): AI vs exact zoom compare + whether AI stays default. Next session: ask.py read it, act, close.
+- No open askwright sets.
 
 - Books: Peitgen, Chaos and Fractals: New Frontiers (#4); Indra's Pearls (#7) now matters for Kleinian sets.
 - Installed musicwright is 0.1.33: the shared clone Ai/musicwright has another session's uncommitted ai-docs/HANDOFF.md, so it was not pulled to 0.1.34.
