@@ -2,34 +2,159 @@
   "skill": "fractalwright",
   "_format": "skill-creator evals.json plus evergreen fields (kind, decoy, evidence, baseline, reference, holdout); extra fields are ignored by skill-creator's runner. reference: what a correct reply says, for the judge to compare against. holdout: true keeps a value case out of evergreen-tune's sight (mark one once there are three or more). Rules: protocol/TESTING.md.",
   "evals": [
-    {"id": "trigger-zoom", "kind": "trigger", "prompt": "render me a mandelbrot zoom video", "expectations": ["the fractalwright skill is invoked"], "runs": 3},
-    {"id": "trigger-identify", "kind": "trigger", "prompt": "what fractal is this picture? (attached: mystery.png)", "expectations": ["the fractalwright skill is invoked"], "runs": 3},
-    {"id": "trigger-visualizer", "kind": "trigger", "prompt": "make a winamp-style visualizer for this song (song.wav)", "expectations": ["the fractalwright skill is invoked"], "runs": 3},
-    {"id": "trigger-coastline", "kind": "trigger", "prompt": "measure the fractal dimension of this coastline image", "expectations": ["the fractalwright skill is invoked"], "runs": 3},
-    {"id": "trigger-flame", "kind": "trigger", "prompt": "make a fractal flame wallpaper", "expectations": ["the fractalwright skill is invoked"], "runs": 3},
-    {"id": "decoy-shader", "kind": "trigger", "decoy": true, "prompt": "write a three.js TSL shader that makes my water plane shimmer", "expectations": ["the fractalwright skill is not invoked"], "runs": 3},
-    {"id": "decoy-master", "kind": "trigger", "decoy": true, "prompt": "master this song to -14 LUFS for Spotify", "expectations": ["the fractalwright skill is not invoked"], "runs": 3},
-    {"id": "decoy-mesh", "kind": "trigger", "decoy": true, "prompt": "make me a 3D model of a dragon from this concept art", "expectations": ["the fractalwright skill is not invoked"], "runs": 3},
-    {"id": "decoy-critique", "kind": "trigger", "decoy": true, "prompt": "critique this abstract painting's composition and colour", "expectations": ["the fractalwright skill is not invoked"], "runs": 3},
-    {"id": "decoy-musicvideo", "kind": "trigger", "decoy": true, "prompt": "make a music video for my song with ComfyUI-generated scenes", "expectations": ["the fractalwright skill is not invoked"], "runs": 3},
-    {"id": "decoy-image", "kind": "trigger", "decoy": true, "prompt": "generate an image of a castle at sunset with ComfyUI", "expectations": ["the fractalwright skill is not invoked"], "runs": 3},
     {
-      "id": "action-zoom-video",
-      "kind": "action",
-      "prompt": "Render a 3 second 320x240 Mandelbrot zoom video into seahorse valley at 12 fps. Put it in {out}.",
-      "expectations": ["an mp4 exists in {out}; ffprobe reports h264, 320x240, duration 3.0 +- 0.2 s", "a recipe JSON beside it holds the animation keyframes, so the video can be redrawn exactly", "a flash check result is reported"],
-      "evidence": {"type": "command", "run": "ffprobe -v error -show_entries stream=codec_name,width,height:format=duration -of csv=p=0 {out}/*.mp4; ls {out}/*.json", "expect": "h264,320,240 and a .json with an animation block"},
-      "baseline": "2026-11-14 run 1 (tester, no skill): wrote its own NumPy + ffmpeg script; mp4 320x240 h264 3.0 s produced; no recipe JSON, no flash check. FAIL on expectations 2 and 3.",
+      "id": "trigger-zoom",
+      "kind": "trigger",
+      "prompt": "render me a mandelbrot zoom video",
+      "expectations": [
+        "the fractalwright skill is invoked"
+      ],
       "runs": 3
     },
     {
-      "id": "outcome-coastline-d",
+      "id": "trigger-identify",
+      "kind": "trigger",
+      "prompt": "what fractal is this picture? (attached: mystery.png)",
+      "expectations": [
+        "the fractalwright skill is invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "trigger-visualizer",
+      "kind": "trigger",
+      "prompt": "make a winamp-style visualizer for this song (song.wav)",
+      "expectations": [
+        "the fractalwright skill is invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "trigger-coastline",
+      "kind": "trigger",
+      "prompt": "measure the fractal dimension of this coastline image",
+      "expectations": [
+        "the fractalwright skill is invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "trigger-flame",
+      "kind": "trigger",
+      "prompt": "make a fractal flame wallpaper",
+      "expectations": [
+        "the fractalwright skill is invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "decoy-shader",
+      "kind": "trigger",
+      "decoy": true,
+      "prompt": "write a three.js TSL shader that makes my water plane shimmer",
+      "expectations": [
+        "the fractalwright skill is not invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "decoy-master",
+      "kind": "trigger",
+      "decoy": true,
+      "prompt": "master this song to -14 LUFS for Spotify",
+      "expectations": [
+        "the fractalwright skill is not invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "decoy-mesh",
+      "kind": "trigger",
+      "decoy": true,
+      "prompt": "make me a 3D model of a dragon from this concept art",
+      "expectations": [
+        "the fractalwright skill is not invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "decoy-critique",
+      "kind": "trigger",
+      "decoy": true,
+      "prompt": "critique this abstract painting's composition and colour",
+      "expectations": [
+        "the fractalwright skill is not invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "decoy-musicvideo",
+      "kind": "trigger",
+      "decoy": true,
+      "prompt": "make a music video for my song with ComfyUI-generated scenes",
+      "expectations": [
+        "the fractalwright skill is not invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "decoy-image",
+      "kind": "trigger",
+      "decoy": true,
+      "prompt": "generate an image of a castle at sunset with ComfyUI",
+      "expectations": [
+        "the fractalwright skill is not invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "action-zoom-video",
+      "kind": "action",
+      "prompt": "Render a 3 second 320x240 Mandelbrot zoom video into seahorse valley at 12 fps. Put it in the folder out/ in the current directory.",
+      "expectations": [
+        "an mp4 exists in out/; ffprobe reports h264, 320x240, duration 3.0 +- 0.2 s",
+        "a recipe JSON beside it holds the animation keyframes, so the video can be redrawn exactly",
+        "regex on the answer: (?i)flash"
+      ],
+      "evidence": {
+        "type": "command",
+        "run": "python evals/check_zoom.py out",
+        "expect": "exit 0 (PASS: h264 320x240 3.0+-0.2 s mp4 plus a .json with an animation block)"
+      },
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Bash"
+      ],
+      "max_turns": 30,
+      "baseline": "2026-11-14 corrected A/B (sonnet, no skill): 3/3 made the mp4, 0/3 wrote a recipe JSON with animation or reported a flash check. FAIL.",
+      "runs": 3
+    },
+    {
+      "id": "outcome-coastline-small",
       "kind": "outcome",
-      "prompt": "What is the fractal dimension of the coastline in evals/fixtures/coastline.png? Give me a number I can trust.",
-      "files": ["evals/fixtures/coastline.png"],
-      "expectations": ["regex on the answer: 1\\.(1[7-9]|2[0-9]|3[0-3])", "the answer gives D between 1.17 and 1.33 (fixture is a Koch curve n 6, D = 1.2619; fw.py measures 1.232)", "the answer gives an error bar or the fit range in decades, and does not claim the number identifies the shape"],
-      "reference": "About 1.23 (box counting over 2 decades), with an error bar of a few hundredths; a descriptor, not an identification.",
-      "baseline": "2026-11-14 run 1 (tester, no skill): own PIL+numpy box count of edge pixels, D 1.36 with a guessed +-0.05; outside 1.17-1.33. FAIL.",
+      "prompt": "What is the fractal dimension of the coastline in evals/fixtures/coastline-small.png? Give me a number I can trust.",
+      "files": [
+        "evals/fixtures/coastline-small.png"
+      ],
+      "expectations": [
+        "regex on the answer: (?i)(descriptor only|(under|less than|below|only|just)( about)? (two|2|1(.[0-9]+)?) decades?|(two|2) decades)",
+        "the answer says the 96x96 image spans only about one decade of box sizes, so D (fw.py: 1.22) is a descriptor, not a trustworthy dimension; it does not present the number as reliable or name the shape from it"
+      ],
+      "reference": "fw.py measure box: D 1.215 over 1.08 decades (fit 2-24 px), verdict 'descriptor only: fit range 1.08 decades is under 2'. The fixture is a Koch curve n 4 at 96x96 (true D 1.2619), but the image is too small to trust any box count; a bigger image is needed.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Bash"
+      ],
+      "max_turns": 30,
+      "baseline": "replaces outcome-coastline-d, which the no-skill arm passed 3/3 on 2026-11-14.",
       "runs": 3
     }
   ]
