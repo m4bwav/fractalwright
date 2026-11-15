@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n Â· date Â· one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-19 - 2026-11-14 - release 0.3.1: worth trims, fixed value evals
+- because: user request, ai-docs/notes/2026-11-14-worth-heavy.md
+- files: skills/fractalwright/SKILL.md (Step 0, explorer, audio and video paragraphs, metadata), references/13-route-details.md (new), evals/evals.json, evals/check_zoom.py (new), evals/fixtures/coastline-small.png (new), plugin.json, .claude-plugin/plugin.json, scripts/fw.py (`VERSION`)
+- SKILL.md no longer reads evergreen.json or runs doctor on every use (doctor only on a failure, freshness on refresh), says "render the preset as given; tune the look only when asked", and moves browser/GPU perturbation, AI styling and audio mapping detail to references/13-route-details.md (body ~2,385 to ~2,195 tokens). Evals: the zoom case writes to out/ (no unfilled {out}), both value cases get tools and max_turns 30, evals/check_zoom.py grades the mp4 plus animation JSON, and outcome-coastline-small (96x96 Koch, 1.08 decades, verdict "descriptor only") replaces the coastline case the baseline passed. A/B sonnet, 3 runs per arm: with 6/6, without 0/6 (zoom hand-graded from transcripts), cost x1.23.
+
 ### C-20261114-18 · 2026-11-14 · release 0.3.0: GPU perturbation deep zoom, rd --size N
 - because: user request, T-20261114-16
 - files: scripts/fw_gpudeep.py (new), scripts/page/deep.frag (new), scripts/fw.py (`cmd_render`, `cmd_zoom`, `write_video`, `_finish_video`, render/zoom `--route` help, `VERSION`), scripts/fw_neighbours.py (`_size`), tests/test_gpudeep.py (new), tests/test_neighbours.py, tests/test_serve.py, README.md, skills/fractalwright/SKILL.md (explorer paragraph, metadata), plugin.json, .claude-plugin/plugin.json
