@@ -24,7 +24,7 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 
 ## Next (Mark's rank: gpudeep, path tracing, mesh, paper checks)
 
-1. Done 2026-11-14 (v0.5.1, PR #22): worth trims + fixed evals, A/B 6/6 vs 0/6 at x1.23 (log). Flashcheck FAIL-at-1-swing/s fixed in v0.6.0: the area rule summed out-of-step cell swings (moving bands); now only cells flashing together count, and the verdict line names the failed rule and its area. Left: re-run the zoom A/B to confirm agents stop retrying.
+1. Done 2026-11-14 (v0.5.1, PR #22): worth trims + fixed evals, A/B 6/6 vs 0/6 at x1.23 (log). Flashcheck FAIL-at-1-swing/s fixed in v0.6.0: the area rule summed out-of-step cell swings (moving bands); now only cells flashing together count, and the verdict line names the failed rule and its area. Re-run 2026-11-15: 3/3 pass, 4-5 turns, no retries (notes/2026-11-15-zoom-ab-rerun.md).
 2. Done 2026-11-14: wiki updated to 0.5.1 (wiki commit ce162a2; GPU deep route, explorer POST /orbit, rd --size N, 3d --pt; outputs check 35/35, live 12/12).
 3. Done 2026-11-15: wiki at 0.8.0 (commit 0291dc3). Left: add 0.9.0 --wall-mm to the wiki Neighbours-and-3D page.
 7. Done in v0.5.0 (PR #23): double-float GPU deep deltas (default; 0.09-1.02% mismatches) and GPU deep in the serve explorer (POST /orbit). Left: the explorer redraws only after each orbit round trip (no progressive preview while panning deep).
