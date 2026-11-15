@@ -11,7 +11,7 @@ Entry shape: `### T-20261114-10 · 2026-11-14 · unittest (tests/) · Windows, P
 - Gate: 54 renders at 768x512 in 3.44 s total GPU plus readback (0.01-0.11 s each).
 - led to: C-20261114-10
 
-### T-20261114-17 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2, Playwright + Edge headless (ANGLE D3D11, RTX 5060 Ti) · 135/135 in 125 s (7 new)
+### T-20261114-17 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2, Playwright + Edge headless (ANGLE D3D11, RTX 5060 Ti) · 135/135 in 125 s (7 new); 140/140 in 132 s after rebase on 0.4.0 (path tracing)
 - GPU deep vs CPU fw_deep, 512x512, escape-count mismatch % (largest blob), float32 -> double-float: 1e-6 3.46 (24) -> 0.09 (2); 1e-10 8.27 (26) -> 0.24 (2); 1e-20 12.68 (24) -> 0.38 (2); 1e-30 8.67 (24) -> 0.24 (2); 1e-50 11.87 (30) -> 0.37 (2); 1e-60 0 -> 0 (DEEP50 centre at 1e-60, 5000 it: CPU and GPU agree everywhere); Julia 1e-30 18.70 (84) -> 1.02 (3). Per call (orbit, upload, draw, readback): float32 0.18-0.25 s (draw 6-16 ms), df 0.24-0.30 s (draw 30-89 ms); CPU 10-55 s.
 - Compiler traps on ANGLE D3D11: with only a `* u_one` guard, two-sum returned error 0 (the compiler rewrote (s - a) as b) and the product error terms were contracted, so df gave 8-19% like float32. A `fence()` (XOR of the float bits with a uniform 0u) on each rounded sum and product fixed it: probe errors exact (dmul rel err 7e-16).
 - Second cause: df deltas below about 1e-30 lose their lo half (denormal flush), so the scaled phase now converts at 1e-20 (`SWITCH_DF`), capped by `W_MAX` 1e33 pixel units. At 64 px this took 1e-30 from 3.52% to 0.27% and Julia from 9.55% to 1.03%.
