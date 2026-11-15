@@ -262,11 +262,25 @@ def write_stl(path, verts, faces):
         fh.write(rec.tobytes())
 
 
-def build(formula, prm, res=200, size_mm=60.0, iso=None, engine="auto"):
+def wall_iso(F, h, iso, size_mm, wall_mm):
+    """Offset for --wall-mm: mesh DE = t instead of DE = 0, which grows every feature by 2t (model units).
+    t = wall/2 in millimetres converted at the final scale; the extent E grows by 2t too, so solve
+    t = wall * (E + 2t) / (2 * size) for t."""
+    m = np.argwhere(F < iso)
+    if not len(m):
+        return iso
+    E = float((m.max(0) - m.min(0)).max()) * h
+    t = wall_mm * E / (2 * (size_mm - wall_mm))
+    return max(iso, t)
+
+
+def build(formula, prm, res=200, size_mm=60.0, iso=None, engine="auto", wall_mm=None):
     t0 = time.time()
     bound = BOUNDS[formula]
     F, h = sample(formula, prm, res, bound)
     iso = 0.5 * h if iso is None else iso
+    if wall_mm:
+        iso = wall_iso(F, h, iso, size_mm, wall_mm)
     inside = F < iso
     main, ncomp = keep_main_solid(inside, F)
     main = fill_voids(main)
@@ -295,7 +309,7 @@ def build(formula, prm, res=200, size_mm=60.0, iso=None, engine="auto"):
     s = size_mm / ext.max()
     verts = (verts - verts.min(0)) * s
     chk = edge_check(faces)
-    info = {"formula": formula, "params": prm, "grid": res, "voxel_mm": round(h * s, 4), "iso": iso,
+    info = {"formula": formula, "params": prm, "grid": res, "voxel_mm": round(h * s, 4), "iso": round(float(iso), 6), "wall_mm": wall_mm,
             "engine": used, "islands_dropped": max(0, ncomp - 1), "shells_dropped": int(nshell_before - 1), "triangles": int(len(faces)),
             "vertices": int(len(verts)), "size_mm": [round(float(v), 2) for v in verts.max(0)],
             "volume_mm3": round(volume(verts, faces), 1), "shells": components(len(verts), faces), **chk,
@@ -311,7 +325,8 @@ def cmd_mesh(a, recipe):
     elif formula in MESH_ITER:
         prm["iter"] = min(prm.get("iter", 99), MESH_ITER[formula])
     out = Path(a.out or f"{formula}.stl")
-    verts, faces, info = build(formula, prm, res=a.res or MESH_RES.get(formula, 200), size_mm=a.size_mm or 60.0, engine=a.engine)
+    verts, faces, info = build(formula, prm, res=a.res or MESH_RES.get(formula, 200), size_mm=a.size_mm or 60.0,
+                               engine=a.engine, wall_mm=getattr(a, "wall_mm", None))
     write_stl(out, verts, faces)
     side = out.with_suffix(".json")
     side.write_text(json.dumps({"kind": "3d-mesh", "stl": out.name, **info}, indent=2) + "\n", encoding="utf-8")

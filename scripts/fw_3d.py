@@ -512,6 +512,8 @@ def register(sub, explain):
     s.add_argument("--res", type=int, help="mesh: grid points per side (default 200)")
     s.add_argument("--size-mm", type=float, help="mesh: longest side in millimetres (default 60)")
     s.add_argument("--iter", type=int, help="mesh: formula iterations (Menger defaults to level 3 for printing)")
+    s.add_argument("--wall-mm", type=float, help="mesh: thicken thin parts so printed walls reach this many mm "
+                   "(meshes the offset surface DE = wall/2, e.g. 0.9 for FDM)")
     s.add_argument("--engine", choices=["auto", "skimage", "numpy"], default="auto",
                    help="mesh: marching cubes from scikit-image if installed (auto), or NumPy marching tetrahedra")
     s.set_defaults(fn=cmd_3d)

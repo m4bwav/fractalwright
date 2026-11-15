@@ -246,6 +246,16 @@ class MeshTests(unittest.TestCase):
             self.skipTest("scikit-image not installed")
         self._check("mandelbulb", "skimage", 48)
 
+    def test_wall_mm_offsets_surface(self):
+        import fw_mesh
+        prm = dict(fw_3d.FORMULA_DEFAULTS["mandelbulb"])
+        _, _, base = fw_mesh.build("mandelbulb", prm, res=48, size_mm=40.0, engine="numpy")
+        _, _, info = fw_mesh.build("mandelbulb", prm, res=48, size_mm=40.0, engine="numpy", wall_mm=2.5)
+        self.assertTrue(info["watertight"], info)
+        self.assertEqual(info["shells"], 1, info)
+        self.assertGreater(info["iso"], base["iso"])
+        self.assertGreater(info["volume_mm3"], base["volume_mm3"])
+
     def test_stl_roundtrip(self):
         import tempfile
         import fw_mesh
