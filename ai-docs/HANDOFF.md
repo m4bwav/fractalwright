@@ -25,7 +25,7 @@ Name fractalwright; public; ALL neighbours in (reaction-diffusion, cellular auto
 
 1. Worth heavy run done: KEEP with trims (ai-docs/notes/2026-11-14-worth-heavy.md). Do on a branch: fix evals/evals.json (fill {out}, tools + max_turns on value cases, evals/check_zoom.py checker, harder case for coastline); SKILL.md trims (drop per-use evergreen.json read + doctor run, add "render the preset as given; tune only when asked", move GPU/AI/audio detail to references/); re-run the fixed A/B.
 2. Wiki to 0.3.0 (GPU deep route, rd --size N).
-3. GPU deep follow-ups: double-float deltas (float32 gives 3.5-19% escape-count mismatches vs CPU, no blobs); GPU deep in the serve explorer.
+3. Done in v0.5.0 (PR #23): double-float GPU deep deltas (default; 0.09-1.02% mismatches) and GPU deep in the serve explorer (POST /orbit). Left: install 0.5.0 locally, wiki pages for 0.4.0/0.5.0; the explorer redraws only after each orbit round trip (no progressive preview while panning deep).
 4. Path-traced 3D: done in 0.4.0 (`3d render --pt N`, references/07-3d.md "Path tracer"; sheet and judge in Ai/fractalwright-renders/pathtrace-2026-11-14).
 5. 3D fractal to printable mesh (polywright-print).
 6. Parameter checks against papers: symmetric icons vs Field and Golubitsky, multi-scroll attractor, Grandma's recipe vs Indra's Pearls (when book arrives), DFS word enumeration, series approximation, page rotation and stop palettes.
