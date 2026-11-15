@@ -229,6 +229,50 @@ class BrowserTests(unittest.TestCase):
             self.assertTrue(np.array_equal(a, c), f)
             self.assertGreater(a.std(), 5, f)        # not a blank frame
 
+    def _pt(self, n, seed=1, f="mandelbulb"):
+        return fw_3d.normalise({"formula": f, "size": {"w": 96, "h": 96}, "pt": {"samples": n, "seed": seed}})
+
+    def test_pt_same_seed_same_pixels(self):
+        a, _ = self.b.render(self._pt(8))
+        self.b.render(self._pt(4, seed=9))                    # disturb state
+        c, _ = self.b.render(json.loads(json.dumps(self._pt(8))))
+        d, _ = self.b.render(self._pt(8, seed=2))
+        self.assertTrue(np.array_equal(a, c))
+        self.assertFalse(np.array_equal(a, d))
+        self.assertGreater(a.std(), 5)
+
+    def test_pt_noise_falls_like_inverse_sqrt(self):
+        # 2026-11-14 at 512 px: rmse*sqrt(N) 0.112, 0.113, 0.116, 0.125 for N = 4..256 (evals/pt_bench.py).
+        ref, _ = self.b.render_linear(self._pt(512, seed=3))
+        e = {}
+        for n in (4, 64):
+            img, _ = self.b.render_linear(self._pt(n, seed=11))
+            e[n] = float(np.sqrt(((np.clip(img, 0, 4) - np.clip(ref, 0, 4)) ** 2).mean()))
+        ratio = e[4] / e[64]                                   # ideal sqrt(16) = 4
+        self.assertGreater(ratio, 2.8)
+        self.assertLess(ratio, 5.0)
+
+
+class PTRecipeTests(unittest.TestCase):
+    def test_pt_defaults_recorded(self):
+        r = fw_3d.normalise({"formula": "menger", "pt": 32})
+        self.assertEqual(r["pt"], {"samples": 32, "bounces": 2, "seed": 1, "spf": 4})
+        self.assertEqual(fw_3d.normalise(r), r)
+        self.assertNotIn("pt", fw_3d.normalise({"formula": "menger"}))
+        self.assertEqual(fw_3d.uniforms(r)["pt"], 1)
+
+    def test_pt_bad_values(self):
+        with self.assertRaises(ValueError):
+            fw_3d.normalise({"pt": {"samples": 0}})
+        with self.assertRaises(ValueError):
+            fw_3d.normalise({"pt": {"samples": 4, "bounces": 9}})
+
+    def test_pt_cli_args(self):
+        import argparse
+        a = argparse.Namespace(view=None, size=None, remedy=None, pt=128, bounces=1, seed=5)
+        r = fw_3d.normalise(fw_3d._apply_args(fw_3d.default_recipe("quatjulia"), a))
+        self.assertEqual((r["pt"]["samples"], r["pt"]["bounces"], r["pt"]["seed"]), (128, 1, 5))
+
 
 if __name__ == "__main__":
     unittest.main()
