@@ -21,10 +21,19 @@ import fw
 import fw_deep
 
 FRAG = Path(__file__).resolve().parent / "page" / "deep.frag"
+FRAG_DF = Path(__file__).resolve().parent / "page" / "deep_df.frag"  # double-float deltas
+PRECISIONS = ("df", "float32")
+DEFAULT_PRECISION = "df"
 GPU_MIN_WIDTH = Decimal("1e-60")
 SWITCH = 1e-30   # |dz| at which the scaled delta converts to an absolute one
+# Double-float: the lo half of a delta near 1e-30 is near 1e-37 and the GPU flushes float32
+# denormals, so absolute df deltas only keep ~48 bits above about 1e-24. Convert at 1e-20, unless
+# the pixel-unit delta would then pass W_MAX (4097 * w must not overflow float32 in the split).
+SWITCH_DF = 1e-20
+W_MAX = 1e33
 TEX_W = 2048
 TILE_ROWS = 128  # rows per draw call, keeps each call well under the Windows GPU timeout
+TILE_ROWS_DF = 32  # double-float costs several times more per pixel
 
 PAGE = """<!doctype html><meta charset="utf-8"><canvas id="cv" width="8" height="8"></canvas>
 <script id="fragsrc" type="x-shader/x-fragment">/*FRAG*/</script>
@@ -48,11 +57,11 @@ window.fwdeep = {
   renderer() { const e = gl.getExtension("WEBGL_debug_renderer_info"); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : "?"; },
   draw(u) {
     const t0 = performance.now();
-    const orb = b64f(u.orbit), th = Math.ceil(orb.length / 2 / u.tw);
-    const pad = new Float32Array(u.tw * th * 2); pad.set(orb);
+    const orb = b64f(u.orbit), th = Math.ceil(orb.length / 4 / u.tw);
+    const pad = new Float32Array(u.tw * th * 4); pad.set(orb);
     const tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, u.tw, th, 0, gl.RG, gl.FLOAT, pad);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, u.tw, th, 0, gl.RGBA, gl.FLOAT, pad);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     const out = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, out);
     gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA32UI, u.w, u.h);
@@ -64,6 +73,9 @@ window.fwdeep = {
     gl.uniform1i(L("u_maxit"), u.maxit); gl.uniform1f(L("u_bail2"), u.bail2);
     gl.uniform1f(L("u_s1"), u.s1); gl.uniform1f(L("u_s2"), u.s2); gl.uniform1f(L("u_S"), u.S); gl.uniform1f(L("u_T"), u.T);
     gl.uniform2f(L("u_z0"), u.z0[0], u.z0[1]);
+    gl.uniform2f(L("u_s1d"), u.s1d[0], u.s1d[1]); gl.uniform2f(L("u_Sd"), u.Sd[0], u.Sd[1]);
+    gl.uniform4f(L("u_z0d"), u.z0d[0], u.z0d[1], u.z0d[2], u.z0d[3]);
+    gl.uniform1f(L("u_one"), 1.0); gl.uniform1f(L("u_split"), 4097.0); gl.uniform1ui(L("u_zero"), 0);
     gl.viewport(0, 0, u.w, u.h); gl.enable(gl.SCISSOR_TEST);
     const buf = new Uint32Array(u.w * u.h * 4);
     for (let y = 0; y < u.h; y += u.tile) {
@@ -88,8 +100,20 @@ def supported(r):
             and Decimal(r["view"]["width"]) >= GPU_MIN_WIDTH)
 
 
-def page_html():
-    return PAGE.replace("/*FRAG*/", FRAG.read_text(encoding="utf-8"))
+def page_html(precision=DEFAULT_PRECISION):
+    return PAGE.replace("/*FRAG*/", frag_source(precision))
+
+
+def frag_source(precision=DEFAULT_PRECISION):
+    if precision not in PRECISIONS:
+        raise ValueError(f"precision must be one of {PRECISIONS}")
+    return (FRAG_DF if precision == "df" else FRAG).read_text(encoding="utf-8")
+
+
+def _df(x):
+    """float64 -> (hi, lo) float32 pair."""
+    hi = np.float32(x)
+    return float(hi), float(np.float32(x - float(hi)))
 
 
 def _pow2_split(s):
@@ -100,7 +124,7 @@ def _pow2_split(s):
     return float(np.float32(m * 2.0 ** a)), float(2.0 ** (e - a))
 
 
-def uniforms(r):
+def uniforms(r, precision=DEFAULT_PRECISION):
     """Normalised recipe -> uniform dict plus the orbit (base64 float32 pairs)."""
     ss = int(r["size"].get("supersample", 1) or 1)
     W, H = r["size"]["w"] * ss, r["size"]["h"] * ss
@@ -113,24 +137,32 @@ def uniforms(r):
         Zr, Zi = fw_deep.reference_orbit(p["c"][0], p["c"][1], maxit, R2, fw_deep._prec(width), z0=(cx, cy))
     else:
         Zr, Zi = fw_deep.reference_orbit(cx, cy, maxit, R2, fw_deep._prec(width))
-    orb = np.empty(2 * len(Zr), np.float32)
-    orb[0::2], orb[1::2] = Zr, Zi
+    orb = np.empty(4 * len(Zr), np.float32)  # RGBA: Zr.hi, Zi.hi, Zr.lo, Zi.lo
+    orb[0::4], orb[1::4] = Zr, Zi
+    orb[2::4] = Zr - orb[0::4].astype(np.float64)
+    orb[3::4] = Zi - orb[1::4].astype(np.float64)
     s = float(width / W)
     s1, s2 = _pow2_split(s)
+    s1d = _df(s / s2)  # s1 with its rounding error, s2 exact power of two
     T = SWITCH / s
+    if precision == "df":
+        T = max(T, min(SWITCH_DF / s, W_MAX))
     if T > 3e38:
         raise ValueError(f"width {width} below the GPU scaled-delta range ({GPU_MIN_WIDTH})")
     return {"w": W, "h": H, "rot": math.radians(float(r["view"].get("rotation_deg", 0) or 0)),
             "tw": TEX_W, "last": len(Zr) - 1, "julia": 1 if julia else 0, "maxit": maxit, "bail2": R2,
             "s1": s1, "s2": s2, "S": float(np.float32(s)), "T": min(T, 3e38) if T > 1 else 0.0,
-            "z0": [float(Zr[0]), float(Zi[0])], "tile": TILE_ROWS,
+            "z0": [float(Zr[0]), float(Zi[0])], "tile": TILE_ROWS_DF if precision == "df" else TILE_ROWS,
+            "s1d": list(s1d), "Sd": list(_df(s)) if s > 1.2e-38 else [0.0, 0.0],
+            "z0d": [*_df(Zr[0]), *_df(Zi[0])], "precision": precision,
             "orbit": base64.b64encode(orb.tobytes()).decode("ascii")}
 
 
 class GpuDeep:
     """Headless Edge (or Chrome) with the deep page loaded; reuse for many frames."""
 
-    def __init__(self):
+    def __init__(self, precision=DEFAULT_PRECISION):
+        self.precision = precision
         from playwright.sync_api import sync_playwright
         import fw_serve
         self.pw = sync_playwright().start()
@@ -147,7 +179,7 @@ class GpuDeep:
             raise RuntimeError(f"no msedge or chrome channel: {last}")
         self.tmp = tempfile.TemporaryDirectory()
         page = Path(self.tmp.name) / "deep.html"
-        page.write_text(page_html(), encoding="utf-8")
+        page.write_text(page_html(precision), encoding="utf-8")
         self.page = self.b.new_page()
         errs = []
         self.page.on("pageerror", lambda e: errs.append(str(e)))
@@ -162,7 +194,7 @@ class GpuDeep:
 
     def escape(self, r):
         """Normalised recipe -> (nu, inside, n, rebased) at supersampled size, top row first."""
-        u = uniforms(r)
+        u = uniforms(r, self.precision)
         res = self.page.evaluate("u => fwdeep.draw(u)", u)
         self.last_ms = float(res["ms"])
         a = np.frombuffer(base64.b64decode(res["data"]), np.uint32).reshape(u["h"], u["w"], 4)[::-1]
@@ -178,7 +210,7 @@ class GpuDeep:
         r = fw.normalise(r)
         nu, inside, _, reb = self.escape(r)
         if stats is not None:
-            stats.update(rebased_pixels=int(reb.sum()), gpu_ms=self.last_ms, renderer=self.renderer)
+            stats.update(rebased_pixels=int(reb.sum()), gpu_ms=self.last_ms, renderer=self.renderer, precision=self.precision)
         rgb = fw.colour(r, nu, inside)
         ss = int(r["size"].get("supersample", 1) or 1)
         if ss > 1:
@@ -194,8 +226,8 @@ class GpuDeep:
             self.tmp.cleanup()
 
 
-def render_array(r, stats=None):
-    g = GpuDeep()
+def render_array(r, stats=None, precision=DEFAULT_PRECISION):
+    g = GpuDeep(precision)
     try:
         return g.render(r, stats)
     finally:

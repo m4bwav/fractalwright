@@ -15,6 +15,7 @@ import sys
 import tempfile
 import threading
 import unittest
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -37,6 +38,9 @@ BROWSER_BAR = 1.0   # design.md pass bar for any GPU route
 # NumPy float64 by 2.63 on this view, the GPU by 2.73: a precision limit, not a shader error.
 SHIP_BAR = 3.0
 PAGE_BAR = 1.5
+# 0.5.0 GPU deep in the explorer: Mandelbrot 1e-30 (tests/test_deep.py DEEP30)
+DEEP_HASH = ("f=mandelbrot&cx=-0.74365672019314946715627157509078125&cy=0.13182842578661420159801990936546875"
+             "&w=1e-30&rot=0&it=3000&bail=256&den=0.02&ph=0&pa=0.5,0.5,0.5,0.5,0.5,0.5,1,1,1,0,0.33,0.67&sz=64x48")
 
 
 def _browser_ok():
@@ -111,6 +115,29 @@ class ServerTests(unittest.TestCase):
             bad = subprocess.run([sys.executable, str(ROOT / "scripts" / "fw.py"), "export", "#f=nope&cx=0"],
                                  capture_output=True, text=True, timeout=60)
             self.assertEqual(bad.returncode, 2)
+
+    def test_orbit_endpoint(self):
+        with tempfile.TemporaryDirectory() as d:
+            srv = fw_serve.make_server("127.0.0.1", 0, d)
+            threading.Thread(target=srv.serve_forever, daemon=True).start()
+            base = f"http://127.0.0.1:{srv.server_address[1]}"
+            try:
+                def post(h):
+                    req = urllib.request.Request(base + "/orbit", json.dumps({"hash": h}).encode(),
+                                                 {"Content-Type": "application/json"})
+                    return urllib.request.urlopen(req, timeout=60)
+                u = json.loads(post(DEEP_HASH).read())
+                self.assertEqual((u["w"], u["h"], u["precision"], u["julia"]), (64, 48, "df", 0))
+                self.assertEqual(len(base64.b64decode(u["orbit"])), 16 * (u["last"] + 1))
+                for bad in (DEEP_HASH.replace("f=mandelbrot", "f=tricorn"), DEEP_HASH.replace("w=1e-30", "w=1e-70"),
+                            DEEP_HASH.replace("it=3000", "it=900000")):
+                    with self.assertRaises(urllib.error.HTTPError) as cm:
+                        post(bad)
+                    self.assertEqual(cm.exception.code, 400)
+            finally:
+                srv.shutdown()
+                srv.server_close()
+        self.assertNotIn("/*DEEPFRAG*/", fw_serve.page_html())
 
     def test_precision_routing(self):
         r = fw.normalise(fw_serve.hash_to_recipe(FULL["mandelbrot"]))
@@ -188,6 +215,53 @@ class BrowserTests(unittest.TestCase):
                 pw.stop()
                 srv.shutdown()
                 srv.server_close()
+
+    def test_page_gpu_deep(self):
+        from decimal import Decimal, getcontext
+        from PIL import Image
+        from playwright.sync_api import sync_playwright
+        import fw_gpudeep
+        with tempfile.TemporaryDirectory() as d:
+            srv = fw_serve.make_server("127.0.0.1", 0, d)
+            threading.Thread(target=srv.serve_forever, daemon=True).start()
+            pw = sync_playwright().start()
+            try:
+                br = None
+                for ch in ("msedge", "chrome"):
+                    try:
+                        br = pw.chromium.launch(channel=ch, headless=True, args=fw_serve.BROWSER_ARGS)
+                        break
+                    except Exception:  # noqa: BLE001
+                        pass
+                page = br.new_page()
+                page.goto(f"http://127.0.0.1:{srv.server_address[1]}/#" + DEEP_HASH)
+                page.wait_for_function("window.fw !== undefined && fw.deep.draws >= 1 && !fw.deep.busy", timeout=60000)
+                self.assertTrue(page.evaluate("fw.deep.ok"))
+                self.assertIn("GPU deep", page.evaluate("document.getElementById('prec').textContent"))
+                canvas = page.evaluate("document.getElementById('cv').toDataURL('image/png')")
+                shot = np.asarray(Image.open(io.BytesIO(base64.b64decode(canvas.split(",", 1)[1]))).convert("RGB"))
+                # zoom by script: the centre keeps exact decimal digits and the deep shader redraws
+                page.evaluate("fw.zoomAt(10, 20, 0.5); fw.setHash('#' + fw.hashOf())")
+                page.wait_for_function("fw.deep.draws >= 2 && !fw.deep.busy && fw.deep.hash === fw.hashOf()", timeout=60000)
+                st = page.evaluate("fw.state")
+                br.close()
+            finally:
+                pw.stop()
+                srv.shutdown()
+                srv.server_close()
+        ref = fw_gpudeep.render_array(fw.normalise(fw_serve.hash_to_recipe(DEEP_HASH)))
+        self.assertEqual(shot.shape, ref.shape)
+        dd = diff(shot, ref)
+        print(f" page GPU deep vs fw_gpudeep: {dd:.3f}", end="")
+        self.assertLess(dd, 0.5)
+        getcontext().prec = 80
+        w = Decimal("1e-30")
+        ex = Decimal("-0.74365672019314946715627157509078125") + (Decimal(10) + Decimal("0.5") - 32) * w / 64 * Decimal("0.5")
+        ey = Decimal("0.13182842578661420159801990936546875") + (24 - Decimal(20) - Decimal("0.5")) * w / 64 * Decimal("0.5")
+        self.assertLess(abs(Decimal(st["cx"]) - ex), w * Decimal("1e-12"))
+        self.assertLess(abs(Decimal(st["cy"]) - ey), w * Decimal("1e-12"))
+        self.assertEqual(Decimal(st["w"]), Decimal("5e-31"))
+        getcontext().prec = 28
 
 
 STROBE_JS = """() => {
