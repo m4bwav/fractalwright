@@ -205,6 +205,44 @@ def _browser():
     except Exception:  # noqa: BLE001
         return None
 
+class MeshTests(unittest.TestCase):
+    """fw.py 3d mesh: watertight single solid in millimetres, with and without scikit-image."""
+
+    def _check(self, formula, engine, res):
+        import fw_mesh
+        prm = dict(fw_3d.FORMULA_DEFAULTS[formula])
+        prm["iter"] = min(prm["iter"], fw_mesh.MESH_ITER.get(formula, 99))
+        verts, faces, info = fw_mesh.build(formula, prm, res=res, size_mm=40.0, engine=engine)
+        self.assertTrue(info["watertight"], info)
+        self.assertEqual(info["shells"], 1, info)
+        self.assertGreater(info["volume_mm3"], 0, info)          # outward normals
+        self.assertAlmostEqual(max(info["size_mm"]), 40.0, places=1)
+        self.assertAlmostEqual(float(verts.min()), 0.0, places=5)
+        return verts, faces, info
+
+    def test_numpy_engine_bulb_and_menger(self):
+        self._check("mandelbulb", "numpy", 48)
+        _, _, info = self._check("menger", "numpy", 56)
+        self.assertEqual(info["engine"], "numpy")
+
+    def test_skimage_engine_if_present(self):
+        try:
+            import skimage  # noqa: F401
+        except ImportError:
+            self.skipTest("scikit-image not installed")
+        self._check("mandelbulb", "skimage", 48)
+
+    def test_stl_roundtrip(self):
+        import tempfile
+        import fw_mesh
+        verts, faces, _ = self._check("quatjulia", "numpy", 40)
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "m.stl"
+            fw_mesh.write_stl(p, verts, faces)
+            b = p.read_bytes()
+            self.assertEqual(len(b), 84 + 50 * len(faces))
+            self.assertEqual(int.from_bytes(b[80:84], "little"), len(faces))
+
 
 class BrowserTests(unittest.TestCase):
     @classmethod

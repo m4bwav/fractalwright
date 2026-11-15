@@ -434,8 +434,7 @@ def cmd_audio(a):
     print(f"wrote {out}, {rp} and {n} frames")
     for s in notes:
         print("note:", s)
-    print(f"flash limiter damped {lim.damped} frames; flashcheck: {fc['max_swings_per_s']} swings/s "
-          f"(limit {fw.FLASH_MAX_PER_S}) {'pass' if fc['pass'] else 'FAIL'}")
+    print(f"flash limiter damped {lim.damped} frames; " + fw.flash_line(fc))
     return 0 if fc["pass"] else 4
 
 

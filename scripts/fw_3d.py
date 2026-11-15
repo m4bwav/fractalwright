@@ -468,6 +468,9 @@ def cmd_3d(a):
         rec.write_text(json.dumps(r, indent=2) + "\n", encoding="utf-8")
         print(f"wrote {out} and {rec} ({dt:.2f} s)")
         return 0
+    if a.action == "mesh":
+        import fw_mesh
+        return fw_mesh.cmd_mesh(a, normalise(_load(a.target or "mandelbulb")))
     if a.action == "gate":
         w, h = (a.size or "768x512").lower().split("x")
         log = run_gate(a.out or "gate3d", (int(w), int(h)))
@@ -482,14 +485,14 @@ EXPLAIN_3D = {
           "running derivative; Mandelbox |z|/|dr| after box and sphere folds; Menger is the cube minus crosses; "
           "hybrid box-folds before each bulb step (evaluated at p*2.5 so it fits the bulb's frame). Default look: shadow, ao and a composed camera. Remedies as switches: ao, shadow, fog, trap, dof, aa, camera. "
           "--pt N path traces (diffuse, sky + sun, cosine-weighted bounces, seeded PCG RNG, N samples "
-          "accumulated over frames). Browser route only (no NumPy fallback). Shipped as a normal route after Mark's 3D gate (2026-11-14).",
+          "accumulated over frames). Browser route only (no NumPy fallback), except `3d mesh`, which samples the same DEs in NumPy and writes a watertight STL in millimetres. Shipped as a normal route after Mark's 3D gate (2026-11-14).",
 }
 
 
 def register(sub, explain):
     explain.update(EXPLAIN_3D)
-    s = sub.add_parser("3d", help="3D DE fractals (browser route): recipe, render, gate")
-    s.add_argument("action", choices=["recipe", "render", "gate"])
+    s = sub.add_parser("3d", help="3D DE fractals: recipe, render, gate (browser route); mesh (NumPy, printable STL)")
+    s.add_argument("action", choices=["recipe", "render", "gate", "mesh"])
     s.add_argument("target", nargs="?", help=f"recipe.json or a formula ({', '.join(FORMULAS3D)})")
     s.add_argument("-o", "--out")
     s.add_argument("--view", help="whole or close (the formula's named views)")
@@ -500,4 +503,9 @@ def register(sub, explain):
                    "cosine-weighted bounces; replaces the shadow/ao look)")
     s.add_argument("--bounces", type=int, help=f"path tracer indirect bounces (default {PT_DEFAULTS['bounces']})")
     s.add_argument("--seed", type=int, help=f"path tracer seed (default {PT_DEFAULTS['seed']}); same seed, same pixels")
+    s.add_argument("--res", type=int, help="mesh: grid points per side (default 200)")
+    s.add_argument("--size-mm", type=float, help="mesh: longest side in millimetres (default 60)")
+    s.add_argument("--iter", type=int, help="mesh: formula iterations (Menger defaults to level 3 for printing)")
+    s.add_argument("--engine", choices=["auto", "skimage", "numpy"], default="auto",
+                   help="mesh: marching cubes from scikit-image if installed (auto), or NumPy marching tetrahedra")
     s.set_defaults(fn=cmd_3d)
