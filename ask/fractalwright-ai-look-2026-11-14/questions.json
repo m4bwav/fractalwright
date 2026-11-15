@@ -1,0 +1,95 @@
+{
+  "askwright": 1,
+  "id": "fractalwright-ai-look-2026-11-14",
+  "title": "fractalwright: AI-styled video look",
+  "context": "",
+  "asked_by": "fractalwright session 4",
+  "product": "Claude Code",
+  "session": "",
+  "working_dir": "D:\\m4bwa\\Claude\\Projects\\Ai\\fractalwright",
+  "media_roots": [
+    "D:/ComfyUI/output/video/fractalwright_aipass"
+  ],
+  "questions": [
+    {
+      "id": "look",
+      "kind": "compare",
+      "title": "AI pass vs exact zoom",
+      "question": "Which version of the 4-second Mandelbrot zoom looks better to you?",
+      "why": "AI styling is on by default for fractalwright videos; if the plain render wins, the default flips to off (--ai becomes opt-in).",
+      "look_for": [
+        "Detail along the set's edge: does the AI version add texture you like, or smear it?",
+        "Flicker between frames from 0.0 s (the clip loops 4 times)",
+        "Colour: does the palette stay the same?"
+      ],
+      "media": [
+        {
+          "src": "pair_ai_left.mp4",
+          "start": 0
+        }
+      ],
+      "sides": {
+        "left": "ai",
+        "right": "exact",
+        "randomized": true
+      },
+      "options": [
+        {
+          "id": "ai",
+          "label": "AI-styled version (Z-Image img2img, denoise 0.3)"
+        },
+        {
+          "id": "exact",
+          "label": "Exact maths render"
+        },
+        {
+          "id": "tie",
+          "label": "About the same"
+        }
+      ],
+      "guess": {
+        "option": "exact",
+        "why": "At 512 px and denoise 0.3 the pass mostly adds frame flicker (raw flicker 54 vs exact 69 smoothed) without new structure.",
+        "confidence": "low"
+      },
+      "status": "closed",
+      "created": "2026-11-14T16:11:26-06:00",
+      "updated": "2026-11-14T20:09:32-06:00"
+    },
+    {
+      "id": "default",
+      "kind": "choice",
+      "title": "Default for video",
+      "question": "Should AI styling stay on by default for fractalwright zoom, morph, loop and audio videos?",
+      "why": "Sets the default in fw.py and the README; each AI-styled 12-frame clip costs about a minute of GPU.",
+      "options": [
+        {
+          "id": "on",
+          "label": "Keep it on by default (--no-ai to skip)"
+        },
+        {
+          "id": "off",
+          "label": "Off by default (--ai to turn on)"
+        },
+        {
+          "id": "tune",
+          "label": "Keep on, but try a stronger look first (higher denoise, a prompt flag, Wan video-to-video)"
+        }
+      ],
+      "guess": {
+        "option": "tune",
+        "why": "You asked for it on; the current pass is too subtle to judge, so a stronger setting is the next test.",
+        "confidence": "low"
+      },
+      "status": "closed",
+      "created": "2026-11-14T16:11:26-06:00",
+      "updated": "2026-11-14T20:09:32-06:00"
+    }
+  ],
+  "created": "2026-11-14T16:11:26-06:00",
+  "updated": "2026-11-14T20:09:32-06:00",
+  "project": {
+    "name": "fractalwright",
+    "path": "D:/m4bwa/Claude/Projects/Ai/fractalwright"
+  }
+}

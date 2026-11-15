@@ -1,0 +1,30 @@
+{
+  "askwright": 1,
+  "rev": 3,
+  "answers": {
+    "look": {
+      "choice": "exact",
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": true,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 2,
+      "updated": "2026-11-14T19:59:22-06:00",
+      "state": "answered"
+    },
+    "default": {
+      "choice": "off",
+      "note": "",
+      "attachments": [],
+      "timecodes": [],
+      "guess_revealed": false,
+      "guess_revealed_before_pick": false,
+      "q_rev": 1,
+      "rev": 3,
+      "updated": "2026-11-14T19:59:44-06:00",
+      "state": "answered"
+    }
+  }
+}
