@@ -18,7 +18,7 @@ import zlib
 from decimal import Decimal
 from pathlib import Path
 
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 ROOT = Path(__file__).resolve().parent.parent
 
 try:
