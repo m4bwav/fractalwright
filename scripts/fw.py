@@ -18,7 +18,7 @@ import zlib
 from decimal import Decimal
 from pathlib import Path
 
-VERSION = "0.2.2"
+VERSION = "0.3.0"
 ROOT = Path(__file__).resolve().parent.parent
 
 try:
@@ -876,7 +876,29 @@ def cmd_render(a):
             r["params"]["power"] = a.power
     r = normalise(r)
     out = Path(a.out)
-    if getattr(a, "route", "auto") == "browser" and not a.deep:
+    browser = getattr(a, "route", "auto") == "browser"
+    if browser and np is not None:
+        import fw_serve
+        import fw_gpudeep
+        browser_deep = (a.deep or Decimal(r["view"]["width"]) < Decimal("1e-12")
+                        or (not fw_serve.float32_ok(r) and fw_gpudeep.supported(r)))
+    if browser and np is not None and browser_deep:  # GPU perturbation: Decimal reference orbit, float32 scaled deltas, rebasing
+        if not fw_gpudeep.supported(r):
+            print(f"browser deep route: mandelbrot/julia power 2, width >= {fw_gpudeep.GPU_MIN_WIDTH}; using numpy")
+        else:
+            try:
+                st = {}
+                arr = fw_gpudeep.render_array(r, st)
+                r["render"] = {"route": "browser-perturbation", "precision": "decimal+float32"}
+                write_png(out, arr=arr)
+                rec = out.with_suffix(".json")
+                rec.write_text(json.dumps(r, indent=2) + "\n", encoding="utf-8")
+                print(f"deep: rebased {st['rebased_pixels']} pixels, gpu {st['gpu_ms']:.0f} ms")
+                print(f"wrote {out} and {rec} (browser deep route)")
+                return 0
+            except Exception as e:  # noqa: BLE001
+                print(f"browser deep route unavailable ({str(e).splitlines()[0][:120]}); using numpy")
+    elif browser:
         import fw_serve
         if not fw_serve.float32_ok(r):
             print(f"browser route: float32 cannot hold this view (pixel {fw_serve.float32_rel(r):.1e} of the coordinate,"
@@ -1216,13 +1238,14 @@ def probe_video(path):
     return {"frames": int(s["nb_read_frames"]), "fps": int(num) / int(den), "w": s["width"], "h": s["height"]}
 
 
-def write_video(kind, recipes, anim, out, ai=True, ai_kw=None):
-    """Render frames, encode, write the animation recipe. Exact frames and video always written."""
+def write_video(kind, recipes, anim, out, ai=True, ai_kw=None, frame_fn=None):
+    """Render frames, encode, write the animation recipe. Exact frames and video always written.
+    frame_fn(recipe) -> uint8 array replaces render_array (zoom --route browser passes the GPU deep renderer)."""
     out = Path(out)
     fdir = out.with_name(out.stem + "_frames")
     fdir.mkdir(parents=True, exist_ok=True)
     for i, r in enumerate(recipes):
-        write_png(fdir / f"f_{i:05d}.png", arr=render_array(normalise(r)))
+        write_png(fdir / f"f_{i:05d}.png", arr=(frame_fn or render_array)(normalise(r)))
     encode_mp4(fdir, anim["fps"], out)
     rec = json.loads(json.dumps(normalise(recipes[0])))
     rec["animation"] = dict(anim, kind=kind, frames=len(recipes), frame_dir=fdir.name)
@@ -1385,9 +1408,9 @@ def _video_base(a):
     return normalise(r)
 
 
-def _finish_video(kind, recipes, anim, a):
+def _finish_video(kind, recipes, anim, a, frame_fn=None):
     import fw_ai
-    rp, notes = write_video(kind, recipes, anim, a.out, ai=a.ai, ai_kw=fw_ai.kw_from(a))
+    rp, notes = write_video(kind, recipes, anim, a.out, ai=a.ai, ai_kw=fw_ai.kw_from(a), frame_fn=frame_fn)
     fc = flash_check(read_frames(Path(a.out).with_name(Path(a.out).stem + "_frames"))[0], anim["fps"])
     print(f"wrote {a.out}, {rp} and {len(recipes)} frames")
     for n in notes:
@@ -1433,8 +1456,23 @@ def cmd_zoom(a):
     frames = zoom_frames(r, w0, w1, n, ct)
     kf = [{"t": 0, "centre": r["view"]["centre"], "width": repr(w0)},
           {"t": a.duration, "centre": [repr(x) for x in ct] if ct else r["view"]["centre"], "width": repr(w1)}]
-    return _finish_video("zoom", frames, {"keyframes": kf, "fps": a.fps, "duration_s": a.duration,
-                                          "interp": "exponential width, smoothstep centre"}, a)
+    anim = {"keyframes": kf, "fps": a.fps, "duration_s": a.duration, "interp": "exponential width, smoothstep centre"}
+    if getattr(a, "route", "auto") == "browser":
+        import fw_gpudeep
+        if not all(fw_gpudeep.supported(normalise(f)) for f in frames):
+            print(f"browser deep route: mandelbrot/julia power 2, width >= {fw_gpudeep.GPU_MIN_WIDTH}; using numpy")
+        else:
+            try:
+                g = fw_gpudeep.GpuDeep()
+            except Exception as e:  # noqa: BLE001
+                print(f"browser deep route unavailable ({str(e).splitlines()[0][:120]}); using numpy")
+            else:
+                try:
+                    anim["route"] = "browser-perturbation"
+                    return _finish_video("zoom", frames, anim, a, frame_fn=g.render)
+                finally:
+                    g.close()
+    return _finish_video("zoom", frames, anim, a)
 
 
 def cmd_morph(a):
@@ -1502,9 +1540,9 @@ def main(argv=None):
     s.add_argument("--supersample", type=int)
     s.add_argument("--mask", help=f"kronecker mask: {', '.join(KRONECKER)} or rows like 111,101,111")
     s.add_argument("--power", type=int, help="kronecker power (side = k^power)")
-    s.add_argument("--deep", action="store_true", help="perturbation route (automatic below width 1e-12)")
+    s.add_argument("--deep", action="store_true", help="perturbation route (automatic below width 1e-12); with --route browser it runs on the GPU")
     s.add_argument("--route", choices=["auto", "numpy", "browser"], default="auto",
-                   help="browser: headless Edge WebGL2 (float32; falls back to numpy when the view is too deep or no browser)")
+                   help="browser: headless Edge WebGL2 (float32 plain; --deep, width < 1e-12 or views too deep for plain float32 use GPU perturbation; numpy when no browser)")
     s.set_defaults(fn=cmd_render)
     s = sub.add_parser("serve", help="interactive WebGL2 explorer on 127.0.0.1 (pan, zoom, share hash, export, exact render)")
     s.add_argument("--host", default="127.0.0.1", help="loopback only; any other host is refused")
@@ -1553,6 +1591,8 @@ def main(argv=None):
     s.add_argument("--to-width", required=True)
     s.add_argument("--from-width")
     s.add_argument("--to-centre", help="re,im: eased centre move")
+    s.add_argument("--route", choices=["auto", "numpy", "browser"], default="auto",
+                   help="browser: every frame by GPU perturbation (mandelbrot/julia, any depth to 1e-60; float32 deltas)")
     s.set_defaults(fn=cmd_zoom)
     s = sub.add_parser("morph", help="interpolate a param along keyframes (default julia c)")
     _video_args(s, "morph.mp4")

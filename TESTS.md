@@ -11,6 +11,14 @@ Entry shape: `### T-20261114-10 Â· 2026-11-14 Â· unittest (tests/) Â· Windows, P
 - Gate: 54 renders at 768x512 in 3.44 s total GPU plus readback (0.01-0.11 s each).
 - led to: C-20261114-10
 
+### T-20261114-16 · 2026-11-14 · unittest (tests/) · Windows, Python 3.14.6, numpy 2.5.2, Playwright + Edge headless (ANGLE D3D11, RTX 5060 Ti) · 128/128 (9 new)
+- GPU perturbation vs CPU fw_deep (float64), 512x512, escape-count mismatches / RGB pixels off by > 8 / largest mismatch blob / mean RGB diff: 1e-6 9062 (3.5%) / 8026 / 24 / 2.5; 1e-10 29602 (11.3%) / 26312 / 21 / 8.1; 1e-20 32557 (12.4%) / 28776 / 28 / 8.9; 1e-30 22730 (8.7%) / 20123 / 24 / 6.2; 1e-50 31123 (11.9%) / 27576 / 30 / 8.4; 1e-60 31227 (11.9%) / 27583 / 31 / 8.5; Julia 1e-30 49018 (18.7%) / 44554 / 84 / 14.4. Every pixel escapes in these views (counts 1100-3900), the worst case for float32.
+- Cause check: a NumPy float32 copy of the algorithm at 1e-30 128 px differs from CPU float64 on 1493 pixels and from the GPU on 1513; GPU vs CPU 1413. So the drift is float32 rounding, not a shader error. Against direct Decimal at 24x16 1e-30: GPU 42/384 wrong, CPU 0.
+- Speed 512x512: CPU 31-136 s, GPU 0.20-0.25 s per call including orbit, upload and readback (draw 11-17 ms). Same recipe twice: identical pixels on every view.
+- Depth limit: the switch threshold 1e-30 / pixel spacing must fit float32, so spacing > ~3e-69; GPU_MIN_WIDTH 1e-60.
+- `rd --size 40` works; test_serve deep-view test now expects the GPU route.
+- led to: C-20261114-18
+
 ### T-20261114-15 Â· 2026-11-14 Â· unittest (tests/) Â· Windows, Python 3.14.6, numpy 2.5.2 Â· 119/119 in 98.8 s (5 new)
 - tests/test_ai.py: --ai-prompt/--ai-denoise/--ai-seed parse and land in all 4 img2img graphs sent to the fake ComfyUI and in the _ai.json ai_pass; denoise 0 and 1.2 refused; audio parser has the flags. No GPU.
 - tests/test_neighbours.py: rd palette (grey default byte-identical to the 0.2.0 formula; fire and ocean differ); --video 96x96, 1000 steps, 10 frames: ffprobe counts 10, frames byte-identical across two runs with seed 3, flashcheck pass, recipe has palette and animation.

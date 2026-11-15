@@ -133,15 +133,16 @@ class BrowserTests(unittest.TestCase):
         finally:
             b.close()
 
-    def test_deep_view_routes_to_numpy(self):
+    def test_deep_view_routes_to_gpu_perturbation(self):
+        # 0.3.0: a Mandelbrot view too deep for plain float32 goes to GPU perturbation, not numpy
         with tempfile.TemporaryDirectory() as d:
             out = Path(d) / "s.png"
             r = subprocess.run([sys.executable, str(ROOT / "scripts" / "fw.py"), "render", "seahorse", "--route", "browser",
                                 "--size", "96x64", "--iter", "300", "-o", str(out)], capture_output=True, text=True, timeout=300)
             self.assertEqual(r.returncode, 0, r.stderr)
-            self.assertIn("float32 cannot hold this view", r.stdout)
+            self.assertIn("browser deep route", r.stdout)
             rec = json.loads(out.with_suffix(".json").read_text(encoding="utf-8"))
-            self.assertEqual(rec["render"]["route"], "numpy")
+            self.assertEqual(rec["render"]["route"], "browser-perturbation")
             out2 = Path(d) / "m.png"
             r = subprocess.run([sys.executable, str(ROOT / "scripts" / "fw.py"), "render", "mandelbrot-full", "--route", "browser",
                                 "--size", "96x64", "-o", str(out2)], capture_output=True, text=True, timeout=300)
