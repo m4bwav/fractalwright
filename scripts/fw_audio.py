@@ -465,8 +465,8 @@ def register(sub):
     s.add_argument("--intensity", type=float, default=0.6, help="modulation depth 0..1 (the flash limiter still applies)")
     s.add_argument("--route", choices=["auto", "browser", "numpy"], default="auto")
     s.add_argument("--allow-mp3", action="store_true")
-    s.add_argument("--ai", action=__import__("argparse").BooleanOptionalAction, default=True,
-                   help="AI styling pass (default on): img2img via ComfyUI to <out>_ai.mp4; exact video always kept")
+    s.add_argument("--ai", action=__import__("argparse").BooleanOptionalAction, default=False,
+                   help="AI styling pass (default off, Mark 2026-11-14): img2img via ComfyUI to <out>_ai.mp4; exact video always kept")
     import fw_ai
     fw_ai.add_args(s)
     s.set_defaults(fn=cmd_audio)

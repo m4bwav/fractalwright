@@ -147,11 +147,11 @@ def run_pass(host, frame_dir, out, fps, prompt=DEFAULT_PROMPT, seed=DEFAULT_SEED
             "flash": {"pass": fc["pass"], "max_swings_per_s": fc["max_swings_per_s"]}}
 
 
-def apply(rec, notes, frame_dir, out, fps, ai=True, **kw):
+def apply(rec, notes, frame_dir, out, fps, ai=False, **kw):
     """Shared hook for zoom/morph/loop/audio: fill rec['ai_pass'] and notes. Never raises on host trouble."""
     import fw
     if not ai:
-        notes.append("AI styling off (--no-ai): exact video")
+        notes.append("AI styling off (default; --ai to turn on): exact video")
         return
     host = fw.probe_comfy()
     if not host:

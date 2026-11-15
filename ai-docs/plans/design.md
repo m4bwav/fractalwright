@@ -89,5 +89,5 @@ Fields: `family` (escape-time, flame, lsystem, ifs, attractor, 3d-de, and any ne
 1. Name: fractalwright.
 2. Repository: public from the first commit.
 3. Neighbours: all four in (above).
-4. AI styling: **on by default for video** (`zoom`, `morph`, `loop`, `audio`) when a ComfyUI host is reachable; stills stay exact by default. `--no-ai` gives the exact video; the exact frames are always kept beside the styled file, and the styled file and recipe are marked interpreted (`ai_pass` filled). No host reachable: exact video, with a note, never an error.
+4. AI styling: **off by default since 2026-11-14** (Mark compared the AI-styled zoom with the exact one, askwright set fractalwright-ai-look-2026-11-14, and chose exact; `--ai` turns it on). Original ruling: on by default for video (`zoom`, `morph`, `loop`, `audio`) when a ComfyUI host is reachable; stills stay exact by default. `--no-ai` gives the exact video; the exact frames are always kept beside the styled file, and the styled file and recipe are marked interpreted (`ai_pass` filled). No host reachable: exact video, with a note, never an error.
 5. Playwright + system Edge is the first optional accelerator.
