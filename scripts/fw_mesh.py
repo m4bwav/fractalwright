@@ -23,12 +23,18 @@ MESH_RES = {"menger": 136}  # keeps Menger under polywright's 1M-triangle FDM bu
 
 def de(formula, P, prm):
     """Distance estimate for points P (..., 3), ported from fractal3d.frag."""
+    return de_trap(formula, P, prm)[0]
+
+
+def de_trap(formula, P, prm):
+    """(distance estimate, orbit trap) for points P; the trap is fractal3d.frag's trap.w: the smallest |z|^2 over
+    the orbit (Menger: the smallest squared hole distance over the levels)."""
     x, y, z = P[..., 0], P[..., 1], P[..., 2]
     it = int(prm.get("iter", 10))
     if formula in ("mandelbulb", "hybrid"):
         s = float(prm.get("scale", 2.5)) if formula == "hybrid" else 1.0
         c = P * s
-        zz = c.copy(); dr = np.ones(x.shape); alive = np.ones(x.shape, bool)
+        zz = c.copy(); dr = np.ones(x.shape); alive = np.ones(x.shape, bool); tw = (zz ** 2).sum(-1)
         pw = float(prm.get("power", 8.0))
         for _ in range(it):
             if formula == "hybrid":
@@ -44,11 +50,12 @@ def de(formula, P, prm):
             rp = rs ** pw
             nz = np.stack([rp * np.sin(th) * np.cos(ph), rp * np.sin(th) * np.sin(ph), rp * np.cos(th)], -1) + c
             zz = np.where(alive[..., None], nz, zz)
+            tw = np.where(alive, np.minimum(tw, (zz ** 2).sum(-1)), tw)
         r = np.linalg.norm(zz, axis=-1)
-        return 0.5 * np.log(np.maximum(r, 1e-6)) * r / dr / s
+        return 0.5 * np.log(np.maximum(r, 1e-6)) * r / dr / s, tw
     if formula == "mandelbox":
         sc = float(prm.get("scale", 2.0))
-        zz = P.copy(); dr = np.ones(x.shape); alive = np.ones(x.shape, bool)
+        zz = P.copy(); dr = np.ones(x.shape); alive = np.ones(x.shape, bool); tw = (zz ** 2).sum(-1)
         for _ in range(it):
             nz = np.clip(zz, -1, 1) * 2 - zz
             r2 = (nz ** 2).sum(-1)
@@ -56,31 +63,34 @@ def de(formula, P, prm):
             nz = nz * f[..., None] * sc + P
             ndr = dr * f * abs(sc) + 1
             zz = np.where(alive[..., None], nz, zz); dr = np.where(alive, ndr, dr)
+            tw = np.where(alive, np.minimum(tw, (zz ** 2).sum(-1)), tw)
             alive &= (zz ** 2).sum(-1) <= 1e4
-        return np.linalg.norm(zz, axis=-1) / np.abs(dr)
+        return np.linalg.norm(zz, axis=-1) / np.abs(dr), tw
     if formula == "quatjulia":
         jc = np.array(prm.get("c", [-0.2, 0.6, 0.2, 0.0]), float)
-        q = np.concatenate([P, np.zeros(x.shape + (1,))], -1); dq = np.ones(x.shape); alive = np.ones(x.shape, bool)
+        q = np.concatenate([P, np.zeros(x.shape + (1,))], -1); dq = np.ones(x.shape); alive = np.ones(x.shape, bool); tw = (q ** 2).sum(-1)
         for _ in range(it):
             n = np.linalg.norm(q, axis=-1)
             a, v = q[..., :1], q[..., 1:]
             nq = np.concatenate([a * a - (v * v).sum(-1, keepdims=True), 2 * a * v], -1) + jc
             dq = np.where(alive, 2 * n * dq, dq); q = np.where(alive[..., None], nq, q)
+            tw = np.where(alive, np.minimum(tw, (q ** 2).sum(-1)), tw)
             alive &= (q ** 2).sum(-1) <= 256
         r = np.linalg.norm(q, axis=-1)
-        return 0.5 * r * np.log(np.maximum(r, 1e-6)) / dq
+        return 0.5 * r * np.log(np.maximum(r, 1e-6)) / dq, tw
     if formula == "menger":
         qb = np.abs(P) - 1.0
         d = np.linalg.norm(np.maximum(qb, 0), axis=-1) + np.minimum(qb.max(-1), 0)
-        cell = 2.0
+        cell = 2.0; tw = (P ** 2).sum(-1)
         for _ in range(it):
             a = np.abs(np.mod(P + 1.0, cell) - 0.5 * cell)
             h = cell / 6.0
             hole = np.minimum(np.maximum(a[..., 1], a[..., 2]),
                               np.minimum(np.maximum(a[..., 0], a[..., 2]), np.maximum(a[..., 0], a[..., 1]))) - h
             d = np.maximum(d, -hole)
+            tw = np.minimum(tw, hole * hole)
             cell /= 3.0
-        return d
+        return d, tw
     raise SystemExit(f"3d mesh: unknown formula {formula}")
 
 
@@ -307,14 +317,80 @@ def build(formula, prm, res=200, size_mm=60.0, iso=None, engine="auto", wall_mm=
     verts = (verts - 1) * h - bound
     ext = verts.max(0) - verts.min(0)
     s = size_mm / ext.max()
-    verts = (verts - verts.min(0)) * s
+    origin = verts.min(0)
+    verts = (verts - origin) * s
     chk = edge_check(faces)
     info = {"formula": formula, "params": prm, "grid": res, "voxel_mm": round(h * s, 4), "iso": round(float(iso), 6), "wall_mm": wall_mm,
             "engine": used, "islands_dropped": max(0, ncomp - 1), "shells_dropped": int(nshell_before - 1), "triangles": int(len(faces)),
-            "vertices": int(len(verts)), "size_mm": [round(float(v), 2) for v in verts.max(0)],
+            "vertices": int(len(verts)), "model_origin": [float(v) for v in origin], "mm_per_unit": float(s), "size_mm": [round(float(v), 2) for v in verts.max(0)],
             "volume_mm3": round(volume(verts, faces), 1), "shells": components(len(verts), faces), **chk,
             "seconds": {"sample": round(t1 - t0, 2), "mesh": round(time.time() - t1, 2)}}
     return verts, faces, info
+
+
+# filament-friendly defaults (white, black, red, blue, yellow, green, orange, purple); --palette overrides
+PALETTE = ["#F2F2F2", "#1A1A1A", "#C8102E", "#0057B8", "#FFC72C", "#00843D", "#FF6A13", "#6D2077"]
+
+
+def face_colours(formula, prm, verts, faces, info, n=4):
+    """Orbit trap at each triangle's centroid (model space), quantised to n equal-count bins: (index per face, edges).
+    Equal-count bins mean every colour carries a share of the surface, so no filament is loaded for a few dots."""
+    cen = verts[faces].mean(1) / info["mm_per_unit"] + np.array(info["model_origin"])
+    t = np.concatenate([de_trap(formula, cen[i:i + 200000], prm)[1] for i in range(0, len(cen), 200000)])
+    t = np.log(np.maximum(t, 1e-12))
+    edges = np.quantile(t, np.linspace(0, 1, n + 1)[1:-1]) if n > 1 else np.array([])
+    return np.searchsorted(edges, t, side="right").astype(np.int64), edges
+
+
+def _paint(k):
+    """Bambu Studio / PrusaSlicer per-triangle filament tag (TriangleSelector serialisation of one unsplit triangle):
+    filament 1 -> '4', 2 -> '8', 3 -> '0C', 4 -> '1C', ..."""
+    f = k + 1
+    return "%X" % (f << 2) if f < 3 else "%XC" % (f - 3)
+
+
+def write_3mf(path, verts, faces, cidx, colours, name="fractal"):
+    """3MF core + materials extension (one m:colorgroup, pid/p1 per triangle), units mm, stdlib zip + XML only.
+    Each triangle also carries paint_color so Bambu Studio and PrusaSlicer map colour k to filament k+1."""
+    import zipfile
+    from xml.sax.saxutils import quoteattr
+    nl = "\n"
+    vs = nl.join('<vertex x="%.6f" y="%.6f" z="%.6f"/>' % tuple(v) for v in verts.tolist())
+    tags = [_paint(k) for k in range(len(colours))]
+    ts = nl.join('<triangle v1="%d" v2="%d" v3="%d" pid="1" p1="%d" paint_color="%s"/>' % (f[0], f[1], f[2], c, tags[c])
+                 for f, c in zip(faces.tolist(), cidx.tolist()))
+    cg = "".join('<m:color color="%sFF"/>' % c.upper() for c in colours)
+    model = nl.join(['<?xml version="1.0" encoding="UTF-8"?>',
+                     '<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" '
+                     'xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02">',
+                     '<metadata name="Application">fractalwright</metadata>', '<resources>',
+                     '<m:colorgroup id="1">%s</m:colorgroup>' % cg,
+                     '<object id="2" type="model" name=%s pid="1" pindex="0"><mesh><vertices>' % quoteattr(name),
+                     vs, '</vertices><triangles>', ts, '</triangles></mesh></object>', '</resources>',
+                     '<build><item objectid="2"/></build>', '</model>', ''])
+    ct = ('<?xml version="1.0" encoding="UTF-8"?>' + nl + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+          '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+          '<Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>' + nl)
+    rels = ('<?xml version="1.0" encoding="UTF-8"?>' + nl + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Target="/3D/3dmodel.model" Id="rel0" '
+            'Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>' + nl)
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("[Content_Types].xml", ct)
+        z.writestr("_rels/.rels", rels)
+        z.writestr("3D/3dmodel.model", model)
+
+
+def read_3mf(path):
+    """Parse a 3MF back: (triangles, colours in the colorgroup, colour indices used). Used by the tests and the CLI check."""
+    import zipfile
+    import xml.etree.ElementTree as ET
+    ns = {"c": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02",
+          "m": "http://schemas.microsoft.com/3dmanufacturing/material/2015/02"}
+    with zipfile.ZipFile(path) as z:
+        root = ET.fromstring(z.read("3D/3dmodel.model"))
+    cols = [c.get("color") for c in root.iterfind(".//m:colorgroup/m:color", ns)]
+    tris = root.findall(".//c:triangle", ns)
+    return len(tris), cols, sorted({int(t.get("p1")) for t in tris})
 
 
 def cmd_mesh(a, recipe):
@@ -327,7 +403,23 @@ def cmd_mesh(a, recipe):
     out = Path(a.out or f"{formula}.stl")
     verts, faces, info = build(formula, prm, res=a.res or MESH_RES.get(formula, 200), size_mm=a.size_mm or 60.0,
                                engine=a.engine, wall_mm=getattr(a, "wall_mm", None))
+    want3mf = out.suffix.lower() == ".3mf" or getattr(a, "colors", None)
+    if out.suffix.lower() == ".3mf":
+        out = out.with_suffix(".stl")
     write_stl(out, verts, faces)
+    if want3mf:
+        n = max(1, min(int(getattr(a, "colors", None) or 4), len(PALETTE)))
+        cols = [c.strip() for c in a.palette.split(",")][:n] if getattr(a, "palette", None) else PALETTE[:n]
+        n = len(cols)
+        cidx, _ = face_colours(formula, prm, verts, faces, info, n)
+        p3 = out.with_suffix(".3mf")
+        write_3mf(p3, verts, faces, cidx, cols, name=formula)
+        ntri, gcols, used = read_3mf(p3)
+        share = np.bincount(cidx, minlength=n) / len(cidx)
+        info["3mf"] = {"file": p3.name, "colors": cols, "trap": "log min |z|^2 at triangle centroid, equal-count bins",
+                       "share": [round(float(x), 3) for x in share], "triangles": ntri, "colors_used": len(used),
+                       "ok": ntri == len(faces) and len(gcols) == n and len(used) == n}
+        print(f"wrote {p3}: {n} colours {cols}, surface shares {info['3mf']['share']}, triangles match STL: {ntri == len(faces)}")
     side = out.with_suffix(".json")
     side.write_text(json.dumps({"kind": "3d-mesh", "stl": out.name, **info}, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {out} and {side}: {info['triangles']} triangles, {info['size_mm']} mm, "

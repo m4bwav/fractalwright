@@ -2,6 +2,11 @@
 
 Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) and its companions, newest first, each with the reason. Reasons cite findings in [RESEARCH.md](RESEARCH.md) (`R-`), lessons in [LEARNINGS.md](LEARNINGS.md) (`L-`), and test runs in [TESTS.md](TESTS.md) (`T-`). State in `evergreen.json`. Protocol: MAINTENANCE.md.
 
+### C-20261115-26 - 2026-11-15 - release 0.10.0: orbit-trap colour 3MF from `3d mesh`
+- because: user request (HANDOFF Next 5: "Left: orbit-trap colour to 3MF")
+- files: scripts/fw_mesh.py (`de_trap`, `face_colours`, `write_3mf`, `read_3mf`, `_paint`, `cmd_mesh`), scripts/fw_3d.py (`--colors`, `--palette`), scripts/fw.py (`VERSION`), tests/test_3d.py (`test_colour_3mf`), skills/fractalwright/SKILL.md, references/07-3d.md (Meshing), plugin.json files
+- `fw.py 3d mesh <f> -o x.3mf [--colors N]` writes a 3MF (materials colorgroup + Bambu `paint_color`) coloured by the orbit trap in N equal-surface bins, plus the STL. Written with stdlib zip + XML rather than polywright `pw.py 3mf`, which packs whole meshes per object and has no per-triangle colour. Mandelbulb and Menger 3MFs pass `pw.py check --target print-fdm`.
+
 ### C-20261115-25 - 2026-11-15 - release 0.9.0: `3d mesh --wall-mm`
 - because: user request (HANDOFF Next 5: Mandelbulb at 60 mm warned 2.7% of the surface under 0.9 mm)
 - files: scripts/fw_mesh.py (`wall_iso`, `build`, `cmd_mesh`), scripts/fw_3d.py (`--wall-mm`), scripts/fw.py (`VERSION`), tests/test_3d.py (`test_wall_mm_offsets_surface`), skills/fractalwright/SKILL.md (3D mesh), references/07-3d.md (Meshing), README.md, plugin.json files
