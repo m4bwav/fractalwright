@@ -4,6 +4,11 @@ Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) a
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261114-19 · 2026-11-14 · release 0.4.0: path-traced 3D (`3d render --pt N`)
+- because: user request (HANDOFF Next item 4)
+- files: scripts/page/fractal3d.frag (`pathTrace`, `march`, `occluded`, `skyCol`, `cosineDir`, PCG RNG, `main`), scripts/fw_3d.py (`PT_DEFAULTS`, `normalise`, `uniforms`, page `drawPT`, `Browser3D.render_linear`, `to_srgb8`, `--pt/--bounces/--seed`), tests/test_3d.py, evals/pt_bench.py (new), references/07-3d.md (Path tracer), skills/fractalwright/SKILL.md (3D paragraph, metadata), plugin.json, .claude-plugin/plugin.json, scripts/fw.py (`VERSION`)
+- `fw.py 3d render --pt N` path traces: diffuse, sky + sun, cosine-weighted bounces, seeded PCG RNG recorded in the recipe, N samples summed in a float framebuffer. Same seed gives identical pixels; noise falls as 1/sqrt(N) (RMSE*sqrt(N) 0.112-0.125); 512 px at 64/256 spp in 0.3-0.6 / 0.5-1.8 s.
+
 ### C-20261114-18 � 2026-11-14 � release 0.3.0: GPU perturbation deep zoom, rd --size N
 - because: user request, T-20261114-16
 - files: scripts/fw_gpudeep.py (new), scripts/page/deep.frag (new), scripts/fw.py (`cmd_render`, `cmd_zoom`, `write_video`, `_finish_video`, render/zoom `--route` help, `VERSION`), scripts/fw_neighbours.py (`_size`), tests/test_gpudeep.py (new), tests/test_neighbours.py, tests/test_serve.py, README.md, skills/fractalwright/SKILL.md (explorer paragraph, metadata), plugin.json, .claude-plugin/plugin.json

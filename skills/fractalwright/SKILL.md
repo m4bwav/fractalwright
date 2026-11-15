@@ -3,7 +3,7 @@ name: fractalwright
 description: "Render, animate, measure and identify fractals as reproducible recipes (PNG or mp4 plus a recipe JSON that redraws it): Mandelbrot, Julia, Burning Ship and Multibrot stills, deep zooms, zoom, morph and loop videos with a flash check, audio-reactive music videos and visualizers from a song, fractal flames, IFS, L-systems, strange attractors, fBm terrain, box-counting dimension. Use whenever the user wants a fractal image, wallpaper or video, asks 'render a Mandelbrot zoom', 'make a fractal flame', 'winamp-style visualizer for this song', 'what fractal is this picture', 'measure the fractal dimension of this coastline', or wants to redraw a fractal exactly. Also 'refresh fractalwright'. Not for general shaders (threewright), mastering music (musicwright) or pixel art (pixelwright)."
 license: MIT
 metadata:
-  version: 0.3.0
+  version: 0.4.0
 ---
 
 # fractalwright
@@ -48,7 +48,7 @@ Read `evergreen.json` at the repository root. If `contradiction` is set or today
 
 ## Step 2e: 3D
 
-`FW 3d render mandelbulb|mandelbox|quatjulia|menger|hybrid [--view whole|close] [--remedy ao|shadow|fog|trap|dof|aa|camera|all|none] -o x.png` (sphere-traced DE in headless Edge; writes the recipe with the camera made explicit). Default look: soft shadows, ambient occlusion and a composed camera (40 mm, low angle, subject on the left third); `--remedy` adds to it, `--remedy none` clears it first. Leave fog and dof off unless asked: fog washed the subject out in the look gate and dof blurs close views. `FW 3d recipe ...` prints the recipe; `FW 3d gate -o DIR` renders the remedy matrix and sheets. Browser route only, no NumPy fallback. A normal route since the 3D look gate (2026-11-14).
+`FW 3d render mandelbulb|mandelbox|quatjulia|menger|hybrid [--view whole|close] [--remedy ao|shadow|fog|trap|dof|aa|camera|all|none] -o x.png` (sphere-traced DE in headless Edge; writes the recipe with the camera made explicit). Default look: soft shadows, ambient occlusion and a composed camera (40 mm, low angle, subject on the left third); `--remedy` adds to it, `--remedy none` clears it first. Leave fog and dof off unless asked: fog washed the subject out in the look gate and dof blurs close views. `FW 3d recipe ...` prints the recipe; `FW 3d gate -o DIR` renders the remedy matrix and sheets. Browser route only, no NumPy fallback. A normal route since the 3D look gate (2026-11-14). `--pt N [--bounces 2] [--seed 1]` path traces instead (diffuse, sky + sun, N samples; same seed, same pixels; 512 px at 256 spp in 0.5-1.8 s); see references/07-3d.md.
 
 ## Step 3: measure
 

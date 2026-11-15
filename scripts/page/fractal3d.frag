@@ -5,7 +5,8 @@
 //   Mandelbulb / quaternion Julia: 0.5 * r * log(r) / dr with a running derivative dr;
 //   Mandelbox: |z| / |dr| after box fold, sphere fold, scale; Menger: box minus crosses;
 //   hybrid: a box fold before each Mandelbulb step (folds are reflections, dr unchanged).
-// Every remedy is a switch so the gate can render it alone. Deterministic: no time, no random.
+// Every remedy is a switch so the gate can render it alone. Deterministic: no time; the path tracer
+// (u_pt) draws its random numbers from a PCG hash of (pixel, sample index, seed), so a seed replays.
 precision highp float;
 precision highp int;
 uniform vec2 u_size;
@@ -24,6 +25,10 @@ uniform vec3 u_a, u_b, u_cc, u_d;          // cosine palette
 uniform int u_ao, u_shadow, u_fog, u_trap, u_dof, u_aa;
 uniform float u_aperture, u_focus, u_fogdens;
 uniform int u_spp;
+uniform int u_pt, u_spf, u_frame0, u_bounces;   // path tracer: samples this draw, first sample index
+uniform uint u_seed;
+uniform float u_invn;                       // 1 / total samples (accumulated by additive blending)
+uniform vec3 u_sun, u_skyz, u_skyh;
 out vec4 frag;
 
 vec4 trap;
@@ -208,6 +213,72 @@ vec3 shade(vec3 ro, vec3 rd) {
   return col;
 }
 
+
+// ---------------------------------------------------------------- path tracer
+// Diffuse surfaces lit by a sky dome and a sun (next-event estimation with a shadow ray), cosine-
+// weighted bounce directions (pdf cos/pi cancels the Lambert BRDF, so throughput *= albedo).
+uint rngState;
+uint pcg(uint v) { uint s = v * 747796405u + 2891336453u; uint w = ((s >> ((s >> 28u) + 4u)) ^ s) * 277803737u; return (w >> 22u) ^ w; }
+float rnd() { rngState = pcg(rngState); return float(rngState >> 8u) * (1.0 / 16777216.0); }
+
+bool march(vec3 ro, vec3 rd, out float t, out int steps) {
+  t = 0.0; steps = 0;
+  for (int i = 0; i < 1024; i++) {
+    if (i >= u_steps) break;
+    float d = DE(ro + rd * t);
+    steps = i;
+    if (d < u_eps * max(t, 0.05)) return true;
+    t += d * u_fudge;
+    if (t > u_maxdist) break;
+  }
+  return false;
+}
+
+bool occluded(vec3 p, vec3 l) {
+  float t = 0.0;
+  for (int i = 0; i < 160; i++) {
+    float h = DE(p + l * t);
+    if (h < 1e-4 + u_eps * t) return true;
+    t += max(h * u_fudge, 1e-4);
+    if (t > u_maxdist) break;
+  }
+  return false;
+}
+
+vec3 skyCol(vec3 rd) {
+  return rd.y > 0.0 ? mix(u_skyh, u_skyz, pow(rd.y, 0.6)) : u_skyh * (0.35 + 0.25 * (1.0 + rd.y));
+}
+
+vec3 cosineDir(vec3 n) {
+  float r1 = rnd(), r2 = rnd();
+  float ph = 6.283185307179586 * r1, sr = sqrt(r2);
+  vec3 a = abs(n.x) > 0.5 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+  vec3 tu = normalize(cross(a, n)), tv = cross(n, tu);
+  return normalize(tu * (cos(ph) * sr) + tv * (sin(ph) * sr) + n * sqrt(max(0.0, 1.0 - r2)));
+}
+
+vec3 pathTrace(vec3 ro, vec3 rd) {
+  vec3 L = vec3(0.0), thr = vec3(1.0);
+  vec3 l = normalize(u_light);
+  for (int b = 0; b < 8; b++) {
+    if (b > u_bounces) break;
+    float t; int steps;
+    if (!march(ro, rd, t, steps)) { L += thr * (b == 0 ? u_bg : skyCol(rd)); break; }
+    vec3 p = ro + rd * t;
+    float e = max(u_eps * t * 0.5, 1e-5);
+    vec3 n = normalAt(p, e);
+    if (dot(n, rd) > 0.0) n = -n;
+    vec3 alb = clamp(pal(float(steps) / float(u_steps) * 4.0), 0.02, 0.85);
+    vec3 po = p + n * e * 4.0;
+    float ndl = dot(n, l);
+    if (ndl > 0.0 && !occluded(po, l)) L += thr * alb * u_sun * ndl;
+    thr *= alb;
+    ro = po;
+    rd = cosineDir(n);
+  }
+  return L;
+}
+
 void main() {
   vec3 fw = normalize(u_target - u_eye);
   vec3 up0 = vec3(-sin(u_roll), cos(u_roll), 0.0);
@@ -215,6 +286,18 @@ void main() {
   vec3 up = cross(rt, fw);
   float th = tan(0.5 * u_fov);
   vec3 acc = vec3(0.0);
+  if (u_pt == 1) {
+    uvec2 px = uvec2(gl_FragCoord.xy);
+    for (int s = 0; s < 64; s++) {
+      if (s >= u_spf) break;
+      rngState = pcg(px.x + pcg(px.y + pcg(uint(u_frame0 + s) + pcg(u_seed))));
+      vec2 j = vec2(rnd(), rnd());
+      vec2 uv = (gl_FragCoord.xy - 0.5 + j - 0.5 * u_size) / (0.5 * u_size.y);
+      acc += pathTrace(u_eye, normalize(fw + th * (uv.x * rt + uv.y * up)));
+    }
+    frag = vec4(acc * u_invn, 1.0);               // linear; summed over draws by additive blending
+    return;
+  }
   int n = max(u_spp, 1);
   for (int s = 0; s < 64; s++) {
     if (s >= n) break;
