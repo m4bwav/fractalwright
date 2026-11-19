@@ -1,25 +1,120 @@
 {
   "version": 1,
   "targets": [
-    {"kind": "reddit", "sub": "fractals", "weight": "core", "keep": "renders with formula, software or parameters; deep-zoom and 3D method posts"},
-    {"kind": "reddit", "sub": "FractalPorn", "keep": "posts that name the software and settings; skip bare reposts"},
-    {"kind": "reddit", "sub": "Mandelbrot", "keep": "deep zoom, perturbation and colouring methods"},
-    {"kind": "reddit", "sub": "generative", "keep": "fractal, attractor, IFS, L-system and flame techniques with code"},
-    {"kind": "reddit", "sub": "proceduralgeneration", "weight": "low", "keep": "fBm, L-systems and fractal terrain only"},
-    {"kind": "reddit", "sub": "shaders", "keep": "fractal and ray-marching shaders with code"},
-    {"kind": "reddit", "sub": "GraphicsProgramming", "weight": "low", "keep": "distance estimators, ray marching, GPU deep zoom"},
-    {"kind": "reddit", "sub": "visualizers", "keep": "audio-reactive mappings, MilkDrop and projectM presets"},
-    {"kind": "reddit", "sub": "Demoscene", "weight": "low", "keep": "intros with fractal or audio-reactive techniques"},
-    {"kind": "reddit", "sub": "TouchDesigner", "weight": "low", "keep": "audio-reactive fractal and feedback networks"},
-    {"kind": "hn", "query": "mandelbrot", "keep": "renderers, deep-zoom maths, points > 50"},
-    {"kind": "hn", "query": "fractal", "keep": "tools and algorithms, points > 50"},
-    {"kind": "hn", "query": "shadertoy", "keep": "shader techniques, points > 50"},
-    {"kind": "hn", "query": "milkdrop", "keep": "visualizer releases and write-ups"},
-    {"kind": "rss", "url": "https://mathr.co.uk/blog/index.rss", "keep": "deep zoom and fractal maths from Claude Heiland-Allen"},
-    {"kind": "web", "url": "https://iquilezles.org/articles/", "keep": "distance estimators, colouring and lighting articles"},
-    {"kind": "github", "url": "https://github.com/projectM-visualizer/projectm", "keep": "releases and preset format changes"},
-    {"kind": "github", "url": "https://github.com/jberg/butterchurn", "keep": "WebGL MilkDrop changes"},
-    {"kind": "github", "url": "https://github.com/buddhi1980/mandelbulber2", "keep": "3D fractal formulas and render features"},
-    {"kind": "github", "url": "https://github.com/thargor6/JWildfire", "keep": "flame variations and render features"}
+    {
+      "kind": "reddit",
+      "sub": "fractals",
+      "weight": "core",
+      "keep": "renders with formula, software or parameters; deep-zoom and 3D method posts"
+    },
+    {
+      "kind": "reddit",
+      "sub": "FractalPorn",
+      "keep": "posts that name the software and settings; skip bare reposts"
+    },
+    {
+      "kind": "reddit",
+      "sub": "Mandelbrot",
+      "keep": "deep zoom, perturbation and colouring methods"
+    },
+    {
+      "kind": "reddit",
+      "sub": "generative",
+      "keep": "fractal, attractor, IFS, L-system and flame techniques with code"
+    },
+    {
+      "kind": "reddit",
+      "sub": "proceduralgeneration",
+      "weight": "low",
+      "keep": "fBm, L-systems and fractal terrain only"
+    },
+    {
+      "kind": "reddit",
+      "sub": "shaders",
+      "keep": "fractal and ray-marching shaders with code"
+    },
+    {
+      "kind": "reddit",
+      "sub": "GraphicsProgramming",
+      "weight": "low",
+      "keep": "distance estimators, ray marching, GPU deep zoom"
+    },
+    {
+      "kind": "reddit",
+      "sub": "visualizers",
+      "keep": "audio-reactive mappings, MilkDrop and projectM presets"
+    },
+    {
+      "kind": "reddit",
+      "sub": "Demoscene",
+      "weight": "low",
+      "keep": "intros with fractal or audio-reactive techniques"
+    },
+    {
+      "kind": "reddit",
+      "sub": "TouchDesigner",
+      "weight": "low",
+      "keep": "audio-reactive fractal and feedback networks"
+    },
+    {
+      "kind": "hn",
+      "query": "mandelbrot",
+      "keep": "renderers, deep-zoom maths, points > 50"
+    },
+    {
+      "kind": "hn",
+      "query": "fractal",
+      "keep": "tools and algorithms, points > 50"
+    },
+    {
+      "kind": "hn",
+      "query": "shadertoy",
+      "keep": "shader techniques, points > 50"
+    },
+    {
+      "kind": "hn",
+      "query": "milkdrop",
+      "keep": "visualizer releases and write-ups"
+    },
+    {
+      "kind": "rss",
+      "url": "https://mathr.co.uk/blog/index.rss",
+      "keep": "deep zoom and fractal maths from Claude Heiland-Allen"
+    },
+    {
+      "kind": "web",
+      "url": "https://iquilezles.org/articles/",
+      "keep": "distance estimators, colouring and lighting articles"
+    },
+    {
+      "kind": "github",
+      "url": "https://github.com/projectM-visualizer/projectm",
+      "keep": "releases and preset format changes"
+    },
+    {
+      "kind": "github",
+      "url": "https://github.com/jberg/butterchurn",
+      "keep": "WebGL MilkDrop changes"
+    },
+    {
+      "kind": "github",
+      "url": "https://github.com/buddhi1980/mandelbulber2",
+      "keep": "3D fractal formulas and render features"
+    },
+    {
+      "kind": "github",
+      "url": "https://github.com/thargor6/JWildfire",
+      "keep": "flame variations and render features"
+    },
+    {
+      "kind": "github",
+      "query": "comfyui audio reactive",
+      "keep": "top 10 by stars; new entries and their owners' repos become harvest targets"
+    },
+    {
+      "kind": "github",
+      "url": "https://github.com/ryanontheinside/ComfyUI_RyanOnTheInside",
+      "keep": "comfyui-top10 harvest seed M2; new nodes, releases and the owner's (ryanontheinside) other repos"
+    }
   ]
 }
