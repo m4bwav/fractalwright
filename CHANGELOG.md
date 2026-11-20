@@ -2,6 +2,11 @@
 
 Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) and its companions, newest first, each with the reason. Reasons cite findings in [RESEARCH.md](RESEARCH.md) (`R-`), lessons in [LEARNINGS.md](LEARNINGS.md) (`L-`), and test runs in [TESTS.md](TESTS.md) (`T-`). State in `evergreen.json`. Protocol: MAINTENANCE.md.
 
+### C-20261119-30 - 2026-11-19 - release 0.12.0: Book of Shaders rules
+- because: C-20261119-29 and the harvest.json popular-repos query (PR #34)
+- files: plugin.json files, scripts/fw.py (`VERSION`)
+- Version 0.11.1 to 0.12.0.
+
 ### C-20261119-29 - 2026-11-19 - Book of Shaders: GPU Worley rules, hue wheel, explorer shader check
 - because: book distillation (The Book of Shaders ch. 5, 6, 7, 12; checked against thebookofshaders.com chapter sources)
 - files: references/06-noise-natural.md (GPU Worley paragraph, [S16]), references/02-escape-time.md (hue wheel and eased palettes, [S29]), tests/test_serve.py (`ShaderViewRules`)
