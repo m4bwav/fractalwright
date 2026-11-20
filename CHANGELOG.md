@@ -2,6 +2,11 @@
 
 Every change to [skills/fractalwright/SKILL.md](skills/fractalwright/SKILL.md) and its companions, newest first, each with the reason. Reasons cite findings in [RESEARCH.md](RESEARCH.md) (`R-`), lessons in [LEARNINGS.md](LEARNINGS.md) (`L-`), and test runs in [TESTS.md](TESTS.md) (`T-`). State in `evergreen.json`. Protocol: MAINTENANCE.md.
 
+### C-20261119-29 - 2026-11-19 - Book of Shaders: GPU Worley rules, hue wheel, explorer shader check
+- because: book distillation (The Book of Shaders ch. 5, 6, 7, 12; checked against thebookofshaders.com chapter sources)
+- files: references/06-noise-natural.md (GPU Worley paragraph, [S16]), references/02-escape-time.md (hue wheel and eased palettes, [S29]), tests/test_serve.py (`ShaderViewRules`)
+- GPU Worley: one point per cell, 3x3 cell-local search, 2x2 seam risk, nearest point for region ids, constant loop bounds. Palettes: RGB hue wheel puts cyan opposite red (not the painter's RYB green); ease through a shaping function. New test: the explorer's .frag files have no unwrapped time in trig and no unscaled aspect; the check fires on a bad snippet.
+
 ### C-20261115-28 - 2026-11-15 - release 0.11.1: palette validation, bare family presets
 - because: HANDOFF Next 0 (session 9 leftovers): `3d mesh --palette fire` was accepted silently as one colour; an eval run guessed preset `mandelbrot`
 - files: scripts/fw_mesh.py (`parse_palette`), scripts/fw.py (`load_recipe` alias, `VERSION`), tests/test_3d.py (`test_palette_validation`), tests/test_fw.py (`test_bare_family_alias`), plugin.json files
