@@ -440,5 +440,28 @@ class StopPaletteHashTests(unittest.TestCase):
                 srv.server_close()
 
 
+def shader_view_problems(src):
+    """Book of Shaders ch. 5 and 7: a view shader must not feed unbounded time into trig, and must
+    map pixels with one scale for both axes (or circles stretch on a non-square canvas)."""
+    import re
+    probs = []
+    if re.search(r"\b(?:sin|cos|fract)\(\s*(?:u_time|uTime|iTime)\s*\*", src):
+        probs.append("unwrapped time")
+    if re.search(r"gl_FragCoord\.xy\s*/\s*u_size\b", src) and "u_size.x / u_size.y" not in src:
+        probs.append("no aspect correction")
+    return probs
+
+
+class ShaderViewRules(unittest.TestCase):
+    def test_rules_fire_on_bad_and_pass_page_shaders(self):
+        bad = "vec2 st = gl_FragCoord.xy / u_size; float w = sin(uTime * 3.0);"
+        self.assertEqual(shader_view_problems(bad), ["unwrapped time", "no aspect correction"])
+        good = ("vec2 st = gl_FragCoord.xy / u_size; st.x *= u_size.x / u_size.y; "
+                "float w = sin(mod(uTime, 6.2831853));")
+        self.assertEqual(shader_view_problems(good), [])
+        for f in sorted((ROOT / "scripts" / "page").glob("*.frag")):
+            self.assertEqual(shader_view_problems(f.read_text(encoding="utf-8")), [], f.name)
+
+
 if __name__ == "__main__":
     unittest.main()

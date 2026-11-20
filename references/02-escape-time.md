@@ -114,6 +114,7 @@ escaped = n < max_iter
 ### Palettes and gradient design
 - Cyclic palettes: colour = palette(fract(mu·density + offset)) so zooms keep their colour variety. IQ's cosine palette, a + b·cos(2π(c·t + d)), gives cyclic gradients from 12 numbers [S25].
 - Perceptual uniformity: use perceptual colormaps (viridis and its kin, designed in CAM02-UCS) for "measured" output; colorcet provides cyclic perceptually uniform maps (e.g. CET-C*) [S26][S27]. Interpolating in OKLab avoids muddy midpoints [S28].
+- Hue wheels: an RGB/HSB hue wheel puts cyan opposite red, not green as on the painter's RYB wheel, so complementary pairs picked by hue + 0.5 look wrong to painters; reshape hue first if a painter's palette is wanted. Ease palette parameters through a shaping function (smoothstep, pow) rather than a linear mix for softer bands [S29].
 - Log scaling of mu (log(mu + 1)) helps deep zooms where n is large.
 
 ## Implications for fractalwright
@@ -178,3 +179,4 @@ Design consequences:
 - [S26] matplotlib, Choosing colormaps: https://matplotlib.org/stable/users/explain/colors/colormaps.html
 - [S27] Peter Kovesi, colorcet / Good Colour Maps: https://colorcet.com/
 - [S28] Björn Ottosson, OKLab: https://bottosson.github.io/posts/oklab/
+- [S29] Gonzalez Vivo and Lowe, The Book of Shaders, ch. 6 Colors (accessed 2026-11-19): https://thebookofshaders.com/06/

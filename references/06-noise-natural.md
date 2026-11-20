@@ -13,6 +13,8 @@ background knowledge or search snippets and were not confirmed on a fetched prim
 | OpenSimplex2 (F, S) | patent-free simplex-like noise | KdotJPG | CC0-1.0, some dirs Unlicense; C#, Java, GLSL, HLSL, Rust [S3] |
 | Worley / cellular | distance F_n to the n-th nearest random seed point | Worley, SIGGRAPH 1996 [S6] | F1 = cells, F2-F1 = cell borders/cracks (F2-F1 is common practice, not on [S6]) |
 
+Worley on the GPU (Book of Shaders ch. 12 [S16]): one feature point per cell, hashed from the cell id `floor(p)`; search the 3x3 neighbour cells (offsets -1..1) and measure from `fract(p)` to the neighbour's point plus its offset, so coordinates stay cell-local and precise far from the origin. Checking only the own cell leaves seams at cell borders; a 2x2 search (Gustavson) is cheaper but can miss the true nearest point near borders, so test seams before using it. Keep the nearest point, not only F1, to colour regions by id. Shader loops need constant bounds, so Worley's variable point count per cell does not port; one point per cell is the GPU form.
+
 Scale convention: one noise "feature" is about one lattice unit; frequency f means the domain is scaled by f.
 
 ## 2. fBm (fractional Brownian motion) by summing octaves
@@ -241,5 +243,6 @@ renders it in 3D in the browser; polywright turns a heightmap into a mesh, a gam
 - [S13] Paul Bourke, Generating noise with different power spectra: https://paulbourke.net/fractals/noise/
 - [S14] Mei, Decaudin, Hu 2007 (HAL copy): https://core.ac.uk/download/52631892.pdf
 - [S15] Jako and Toth, CESCG 2011: https://www.old.cescg.org/CESCG-2011/papers/TUBudapest-Jako-Balazs.pdf
+- [S16] Gonzalez Vivo and Lowe, The Book of Shaders, ch. 12 Cellular noise (accessed 2026-11-19): https://thebookofshaders.com/12/
 - Blender manual (Musgrave node: offset applies to hybrid/ridged/hetero, gain to hybrid/ridged):
   https://docs.blender.org/manual/ja/3.6/modeling/geometry_nodes/texture/musgrave.html (search snippet)
